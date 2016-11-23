@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro" path="src/main/java/com.github.forax.pro"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.api" path="src/main/java/com.github.forax.pro.api"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="src/main/java/com.github.forax.pro.helper"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.main" path="src/main/java/com.github.forax.pro.main"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.convention" path="src/main/java/com.github.forax.pro.plugin.convention"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.compiler" path="src/main/java/com.github.forax.pro.plugin.compiler"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.packager" path="src/main/java/com.github.forax.pro.plugin.packager"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.linker" path="src/main/java/com.github.forax.pro.plugin.linker"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.bootstrap" path="src/main/java/com.github.forax.pro.bootstrap"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="test/main/java/com.github.forax.pro.helper"/>
+	<classpathentry kind="src" path="samples/simple/src/main/java/com.foo.acme.amodule"/>
+	<classpathentry kind="src" path="samples/simple/src/main/java/com.foo.acme.anothermodule"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-9-jigsaw"/>
+	<classpathentry kind="lib" path="deps/org.json.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

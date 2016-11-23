@@ -1,0 +1,10 @@
+{
+  packager: {
+    moduleMetadata: [
+      "com.foo.acme.amodule@1.0",
+      "com.foo.acme.anothermodule@2.0/com.foo.acme.anotherpackage.Main"
+    ]
+  },
+  run: ["compiler", "packager"]
+}
+
