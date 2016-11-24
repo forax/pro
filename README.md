@@ -1,6 +1,29 @@
 # pro
 a Java 9 compatible build tool
 
+> No need to be a maven to configure a build tool 
+
+
+# rational
+With the introduction of modules in Java 9, creating modules/jars is easier and
+new applications will tend to have many more smaller modules that it was previously the case.
+The build model of Maven is not well suited to describe this new world.
+
+
+# principles
+
+  - use convention over configuration
+  - programmatic API first
+  - stateless plugins 
+  - separate configuration time where configuration is mutable and build time where configuration is immutable
+  - external dependencies are in plain sight
+
+
+# architectures
+  
+
+
+# build instructions
 To compile and build pro, run 
 ```
 build.sh
