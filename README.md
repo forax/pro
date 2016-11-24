@@ -12,8 +12,8 @@ The build model of Maven is not well suited to describe this new world.
 
 # principles
 
+  - __pro__grammatic API first
   - use [convention](https://github.com/forax/pro/blob/master/src/main/java/com.github.forax.pro.plugin.convention/com/github/forax/pro/plugin/convention/ConventionPlugin.java#L17) over configuration
-  - programmatic API first
   - stateless [plugins](https://github.com/forax/pro/blob/master/src/main/java/com.github.forax.pro.api/com/github/forax/pro/api/Plugin.java) 
   - separate configuration time where configuration is [mutable](https://github.com/forax/pro/blob/master/src/main/java/com.github.forax.pro.api/com/github/forax/pro/api/MutableConfig.java) and build time where configuration is [immutable](https://github.com/forax/pro/blob/master/src/main/java/com.github.forax.pro.api/com/github/forax/pro/api/Config.java)
   - external dependencies are in plain sight
