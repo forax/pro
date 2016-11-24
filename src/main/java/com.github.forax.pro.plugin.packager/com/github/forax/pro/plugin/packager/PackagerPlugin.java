@@ -77,6 +77,9 @@ public class PackagerPlugin implements Plugin {
     if (errorCode != 0) {
       return errorCode;
     }
+    if (!moduleExplodedTestPath.stream().anyMatch(Files::exists)) {
+      return 0;
+    }
     return packageModules(jarTool, moduleExplodedTestPath, moduleArtifactTestPath, metadataMap, "test-");
   }
 
