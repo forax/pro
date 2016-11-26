@@ -10,21 +10,23 @@ import java.io.IOException;
 public class Bootstrap {
   public static void main(String[] args) throws IOException {
     set("packager.moduleMetadata", list(
-        "com.github.forax.pro@1.0",
-        "com.github.forax.pro.api@1.0",
-        "com.github.forax.pro.helper@1.0",
-        "com.github.forax.pro.main@1.0/com.github.forax.pro.main.Main",
-        "com.github.forax.pro.plugin.convention@1.0",
-        "com.github.forax.pro.plugin.compiler@1.0",
-        "com.github.forax.pro.plugin.packager@1.0",
-        "com.github.forax.pro.plugin.linker@1.0",
-        "com.github.forax.pro.plugin.bootstrap@1.0"
+        "com.github.forax.pro@9.0",
+        "com.github.forax.pro.api@9.0",
+        "com.github.forax.pro.helper@9.0",
+        "com.github.forax.pro.main@9.0/com.github.forax.pro.main.Main",
+        "com.github.forax.pro.plugin.convention@9.0",
+        "com.github.forax.pro.plugin.resolver@9.0",
+        "com.github.forax.pro.plugin.compiler@9.0",
+        "com.github.forax.pro.plugin.packager@9.0",
+        "com.github.forax.pro.plugin.linker@9.0",
+        "com.github.forax.pro.plugin.bootstrap@9.0"
         ));
     
     set("linker.rootModules", append(
         "com.github.forax.pro",
         "com.github.forax.pro.main",
         "com.github.forax.pro.plugin.convention",
+        "com.github.forax.pro.plugin.resolver",
         "com.github.forax.pro.plugin.compiler",
         "com.github.forax.pro.plugin.packager",
         "com.github.forax.pro.plugin.linker",
@@ -37,8 +39,8 @@ public class Bootstrap {
     //set("linker.serviceNames", list("java.util.spi.ToolProvider"));
     //run("compiler", "packager");
     
-    run("compiler", "packager", "linker");
+    run("compiler", "packager" /*, "linker" FIXME*/ );
     
-    Vanity.postOperations();
+    //Vanity.postOperations(); FIXME
   }
 }

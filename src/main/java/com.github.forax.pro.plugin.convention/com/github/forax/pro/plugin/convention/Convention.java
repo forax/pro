@@ -26,6 +26,8 @@ public interface Convention {
   public Path javaModuleArtifactTestPath();
   public void javaModuleArtifactTestPath(Path path);
   
+  public Path javaMavenLocalRepositoryPath();
+  public void javaMavenLocalRepositoryPath(Path path);
   public List<Path> javaModuleDependencyPath();
   public void javaModuleDependencyPath(List<Path> path);
   

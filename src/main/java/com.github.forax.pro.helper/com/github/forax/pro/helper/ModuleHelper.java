@@ -249,7 +249,7 @@ public class ModuleHelper {
           .forEach(require -> works.offer(new Work(() -> chain.get() + " -> " + require, require)));
       } else {
         resolved = false;
-        listener.dependencyNotFound(work.moduleName, chain.get());
+        listener.dependencyNotFound(name, chain.get());
       }
     }
   }

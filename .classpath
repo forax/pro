@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro" path="src/main/java/com.github.forax.pro"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.aether" path="src/main/java/com.github.forax.pro.aether"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.api" path="src/main/java/com.github.forax.pro.api"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="src/main/java/com.github.forax.pro.helper"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.main" path="src/main/java/com.github.forax.pro.main"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.convention" path="src/main/java/com.github.forax.pro.plugin.convention"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.resolver" path="src/main/java/com.github.forax.pro.plugin.resolver"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.compiler" path="src/main/java/com.github.forax.pro.plugin.compiler"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.packager" path="src/main/java/com.github.forax.pro.plugin.packager"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.linker" path="src/main/java/com.github.forax.pro.plugin.linker"/>
@@ -12,7 +14,34 @@
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="test/main/java/com.github.forax.pro.helper"/>
 	<classpathentry kind="src" path="samples/simple/src/main/java/com.foo.acme.amodule"/>
 	<classpathentry kind="src" path="samples/simple/src/main/java/com.foo.acme.anothermodule"/>
+	<classpathentry kind="src" path="samples/getstarted/src/main/java/com.foo.getstarted"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-9-jigsaw"/>
 	<classpathentry kind="lib" path="deps/org.json.jar"/>
+	<classpathentry kind="lib" path="deps/aether-api-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether-connector-basic-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether-impl-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether-spi-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether-transport-classpath-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether-transport-file-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether-transport-http-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether-transport-wagon-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether-util-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/commons-lang3-3.5.jar"/>
+	<classpathentry kind="lib" path="deps/commons-logging-api-1.1.jar"/>
+	<classpathentry kind="lib" path="deps/maven-aether-provider-3.3.9.jar"/>
+	<classpathentry kind="lib" path="deps/maven-artifact-3.3.9.jar"/>
+	<classpathentry kind="lib" path="deps/maven-builder-support-3.3.9.jar"/>
+	<classpathentry kind="lib" path="deps/maven-model-3.3.9.jar"/>
+	<classpathentry kind="lib" path="deps/maven-model-builder-3.3.9.jar"/>
+	<classpathentry kind="lib" path="deps/plexus-interpolation-1.24.jar"/>
+	<classpathentry kind="lib" path="deps/plexus-utils-3.0.24.jar"/>
+	<classpathentry kind="lib" path="deps/aether.api-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether.connector.basic-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether.impl-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether.spi-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether.transport.file-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/aether.transport.http-1.0.1.jar"/>
+	<classpathentry kind="lib" path="deps/maven.aether.provider-3.3.9.jar"/>
+	<classpathentry kind="lib" path="deps/aether.util-1.0.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

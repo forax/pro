@@ -38,7 +38,7 @@ public class Pro {
     DefaultConfig config = new DefaultConfig(root);
     
     List<Plugin> plugins = Plugins.getAllPlugins();
-    //System.out.println("registered plugins " + plugins.stream().map(Plugin::name).collect(joining(", ")));
+    System.out.println("registered plugins " + plugins.stream().map(Plugin::name).collect(Collectors.joining(", ")));
     
     
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));

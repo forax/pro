@@ -1,0 +1,179 @@
+package com.github.forax.pro.plugin.resolver;
+
+import static java.util.stream.Collectors.toList;
+
+import java.io.IOException;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.github.forax.pro.aether.Aether;
+import com.github.forax.pro.aether.ArtifactDescriptor;
+import com.github.forax.pro.api.Config;
+import com.github.forax.pro.api.MutableConfig;
+import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.helper.FileHelper;
+import com.github.forax.pro.helper.ModuleHelper;
+
+public class ResolverPlugin implements Plugin {
+  @Override
+  public String name() {
+    return "resolver";
+  }
+
+  @Override
+  public void init(MutableConfig config) {
+    Resolver resolver = config.getOrUpdate(name(), Resolver.class);
+  }
+  
+  @Override
+  public void configure(MutableConfig config) {
+    Resolver resolver = config.getOrUpdate(name(), Resolver.class);
+    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+    resolver.moduleDependencyPath(convention.javaModuleDependencyPath());
+    resolver.moduleSourcePath(convention.javaModuleSourcePath());
+    resolver.moduleTestPath(convention.javaModuleTestPath());
+    resolver.mavenLocalRepositoryPath(convention.javaMavenLocalRepositoryPath());
+  }
+  
+  static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
+    return modulePath
+             .or(() -> Optional.of(
+                    Stream.of(moduleDependencyPath, additionnalPath)
+                          .flatMap(List::stream)
+                          .collect(toList())))
+             .map(FileHelper::pathFromFilesThatExist)
+             .filter(list -> !list.isEmpty());
+  }
+  
+  @Override
+  public int execute(Config config) throws IOException {
+    // System.out.println("execute " + config);
+    
+    Resolver resolver = config.getOrThrow(name(), Resolver.class);
+    
+    ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(resolver.moduleSourcePath());
+    
+    /*
+    List<Path> moduleTestPath = FileHelper.pathFromFilesThatExist(compiler.moduleTestPath());
+    if (moduleTestPath.isEmpty()) {
+      return 0;
+    }
+    
+    ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(compiler.moduleTestPath());
+    */
+    
+    Optional<List<Path>> modulePath = modulePathOrDependencyPath(resolver.modulePath(),
+        resolver.moduleDependencyPath(), List.of());
+    
+    ModuleFinder dependencyFinder = ModuleFinder.compose(
+        modulePath
+            .stream()
+            .flatMap(List::stream)
+            .map(ModuleFinder::of)
+            .toArray(ModuleFinder[]::new));
+    List<String> rootSourceNames = moduleSourceFinder.findAll().stream()
+            .map(ref -> ref.descriptor().name())
+            .collect(Collectors.toList());
+    
+    ModuleFinder allFinder = ModuleFinder.compose(moduleSourceFinder, dependencyFinder, ModuleFinder.ofSystem());
+    //allFinder.findAll().stream().sorted(Comparator.comparing(ModuleReference::toString)).forEach(System.out::println);
+    
+    System.out.println(allFinder.find("maven.aether.provider"));
+    
+    LinkedHashSet<String> unresolvedModules = new LinkedHashSet<>();
+    boolean resolved = ModuleHelper.resolveOnlyRequires(allFinder, rootSourceNames,
+        (moduleName, dependencyChain) -> unresolvedModules.add(moduleName));
+    if (resolved) {
+      return 0;
+    }
+    
+    System.out.println("resolver: unresolvedModules " + unresolvedModules);
+    
+    // mapping between module name and Maven artifact name
+    List<String> dependencies = resolver.dependencies();
+    LinkedHashMap<String, String> moduleToArtifactMap = new LinkedHashMap<>();
+    LinkedHashMap<String, String> artifactToModuleMap = new LinkedHashMap<>();
+    for(String dependency: dependencies) {
+      int index = dependency.indexOf('=');
+      if (index == -1) {
+        throw new IllegalStateException("invalid dependency format " + dependency);
+      }
+      String module = dependency.substring(0, index);
+      String artifact = dependency.substring(index + 1);
+      moduleToArtifactMap.put(module, artifact);
+      artifactToModuleMap.put(artifact, module);
+    }
+    
+    verifyDeclaration("modules", unresolvedModules, moduleToArtifactMap.keySet());
+    
+    
+    
+    List<String> unresolvedRootArtifacts = unresolvedModules.stream()
+      .map(moduleToArtifactMap::get)
+      .collect(Collectors.toList());
+    System.out.println("resolver: unresolved root artifacts " + unresolvedRootArtifacts);
+    
+    Aether aether = Aether.create(resolver.mavenLocalRepositoryPath());
+    
+    LinkedHashSet<String> unresolvedArtifacts = new LinkedHashSet<>();
+    for(String unresolvedRootArtifact: unresolvedRootArtifacts) {
+      unresolvedArtifacts.addAll(aether.dependencies(unresolvedRootArtifact));  
+    }
+    System.out.println("resolver: unresolved artifacts " + unresolvedArtifacts);
+    
+    verifyDeclaration("artifacts", unresolvedArtifacts, artifactToModuleMap.keySet());
+    
+    
+    Map<String, ArtifactDescriptor> resolvedArtifactMap =
+        aether.download(new ArrayList<>(unresolvedArtifacts));
+    
+    System.out.println("resolver: resolved artifacts " + resolvedArtifactMap);
+    
+    Path moduleDependencyPath = resolver.moduleDependencyPath().get(0);
+    Files.createDirectories(moduleDependencyPath);
+    
+    ArrayList<String> undeclaredArtifactIds = new ArrayList<>();
+    for(Map.Entry<String, ArtifactDescriptor> entry: resolvedArtifactMap.entrySet()) {
+      String unresolvedArtifactId = entry.getKey();
+      ArtifactDescriptor artifact = entry.getValue();
+      
+      String moduleName = artifactToModuleMap.get(unresolvedArtifactId);
+      if (moduleName == null) {
+        undeclaredArtifactIds.add(unresolvedArtifactId);
+      } else {
+        System.out.println(moduleName + " (" + artifact.getCoordId() + ") resolved from maven central");
+        Files.copy(artifact.getPath(), moduleDependencyPath.resolve(moduleName + ".jar"));
+      }
+    }
+    if (!undeclaredArtifactIds.isEmpty()) {
+      throw new IllegalStateException("no dependency declared for Maven artifacts " + undeclaredArtifactIds);
+    }
+    
+    return 0;
+  }
+  
+  private static void verifyDeclaration(String kind, Set<String> unresolvedModules, Set<String> dependencySet) {
+    ArrayList<String> undeclaredModules = new ArrayList<>();
+    for(String module: unresolvedModules) {
+      if (!dependencySet.contains(module)) {
+        undeclaredModules.add(module);
+      }
+    }
+    if (!undeclaredModules.isEmpty()) {
+      throw new IllegalStateException("no dependency declared for unresolved " + kind + " " + undeclaredModules);
+    }
+  }
+}

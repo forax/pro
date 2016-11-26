@@ -11,7 +11,7 @@ $javac --module-source-path src/main/java \
        --module-path deps \
        $(find src/main/java/ -name "*.java")
 
-$java --module-path bootstrap/modules \
+$java --module-path bootstrap/modules:deps \
       --module com.github.forax.pro.bootstrap/com.github.forax.pro.bootstrap.Bootstrap
       
       

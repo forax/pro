@@ -28,6 +28,7 @@ public class ConventionPlugin implements Plugin {
     convention.javaModuleArtifactTestPath(Paths.get("target/test/artifact"));
     
     convention.javaModuleDependencyPath(List.of(Paths.get("deps")));
+    convention.javaMavenLocalRepositoryPath(Paths.get("target/deps/maven-local"));
     convention.javaLinkerImagePath(Paths.get("target/image"));
   }
   
