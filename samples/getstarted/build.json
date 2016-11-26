@@ -1,0 +1,14 @@
+{
+  resolver: {
+    dependencies: [
+      "com.google.guava=com.google.guava:guava:20.0"
+    ]
+  },
+  packager: {
+    moduleMetadata: [
+      "com.foo.getstarted@1.0/com.foo.getstarted.main.Main"
+    ]
+  },
+  run: ["resolver", "compiler", "packager"]
+}
+
