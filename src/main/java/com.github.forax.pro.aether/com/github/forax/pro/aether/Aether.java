@@ -2,7 +2,6 @@ package com.github.forax.pro.aether;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -69,9 +68,15 @@ public class Aether {
     
     return new Aether(system, session, mavenCentral);
   }
+  
+  @SuppressWarnings("static-method")
+  public ArtifactQuery createArtifactQuery(String artifactCoords) {
+    DefaultArtifact artifact = new DefaultArtifact(artifactCoords);
+    return new ArtifactQuery(artifact);
+  }
 
-  public Set<String> dependencies(String unresolvedArtifact)throws IOException {
-    Artifact artifact = new DefaultArtifact(unresolvedArtifact);
+  public Set<ArtifactInfo> dependencies(ArtifactQuery query)throws IOException {
+    Artifact artifact = query.artifact;
 
     CollectRequest collectRequest = new CollectRequest();
     collectRequest.setRoot(new Dependency(artifact, ""));
@@ -84,7 +89,7 @@ public class Aether {
       throw new IOException(e);
     }
 
-    LinkedHashSet<String> dependencies = new LinkedHashSet<>();
+    LinkedHashSet<ArtifactInfo> dependencies = new LinkedHashSet<>();
     collectResult.getRoot().accept(new DependencyVisitor() {
       @Override
       public boolean visitLeave(DependencyNode node) {
@@ -98,78 +103,35 @@ public class Aether {
           return false;
         }
         Artifact artifact = node.getArtifact();
-        String coordId = coordId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
-        dependencies.add(coordId);
+        dependencies.add(new ArtifactInfo(artifact));
         return true;
       }
     });
     return dependencies;
   }
    
-  public Map<String, ArtifactDescriptor> download(List<String> unresolvedArtifacts) throws IOException {
+  public List<ArtifactDescriptor> download(List<ArtifactInfo> unresolvedArtifacts) throws IOException {
     System.out.println("download unresolvedArtifacts " + unresolvedArtifacts);
 
     List<RemoteRepository> repositories = List.of(mavenCentral);
-    Map<ArtifactRequest, String> artifactRequests = unresolvedArtifacts.stream()
-        .collect(Collectors.toMap(artifactName -> {
-          DefaultArtifact artifact = new DefaultArtifact(artifactName);
-
+    List<ArtifactRequest> artifactRequests = unresolvedArtifacts.stream()
+        .map(dependency -> {
           ArtifactRequest artifactRequest = new ArtifactRequest();
-          artifactRequest.setArtifact(artifact);
+          artifactRequest.setArtifact(dependency.artifact);
           artifactRequest.setRepositories(repositories);
-
           return artifactRequest;
-        }, artifactName -> artifactName));
+        })
+        .collect(Collectors.toList());
 
     List<ArtifactResult> artifactResults;
     try {
-      artifactResults = system.resolveArtifacts(session, artifactRequests.keySet());
+      artifactResults = system.resolveArtifacts(session, artifactRequests);
     } catch (ArtifactResolutionException e) {
       throw new IOException(e);
     }
     
     return artifactResults.stream()
-      .collect(Collectors.<ArtifactResult, String, ArtifactDescriptor>toMap(
-          result -> artifactRequests.get(result.getRequest()),
-          result -> createArtifactDescriptor(result.getArtifact())));
-  }
-  
-  static ArtifactDescriptor createArtifactDescriptor(Artifact artifact) {
-    String groupId = artifact.getGroupId();
-    String artifactId = artifact.getArtifactId();
-    String version = artifact.getVersion();
-    String coordId = coordId(groupId, artifactId, version);
-    Path path = artifact.getFile().toPath();
-    return new ArtifactDescriptor() {
-      @Override
-      public String getArtifactId() {
-        return artifactId;
-      }
-      @Override
-      public String getGroupId() {
-        return groupId;
-      }
-      @Override
-      public String getVersion() {
-        return version;
-      }
-      @Override
-      public String getCoordId() {
-        return coordId;
-      }
-      @Override
-      public Path getPath() {
-        return path;
-      }
-      
-      @Override
-      public String toString() {
-        return coordId + '(' + path + ')';
-      }
-    };
-  }
-
-  static String coordId(String groupId, String artifactId, String version) {
-    return groupId + ':' + artifactId + ':' + version;
+      .map(result -> new ArtifactDescriptor(result.getArtifact()))
+      .collect(Collectors.toList());
   }
 }

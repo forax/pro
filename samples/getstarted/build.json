@@ -1,7 +1,7 @@
 {
   resolver: {
     dependencies: [
-      "com.google.guava=com.google.guava:guava:20.0"
+      "com.google.guava=com.google.guava:guava:[20.0,)"
     ]
   },
   packager: {

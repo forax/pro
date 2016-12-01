@@ -14,9 +14,11 @@ module com.github.forax.pro.aether {
   requires httpclient;
   requires httpcore;
   requires maven.aether.provider;
-  requires maven.artifact;
+  requires maven.artifactfat; // merge between maven.artifact and maven.repository.metadata because of split packages
+  //requires maven.artifact;  
+  //requires maven.repository.metadata;
   requires maven.builder.support;
-  requires maven.modelfat;  // merge between maven.model and maven.model.builder because of split packages
+  requires maven.modelfat;    // merge between maven.model and maven.model.builder because of split packages
   //requires maven.model;
   //requires maven.model.builder;
   requires plexus.interpolation;
