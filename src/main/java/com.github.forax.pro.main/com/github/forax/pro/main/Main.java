@@ -40,7 +40,7 @@ public class Main {
   }
   
   enum Command {
-    SHELL(args -> Secret.jShellTool_main()),
+    SHELL(__ -> Secret.jShellTool_main()),
     RUN(args -> run(args)),
     HELP(__ -> help())
     ;
