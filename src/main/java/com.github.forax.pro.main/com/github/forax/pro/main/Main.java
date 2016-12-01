@@ -41,7 +41,8 @@ public class Main {
   
   enum Command {
     SHELL(args -> Secret.jShellTool_main()),
-    RUN(args -> run(args))
+    RUN(args -> run(args)),
+    HELP(__ -> help())
     ;
     
     final Consumer<String[]> consumer;
@@ -58,7 +59,7 @@ public class Main {
     }
   }
   
-  public static void run(String[] args) {
+  static void run(String[] args) {
     Path configFile = InputFile.find(args)
         .orElseThrow(() -> new IllegalArgumentException("no existing input file specified"));
     
@@ -71,6 +72,20 @@ public class Main {
         .findFirst()
         .orElseThrow(() -> new IllegalStateException("no runner available for config file " + configFile))
         .run(configFile);
+  }
+  
+  static void help() {
+    System.err.println(
+        "usage: pro [subcommand] args                                                 \n" +
+        "                                                                             \n" +
+        "  subcommands                                                                \n" +
+        "    run [buildfile]  run the build file                                      \n" +
+        "                     use build.json or build.pro if no buildfile is specified\n" +
+        "    shell            start the interactive shell                             \n" +
+        "    help             this help                                               \n" +
+        "                                                                             \n" +
+        "  if no subcommand is specified, 'run' is used                               \n"
+    );
   }
   
   public static void main(String[] args) {
