@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.UndeclaredThrowableException;
 
 public class Secret {
-  public static void jShellTool_main(String[] arguments) {
+  public static void jShellTool_main(String... arguments) {
     try {
       jShellTool_main.invokeExact(arguments);
     } catch(Throwable t) {
