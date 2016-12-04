@@ -1,8 +1,10 @@
 package com.github.forax.pro.helper;
 
 import static java.util.stream.Collectors.toList;
+import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACC_OPEN;
+import static org.objectweb.asm.Opcodes.V1_9;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
@@ -33,6 +35,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.objectweb.asm.ClassWriter;
+//import org.objectweb.asm.ModuleVisitor;
+
 import com.github.forax.pro.helper.parser.JavacModuleParser;
 
 public class ModuleHelper {
@@ -59,7 +64,7 @@ public class ModuleHelper {
     return Set.of();
   }
   
-  public static class ModuleInfo {
+  static class ModuleInfo {
     int modifiers;
     String name;
     final LinkedHashMap<String, Integer> requires = new LinkedHashMap<>();
@@ -97,9 +102,9 @@ public class ModuleHelper {
     }
   }
   
-  public static ModuleInfo sourceModuleInfo(Path moduleInfoPath) {
+  private static ModuleInfo sourceModuleInfo(Path moduleInfoPath) {
     ModuleInfo moduleInfo = new ModuleInfo();
-    moduleInfo.requires.put("java.base", 0);
+    moduleInfo.requires.put("java.base", ACC_MANDATED);
     ModuleVisitor visitor = new ModuleVisitor() {
       @Override
       public void visitModule(int modifiers, String name) {
@@ -329,7 +334,7 @@ public class ModuleHelper {
   }
   
   
-  public static void write(Path path, ModuleDescriptor descriptor) {
+  public static String moduleDescriptorToSource(ModuleDescriptor descriptor) {
     class Generator {
       private final ArrayList<Stream<String>> streams = new ArrayList<>();
       
@@ -355,8 +360,7 @@ public class ModuleHelper {
       }
     }
     
-    try(BufferedWriter writer = Files.newBufferedWriter(path)) {
-      writer.write(new Generator()
+    return new Generator()
           .$("module %s {",    ModuleDescriptor::name)
           .$("  requires %s;", ModuleDescriptor::requires, Requires::name)
           .$("  exports %s;",  ModuleDescriptor::exports,  Exports::source,   "to %s", Exports::targets)
@@ -365,9 +369,51 @@ public class ModuleHelper {
           .$("  uses %s;",     ModuleDescriptor::uses,     Function.identity())
           .$("  provides %s;", ModuleDescriptor::provides, Provides::service, "with %s", Provides::providers)
           .$("}\n")
-          .join());
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
+          .join();
+  }
+
+  public static byte[] moduleDescriptorToBinary(ModuleDescriptor descriptor) {
+    ClassWriter classWriter = new ClassWriter(0);
+    classWriter.visit(V1_9, ACC_MODULE, null, null, null, null);
+    org.objectweb.asm.ModuleVisitor mv = classWriter.visitModule(descriptor.name().replace('.', '/'), ACC_OPEN);
+    descriptor.version().ifPresent(version -> mv.visitVersion(version.toString()));
+    descriptor.requires().forEach(require -> {
+      int modifiers = require.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
+      mv.visitRequire(require.name().replace('.', '/'), modifiers);
+    });
+    descriptor.exports().forEach(export -> {
+      int modifiers = export.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
+      mv.visitExport(export.source().replace('.', '/'), modifiers, export.targets().toArray(new String[0]));
+    });
+    //FIXME add support of packages, uses and provides
+    mv.visitEnd();
+    classWriter.visitEnd();
+    return classWriter.toByteArray();
+  }
+  
+  private static int modifierToInt(Requires.Modifier modifier) {
+    switch(modifier) {
+    case MANDATED:
+      return ACC_MANDATED;
+    case SYNTHETIC:
+      return ACC_SYNTHETIC;
+    case STATIC:
+      return ACC_STATIC_PHASE;
+    case TRANSITIVE:
+      return ACC_TRANSITIVE;
+    default:
+      throw new IllegalStateException("unknown modifier " + modifier);
+    }
+  }
+  
+  private static int modifierToInt(Exports.Modifier modifier) {
+    switch(modifier) {
+    case MANDATED:
+      return ACC_MANDATED;
+    case SYNTHETIC:
+      return ACC_SYNTHETIC;
+    default:
+      throw new IllegalStateException("unknown modifier " + modifier);
     }
   }
 }

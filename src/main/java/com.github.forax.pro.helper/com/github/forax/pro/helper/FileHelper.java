@@ -1,7 +1,5 @@
 package com.github.forax.pro.helper;
 
-import static com.github.forax.pro.helper.FileHelper.unchecked;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
@@ -9,8 +7,9 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -22,10 +21,6 @@ public class FileHelper {
     throw new AssertionError();
   }
 
-  public static List<Path> pathFromFilesThatExist(Path... paths) {
-    return List.of(Arrays.stream(paths).filter(Files::exists).toArray(Path[]::new));
-  }
-  
   public static List<Path> pathFromFilesThatExist(List<Path> paths) {
     return List.of(paths.stream().filter(Files::exists).toArray(Path[]::new));
   }
@@ -56,19 +51,31 @@ public class FileHelper {
     });
   }
   
+  public interface IORunnable {
+    public void run() throws IOException;
+  }
   public interface IOConsumer<T> {
     public void accept(T element) throws IOException;
   }
-  public interface IOConsumer2<T, U> {
+  public interface IOBiConsumer<T, U> {
     public void accept(T t, U u) throws IOException;
-  }
-  public interface IOPredicate<T> {
-    public boolean test(T element) throws IOException;
   }
   public interface IOFunction<T, R> {
     public R apply(T element) throws IOException;
   }
+  public interface IOBiFunction<T, U, R> {
+    public R apply(T element, U element2) throws IOException;
+  }
 
+  public static <T> Runnable unchecked(IORunnable runnable) {
+    return () -> {
+      try {
+        runnable.run();
+      } catch(IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    };
+  }
   public static <T> Consumer<T> unchecked(IOConsumer<? super T> consumer) {
     return element -> {
       try {
@@ -78,10 +85,10 @@ public class FileHelper {
       }
     };
   }
-  public static <T> Predicate<T> unchecked(IOPredicate<? super T> predicate) {
-    return element -> {
+  public static <T, U> BiConsumer<T, U> unchecked(IOBiConsumer<? super T, ? super U> consumer) {
+    return (element, element2) -> {
       try {
-        return predicate.test(element);
+        consumer.accept(element, element2);
       } catch(IOException e) {
         throw new UncheckedIOException(e);
       }
@@ -91,6 +98,15 @@ public class FileHelper {
     return element -> {
       try {
         return function.apply(element);
+      } catch(IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    };
+  }
+  public static <T, U, R> BiFunction<T, U, R> unchecked(IOBiFunction<? super T, ? super U, ? extends R> function) {
+    return (element, element2) -> {
+      try {
+        return function.apply(element, element2);
       } catch(IOException e) {
         throw new UncheckedIOException(e);
       }
@@ -116,7 +132,7 @@ public class FileHelper {
                .collect(Collectors.toList());
   }
   
-  public static void walkAndFindCounterpart(Path srcPath, Path dstPath, Function<Stream<Path>, Stream<Path>> configure, IOConsumer2<Path, Path> consumer) {
+  public static void walkAndFindCounterpart(Path srcPath, Path dstPath, Function<Stream<Path>, Stream<Path>> configure, IOBiConsumer<Path, Path> consumer) {
     try(Stream<Path> stream = Files.walk(srcPath)) {
       configure.apply(stream)
         .forEach(unchecked(path -> {

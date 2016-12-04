@@ -1,7 +1,7 @@
 {
   resolver: {
     dependencies: [
-      "com.google.guava=com.google.guava:guava:[20.0,)"
+      "com.google.guava=com.google.guava:guava:20.0"
     ]
   },
   packager: {
@@ -9,6 +9,6 @@
       "com.foo.getstarted@1.0/com.foo.getstarted.main.Main"
     ]
   },
-  run: ["resolver", "compiler", "packager"]
+  run: ["resolver", "modulefixer", "compiler", "packager"]
 }
 

@@ -9,6 +9,7 @@ import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 import static java.util.stream.Collectors.toList;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Builder;
@@ -74,7 +75,7 @@ public class CompilerPlugin implements Plugin {
                     Stream.of(moduleDependencyPath, additionnalPath)
                           .flatMap(List::stream)
                           .collect(toList())))
-             .map(FileHelper::pathFromFilesThatExist)
+             .map(FileHelper.unchecked(FileHelper::pathFromFilesThatExist))
              .filter(list -> !list.isEmpty());
   }
   
@@ -189,7 +190,8 @@ public class CompilerPlugin implements Plugin {
             Files::copy);
         
         ModuleDescriptor descriptor = ModuleHelper.mergeModuleDescriptor(sourceRef.descriptor(), testRef.descriptor());
-        ModuleHelper.write(moduleRoot.resolve("module-info.java"), descriptor);
+        Files.write(moduleRoot.resolve("module-info.java"), List.of(ModuleHelper.moduleDescriptorToSource(descriptor)));
+        
         predicate = skipModuleInfoDotJava;
         
       } else {
