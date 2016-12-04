@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro" path="src/main/java/com.github.forax.pro"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.aether" path="src/main/java/com.github.forax.pro.aether"/>
+	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.aether.fakeguava" path="src/main/java/com.github.forax.pro.aether.fakeguava"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.api" path="src/main/java/com.github.forax.pro.api"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="src/main/java/com.github.forax.pro.helper"/>
 	<classpathentry kind="src" output="output-eclipse/modules/com.github.forax.pro.main" path="src/main/java/com.github.forax.pro.main"/>
@@ -16,7 +17,7 @@
 	<classpathentry kind="src" path="samples/simple/src/main/java/com.foo.acme.amodule"/>
 	<classpathentry kind="src" path="samples/simple/src/main/java/com.foo.acme.anothermodule"/>
 	<classpathentry kind="src" path="samples/getstarted/src/main/java/com.foo.getstarted"/>
-	<classpathentry kind="src" path="src/main/java/com.github.forax.pro.aether.fakeguava"/>
+	
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-9-jigsaw"/>
 	<classpathentry kind="lib" path="deps/org.json.jar"/>
 	<classpathentry kind="lib" path="deps/aether-api-1.0.1.jar"/>
