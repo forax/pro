@@ -69,7 +69,7 @@ public class LinkerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    System.out.println("execute linker " + config);
+    //System.out.println("execute linker " + config);
     
     ToolProvider jlinkTool = ToolProvider.findFirst("jlink")
         .orElseThrow(() -> new IllegalStateException("can not find jlink"));

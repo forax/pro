@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.spi.ToolProvider;
 import java.util.stream.Collectors;
@@ -41,7 +42,8 @@ public class ModuleFixerPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    config.getOrUpdate(name(), ModuleFixer.class);
+    ModuleFixer moduleFixer = config.getOrUpdate(name(), ModuleFixer.class);
+    moduleFixer.force(false);
   }
   
   @Override
@@ -62,13 +64,24 @@ public class ModuleFixerPlugin implements Plugin {
     class Info {
       final Set<String> requirePackages;
       final Set<String> exports;
-      Set<String> requireModules;
+      final Set<String> requireModules;
       
-      Info(Set<String> requirePackages, Set<String> exports) {
+      Info(Set<String> requirePackages, Set<String> exports, Set<String> requireModules) {
         this.requirePackages = requirePackages;
         this.exports = exports;
+        this.requireModules = requireModules;
       }
     }
+    
+    // gather additional requires
+    boolean force = moduleFixer.force();
+    Map<String, Set<String>> additionalRequireMap =
+        moduleFixer.additionalRequires()
+                   .orElse(List.of())
+                   .stream()
+                   .map(line -> line.split("="))
+                   .collect(Collectors.groupingBy(tokens -> tokens[0], Collectors.mapping(tokens -> tokens[1], Collectors.toSet())));
+    //System.out.println("additionalRequireMap " + additionalRequireMap);
     
     // find dependencies (requires and exports)
     HashMap<ModuleReference, Info> moduleInfoMap = new HashMap<>();
@@ -78,13 +91,17 @@ public class ModuleFixerPlugin implements Plugin {
         ModuleFinder.ofSystem());
     for(ModuleReference ref: moduleFinder.findAll()) {
       Set<String> exports;
-      if (ref.descriptor().isAutomatic()) {
+      ModuleDescriptor descriptor = ref.descriptor();
+      String name = descriptor.name();
+      if (descriptor.isAutomatic() || (force && additionalRequireMap.containsKey(name))) {
         HashSet<String> requires = new HashSet<>();
         exports = new HashSet<>();
         findRequiresAndExports(ref, requires, exports);
-        moduleInfoMap.put(ref, new Info(requires, exports));
+        moduleInfoMap.put(ref,
+            new Info(requires, exports,
+                Optional.ofNullable(additionalRequireMap.get(name)).orElseGet(HashSet::new)));
       } else {
-        exports = ref.descriptor().exports().stream().map(export -> export.source().replace('.', '/')).collect(Collectors.toSet());
+        exports = descriptor.exports().stream().map(export -> export.source().replace('.', '/')).collect(Collectors.toSet());
       }
       exports.forEach(packageName -> exportMap.computeIfAbsent(packageName, __ -> new ArrayList<>()).add(ref));
     }
@@ -114,7 +131,7 @@ public class ModuleFixerPlugin implements Plugin {
     // calculated module dependencies
     HashMap<String, List<ModuleReference>> unknownRequiredPackages = new HashMap<>();
     moduleInfoMap.forEach((ref, info) -> {
-      info.requireModules = info.requirePackages.stream()
+      Set<String> calculatedRequires = info.requirePackages.stream()
           .flatMap(requireName -> {
             List<ModuleReference> refs = exportMap.get(requireName);
             if (refs == null) {
@@ -124,6 +141,7 @@ public class ModuleFixerPlugin implements Plugin {
             return Stream.of(refs.get(0).descriptor().name());
           })
           .collect(Collectors.toSet());
+      info.requireModules.addAll(calculatedRequires);
     });
     unknownRequiredPackages.forEach((unknownRequiredPackage, modules) -> {
       String moduleNames = modules.stream().map(ref -> ref.descriptor().name()).collect(joining(", "));
@@ -188,7 +206,11 @@ public class ModuleFixerPlugin implements Plugin {
                  .forEach(resource -> {
           try(InputStream input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource))) {
             ClassReader classReader = new ClassReader(input);
-            exports.add(packageOf(classReader.getClassName()));
+            String className = classReader.getClassName();
+            if (className == null) { //FIXME, module name is null !!
+              return;  // skip module-info
+            }
+            exports.add(packageOf(className));
             classReader.accept(new ClassRemapper(null, new Remapper() {
               @Override
               public String map(String typeName) {

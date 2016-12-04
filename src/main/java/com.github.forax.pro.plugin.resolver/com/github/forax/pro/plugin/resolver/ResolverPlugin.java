@@ -93,8 +93,6 @@ public class ResolverPlugin implements Plugin {
     ModuleFinder allFinder = ModuleFinder.compose(moduleSourceFinder, dependencyFinder, ModuleFinder.ofSystem());
     //allFinder.findAll().stream().sorted(Comparator.comparing(ModuleReference::toString)).forEach(System.out::println);
     
-    System.out.println(allFinder.find("maven.aether.provider"));
-    
     LinkedHashSet<String> unresolvedModules = new LinkedHashSet<>();
     boolean resolved = ModuleHelper.resolveOnlyRequires(allFinder, rootSourceNames,
         (moduleName, dependencyChain) -> unresolvedModules.add(moduleName));

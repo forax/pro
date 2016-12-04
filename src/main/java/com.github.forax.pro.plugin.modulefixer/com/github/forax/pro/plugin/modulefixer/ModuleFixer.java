@@ -13,4 +13,10 @@ public interface ModuleFixer {
   
   Optional<Path> moduleDependencyFixerPath();
   void moduleDependencyFixerPath(Path path);
+  
+  boolean force();
+  void force(boolean force);
+  
+  Optional<List<String>> additionalRequires();
+  void additionalRequires(List<String> additionalRequires);
 }

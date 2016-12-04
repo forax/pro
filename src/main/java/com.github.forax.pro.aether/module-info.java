@@ -24,8 +24,7 @@ module com.github.forax.pro.aether {
   requires plexus.interpolation;
   requires plexus.utils;
   
-  exports com.github.forax.pro.aether;
+  requires com.github.forax.pro.aether.fakeguava;
   
-  exports com.google.common.base;    // fake implementation
-  exports com.google.common.collect; // fake implementation
+  exports com.github.forax.pro.aether;
 }
