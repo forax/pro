@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;

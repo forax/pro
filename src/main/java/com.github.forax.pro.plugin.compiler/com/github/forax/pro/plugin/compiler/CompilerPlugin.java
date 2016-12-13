@@ -7,7 +7,6 @@ import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
 import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
-import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
@@ -21,7 +20,6 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.spi.ToolProvider;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;

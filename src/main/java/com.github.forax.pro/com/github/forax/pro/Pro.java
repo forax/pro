@@ -15,9 +15,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -82,9 +79,6 @@ public class Pro {
     return list(locations);
   }
   
-  public static PathMatcher regex(String regex) {
-    return globRegex(regex);
-  }
   public static PathMatcher globRegex(String regex) {
     return FileSystems.getDefault().getPathMatcher("glob:" + regex);
   }
