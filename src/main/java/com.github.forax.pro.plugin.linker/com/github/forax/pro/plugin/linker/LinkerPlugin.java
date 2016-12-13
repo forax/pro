@@ -5,6 +5,7 @@ import static com.github.forax.pro.api.helper.OptionAction.exists;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -33,6 +34,7 @@ public class LinkerPlugin implements Plugin {
     linker.compressLevel(0);
     linker.stripDebug(false);
     linker.stripNativeCommands(false);
+    linker.includeSystemJMODs(false);
   }
   
   @Override
@@ -76,9 +78,9 @@ public class LinkerPlugin implements Plugin {
     Linker linker = config.getOrThrow(name(), Linker.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
-    Path javaSystemModule = convention.javaHome().resolve("jmods");
-    if (!(Files.exists(javaSystemModule))) {
-      throw new IOException("unable to find Java system module at " + javaSystemModule);
+    Path javaSystemModulePath = systemModulePath(convention);
+    if (!(Files.exists(javaSystemModulePath))) {
+      throw new IOException("unable to find Java system module at " + javaSystemModulePath);
     }
     
     ModuleFinder moduleFinder = ModuleFinder.of(convention.javaModuleArtifactSourcePath());
@@ -95,7 +97,7 @@ public class LinkerPlugin implements Plugin {
     List<Path> modulePath =
         linker.modulePath()
           .orElseGet(() -> Stream.of(
-                Stream.of(systemModulePath(convention)),
+                Stream.of(javaSystemModulePath),
                 FileHelper.pathFromFilesThatExist(linker.moduleDependencyPath()).stream(),
                 Stream.of(convention.javaModuleArtifactSourcePath()))
             .flatMap(x -> x)
@@ -110,6 +112,20 @@ public class LinkerPlugin implements Plugin {
     String[] arguments = OptionAction.gatherAll(JlinkOption.class, option -> option.action).apply(jlink, new CmdLine()).toArguments();
     
     //System.out.println("jlink " + String.join(" ", arguments));
-    return jlinkTool.run(System.out, System.err, arguments);
+    int errorCode = jlinkTool.run(System.out, System.err, arguments);
+    if (errorCode != 0) {
+      return errorCode; 
+    }
+    
+    if (linker.includeSystemJMODs()) {
+      Path jmods = destination.resolve("jmods");
+      Files.createDirectories(jmods);
+      try(DirectoryStream<Path> stream = Files.newDirectoryStream(javaSystemModulePath)) {
+        for(Path path: stream) {
+          Files.copy(path, jmods.resolve(path.getFileName()));
+        }
+      }
+    }
+    return 0;
   }
 }

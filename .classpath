@@ -17,8 +17,10 @@
 	<classpathentry kind="src" path="samples/simple/src/main/java/com.foo.acme.amodule"/>
 	<classpathentry kind="src" path="samples/simple/src/main/java/com.foo.acme.anothermodule"/>
 	<classpathentry kind="src" path="samples/getstarted/src/main/java/com.foo.getstarted"/>
-	
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-9-jigsaw"/>
+	<classpathentry kind="src" path="src/main/java/com.github.forax.pro.plugin.uberpackager"/>
+	<classpathentry kind="src" path="src/main/java/com.github.forax.pro.ubermain"/>
+	<classpathentry kind="src" path="src/main/java/com.github.forax.pro.uberbooter"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-9-jigsaw-b146"/>
 	<classpathentry kind="lib" path="deps/org.json.jar"/>
 	<classpathentry kind="lib" path="deps/aether-api-1.0.1.jar"/>
 	<classpathentry kind="lib" path="deps/aether-connector-basic-1.0.1.jar"/>

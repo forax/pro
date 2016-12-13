@@ -20,6 +20,9 @@ public interface Linker {
   boolean stripNativeCommands();
   void stripNativeCommands(boolean stripNativeCommands);
   
+  boolean includeSystemJMODs();
+  void includeSystemJMODs(boolean includeSystemJMODs);
+  
   Optional<List<Path>> modulePath();
   void modulePath(List<Path> modulePath);
   

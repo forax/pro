@@ -19,6 +19,7 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.modulefixer@9.0",
         "com.github.forax.pro.plugin.compiler@9.0",
         "com.github.forax.pro.plugin.packager@9.0",
+        "com.github.forax.pro.uberjar@9.0/com.github.forax.pro.uberjar.Main",
         "com.github.forax.pro.plugin.linker@9.0",
         "com.github.forax.pro.plugin.bootstrap@9.0"
         ));
@@ -34,7 +35,8 @@ public class Bootstrap {
         "aether.connector.basic=aether.util"
         ));
     
-    set("linker.rootModules", append(
+    set("linker.includeSystemJMODs", true);
+    set("linker.rootModules", list(
         "com.github.forax.pro",
         "com.github.forax.pro.main",
         "com.github.forax.pro.plugin.convention",
@@ -51,9 +53,9 @@ public class Bootstrap {
     
     //set("linker.stripNativeCommands", true);
     //set("linker.serviceNames", list("java.util.spi.ToolProvider"));
-    //run("compiler", "packager");
     
-    run("modulefixer", "compiler", "packager", "linker");
+    
+    run("modulefixer", "compiler", "packager", "linker", "uberpackager");
     
     Vanity.postOperations();
   }

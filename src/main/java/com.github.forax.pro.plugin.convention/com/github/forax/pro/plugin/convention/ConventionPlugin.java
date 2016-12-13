@@ -29,6 +29,8 @@ public class ConventionPlugin implements Plugin {
     
     convention.javaModuleDependencyPath(List.of(Paths.get("deps")));
     convention.javaMavenLocalRepositoryPath(Paths.get("target/deps/maven-local"));
+    convention.javaModuleUberPath(Paths.get("target/uber"));
+    convention.javaModuleUberExplodedPath(Paths.get("target/uber/exploded"));
     convention.javaLinkerImagePath(Paths.get("target/image"));
   }
   
