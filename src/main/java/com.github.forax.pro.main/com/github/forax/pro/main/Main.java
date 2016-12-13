@@ -68,10 +68,10 @@ public class Main {
     loader.forEach(runners::add);
     
     runners.stream()
-        .filter(runner -> runner.accept(configFile))
+        .flatMap(runner -> runner.accept(configFile).stream())
         .findFirst()
         .orElseThrow(() -> new IllegalStateException("no runner available for config file " + configFile))
-        .run(configFile);
+        .run();
   }
   
   static void help() {

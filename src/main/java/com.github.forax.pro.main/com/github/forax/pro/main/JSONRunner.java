@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -17,8 +18,9 @@ import com.github.forax.pro.main.runner.Runner;
 
 public class JSONRunner implements Runner {
   @Override
-  public boolean accept(Path config) {
-    return config.toString().endsWith(".json");
+  public Optional<Runnable> accept(Path config) {
+    return Optional.<Runnable>of(() -> run(config))
+             .filter(__ -> config.toString().endsWith(".json"));
   }
   
   private static void decode(String prefix, Map<?, ?> map, ArrayList<Object> pluginNames) {
@@ -44,8 +46,8 @@ public class JSONRunner implements Runner {
     });
   }
   
-  @Override
-  public void run(Path configFile) {
+ 
+  private static void run(Path configFile) {
     //System.out.println("run with json " + configFile);
     
     ArrayList<Object> pluginNames = new ArrayList<>();

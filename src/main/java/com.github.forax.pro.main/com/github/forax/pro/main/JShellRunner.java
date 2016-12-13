@@ -1,20 +1,21 @@
 package com.github.forax.pro.main;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.github.forax.pro.helper.secret.Secret;
 import com.github.forax.pro.main.runner.Runner;
 
 public class JShellRunner implements Runner {
   @Override
-  public boolean accept(Path config) {
-    return config.toString().endsWith(".pro");
+  public Optional<Runnable> accept(Path configFile) {
+    return Optional.<Runnable>of(() -> run(configFile))
+        .filter(__ -> configFile.toString().endsWith(".pro"));
   }
   
-  @Override
-  public void run(Path configFile) {
+  private static void run(Path configFile) {
     //System.out.println("run with jshell " + configFile);
     
-    Secret.jShellTool_main(configFile.toString());
+    Secret.jShellTool_main(configFile.toString());  
   }
 }
