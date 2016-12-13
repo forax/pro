@@ -19,6 +19,7 @@ import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.helper.FileHelper;
+import com.github.forax.pro.helper.StableList;
 import com.github.forax.pro.ubermain.Main;
 
 public class UberPackagerPlugin implements Plugin {
@@ -45,7 +46,7 @@ public class UberPackagerPlugin implements Plugin {
     //System.out.println("execute " + config);
     
     ToolProvider jarTool = ToolProvider.findFirst("jar")
-        .orElseThrow(() -> new IllegalStateException("can not find jar"));
+        .orElseThrow(() -> new IllegalStateException("can not find the command jar"));
     UberPackager packager = config.getOrThrow(name(), UberPackager.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class); 
     
@@ -58,7 +59,8 @@ public class UberPackagerPlugin implements Plugin {
     ModuleReference uberJarRef = uberjarModule.getLayer().configuration().findModule(uberjarModule.getName()).get().reference();
     Path uberJarModulePath;
     try(ModuleReader moduleReader = uberJarRef.open()) {
-      for(String filename: List.of(mainClass.getName().replace('.', '/') + ".class", mainClass.getName().replace('.', '/') + "$1.class")) {
+      String mainClassName = mainClass.getName().replace('.', '/');
+      for(String filename: List.of(mainClassName + ".class", mainClassName + "$1.class")) {
         Path path = uberExplodedPath.resolve(filename);
         Files.createDirectories(path.getParent());
         Files.copy(moduleReader.open(filename).get(), path);
@@ -69,11 +71,9 @@ public class UberPackagerPlugin implements Plugin {
       Files.copy(uberJarPath, uberExplodedPath.resolve(uberJarModulePath));
     }
     
-    List<Path> modulePaths = Stream.of(
-        Stream.of(convention.javaModuleArtifactSourcePath()),
-        convention.javaModuleDependencyPath().stream())
-        .flatMap(x -> x)
-        .collect(Collectors.toList());
+    List<Path> modulePaths = new StableList<Path>()
+        .append(convention.javaModuleArtifactSourcePath())
+        .appendAll(convention.javaModuleDependencyPath());
     
     try(BufferedWriter writer = Files.newBufferedWriter(uberExplodedPath.resolve("modules.txt"))) {
       writer.write("com.github.forax.pro.main/com.github.forax.pro.main.Main");

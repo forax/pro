@@ -21,6 +21,7 @@ import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.ModuleHelper;
+import com.github.forax.pro.helper.StableList;
 
 public class LinkerPlugin implements Plugin {
   @Override
@@ -96,12 +97,10 @@ public class LinkerPlugin implements Plugin {
     
     List<Path> modulePath =
         linker.modulePath()
-          .orElseGet(() -> Stream.of(
-                Stream.of(javaSystemModulePath),
-                FileHelper.pathFromFilesThatExist(linker.moduleDependencyPath()).stream(),
-                Stream.of(convention.javaModuleArtifactSourcePath()))
-            .flatMap(x -> x)
-            .collect(Collectors.toList()));
+          .orElseGet(() -> new StableList<Path>()
+                .append(javaSystemModulePath)
+                .appendAll(FileHelper.pathFromFilesThatExist(linker.moduleDependencyPath()))
+                .append(convention.javaModuleArtifactSourcePath()));
     
     //System.out.println("rootModules " + rootModules);
     Jlink jlink = new Jlink(linker, rootModules, modulePath);

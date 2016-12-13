@@ -1,6 +1,5 @@
 package com.github.forax.pro.bootstrap;
 
-import static com.github.forax.pro.Pro.append;
 import static com.github.forax.pro.Pro.list;
 import static com.github.forax.pro.Pro.run;
 import static com.github.forax.pro.Pro.set;

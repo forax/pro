@@ -30,6 +30,7 @@ import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.ModuleHelper;
+import com.github.forax.pro.helper.StableList;
 
 public class CompilerPlugin implements Plugin {
   @Override
@@ -58,9 +59,7 @@ public class CompilerPlugin implements Plugin {
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
     return modulePath
              .or(() -> Optional.of(
-                    Stream.of(moduleDependencyPath, additionnalPath)
-                          .flatMap(List::stream)
-                          .collect(toList())))
+                    new StableList<Path>().appendAll(moduleDependencyPath).appendAll(additionnalPath)))
              .map(FileHelper.unchecked(FileHelper::pathFromFilesThatExist))
              .filter(list -> !list.isEmpty());
   }

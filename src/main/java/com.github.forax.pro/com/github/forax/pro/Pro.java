@@ -25,6 +25,7 @@ import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.impl.Configs;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
+import com.github.forax.pro.helper.StableList;
 
 public class Pro {
   private Pro() {
@@ -74,10 +75,10 @@ public class Pro {
     return Paths.get(first, more);
   }
   
-  public static List<Path> path(String... locations) {
-    return list(Arrays.stream(locations).map(Pro::location).toArray(Path[]::new));
+  public static StableList<Path> path(String... locations) {
+    return list(Arrays.stream(locations).map(Pro::location));
   }
-  public static List<Path> path(Path... locations) {
+  public static StableList<Path> path(Path... locations) {
     return list(locations);
   }
   
@@ -91,13 +92,13 @@ public class Pro {
     return FileSystems.getDefault().getPathMatcher("regex:" + regex);
   }
   
-  public static List<Path> files(Path sourceDirectory) {
+  public static StableList<Path> files(Path sourceDirectory) {
     return files(sourceDirectory, __ -> true);
   }
-  public static List<Path> files(Path sourceDirectory, String globRegex) {
+  public static StableList<Path> files(Path sourceDirectory, String globRegex) {
     return files(sourceDirectory, globRegex(globRegex));
   }
-  public static List<Path> files(Path sourceDirectory, PathMatcher filter) {
+  public static StableList<Path> files(Path sourceDirectory, PathMatcher filter) {
     try {
       return list(Files.walk(sourceDirectory).filter(filter::matches));
     } catch (IOException e) {
@@ -106,16 +107,15 @@ public class Pro {
   }
   
   @SafeVarargs
-  public static <T> List<T> list(T... elements) {
-    return List.of(elements);
+  public static <T> StableList<T> list(T... elements) {
+    return StableList.of(elements);
+  }
+  public static <T> StableList<T> list(Collection<? extends T> collection) {
+    return StableList.<T>of().appendAll(collection);
   }
   @SuppressWarnings("unchecked")
-  public static <T> List<T> list(Collection<? extends T> elements) {
-    return list(elements.toArray((T[])new Object[0]));
-  }
-  @SuppressWarnings("unchecked")
-  public static <T> List<T> list(Stream<? extends T> elements) {
-    return list((T[])elements.toArray(Object[]::new));
+  public static <T> StableList<T> list(Stream<? extends T> stream) {
+    return list((T[])stream.toArray(Object[]::new));  //FIXME, implements a Collection in StableList
   }
   
   public static Path resolve(Path location, Path child) {
@@ -125,9 +125,10 @@ public class Pro {
     return location.resolve(child);
   }
   
+  /* Not sure of this one
   @SuppressWarnings("unchecked")  // emulate a dynamic language behavior
-  public static <T> List<T> append(Object... elements) {
-    return (List<T>)list(Arrays.stream(elements).flatMap(element -> {
+  public static <T> StableList<T> append(Object... elements) {
+    return (StableList<T>)list(Arrays.stream(elements).flatMap(element -> {
       if (element instanceof Collection) {
         return ((Collection<?>)element).stream();
       }
@@ -136,7 +137,8 @@ public class Pro {
       }
       return Stream.of(element);
     }));
-  }
+  }*/
+  
   /*
   @SafeVarargs
   public static <T> List<T> append(Collection< ? extends T> locations, T... others) {
