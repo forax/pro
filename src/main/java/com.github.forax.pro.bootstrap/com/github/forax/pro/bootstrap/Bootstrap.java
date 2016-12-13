@@ -10,18 +10,20 @@ import java.io.IOException;
 public class Bootstrap {
   public static void main(String[] args) throws IOException {
     set("packager.moduleMetadata", list(
-        "com.github.forax.pro@9.0",
-        "com.github.forax.pro.api@9.0",
-        "com.github.forax.pro.helper@9.0",
-        "com.github.forax.pro.main@9.0/com.github.forax.pro.main.Main",
-        "com.github.forax.pro.plugin.convention@9.0",
-        "com.github.forax.pro.plugin.resolver@9.0",
-        "com.github.forax.pro.plugin.modulefixer@9.0",
-        "com.github.forax.pro.plugin.compiler@9.0",
-        "com.github.forax.pro.plugin.packager@9.0",
-        "com.github.forax.pro.uberjar@9.0/com.github.forax.pro.uberjar.Main",
-        "com.github.forax.pro.plugin.linker@9.0",
-        "com.github.forax.pro.plugin.bootstrap@9.0"
+        "com.github.forax.pro@0.9",
+        "com.github.forax.pro.api@0.9",
+        "com.github.forax.pro.helper@0.9",
+        "com.github.forax.pro.main@0.9/com.github.forax.pro.main.Main",
+        "com.github.forax.pro.plugin.convention@0.9",
+        "com.github.forax.pro.plugin.resolver@0.9",
+        "com.github.forax.pro.plugin.modulefixer@0.9",
+        "com.github.forax.pro.plugin.compiler@0.9",
+        "com.github.forax.pro.plugin.packager@0.9",
+        "com.github.forax.pro.plugin.linker@0.9",
+        "com.github.forax.pro.ubermain@0.9",
+        "com.github.forax.pro.uberbooter@0.9",
+        "com.github.forax.pro.plugin.uberpackager@0.9",
+        "com.github.forax.pro.plugin.bootstrap@0.9"
         ));
     
     //set("modulefixer.force", true);
@@ -45,6 +47,9 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.compiler",
         "com.github.forax.pro.plugin.packager",
         "com.github.forax.pro.plugin.linker",
+        "com.github.forax.pro.ubermain",
+        "com.github.forax.pro.uberbooter",
+        "com.github.forax.pro.plugin.uberpackager",
         "jdk.compiler",
         "jdk.zipfs",      // need by the compiler to open compressed zip !
         "jdk.jartool",
