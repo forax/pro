@@ -113,9 +113,8 @@ public class Pro {
   public static <T> StableList<T> list(Collection<? extends T> collection) {
     return StableList.<T>of().appendAll(collection);
   }
-  @SuppressWarnings("unchecked")
   public static <T> StableList<T> list(Stream<? extends T> stream) {
-    return list((T[])stream.toArray(Object[]::new));  //FIXME, implements a Collection in StableList
+    return list(stream.collect(StableList.asStableList()));
   }
   
   public static Path resolve(Path location, Path child) {

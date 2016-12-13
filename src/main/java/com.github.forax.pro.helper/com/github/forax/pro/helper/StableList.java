@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.stream.Collector;
 
 /**
  * An unmodifiable list that tries to share it's backing array if possible.
@@ -117,6 +118,14 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   @SafeVarargs
   public static <E> StableList<E> of(E... elements) {
     return StableList.<E>of().appendAll(elements);
+  }
+  
+  @SuppressWarnings("unchecked")
+  public static <T> Collector<T, ?, StableList<T>> asStableList() {
+    return Collector.of(() -> (StableList<T>[])new StableList<?>[] { StableList.of() },
+        (array, element) -> array[0] = array[0].append(element),
+        (array1, array2) -> { array1[0] = array1[0].appendAll(array2[0]); return array1; },
+        array -> array[0]);
   }
   
   /*
