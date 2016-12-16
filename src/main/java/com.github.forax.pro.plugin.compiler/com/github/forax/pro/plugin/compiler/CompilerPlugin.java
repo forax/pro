@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
@@ -47,12 +48,24 @@ public class CompilerPlugin implements Plugin {
   public void configure(MutableConfig config) {
     Compiler compiler = config.getOrUpdate(name(), Compiler.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+    
+    // inputs
     compiler.moduleDependencyPath(convention.javaModuleDependencyPath());
     compiler.moduleSourcePath(convention.javaModuleSourcePath());
-    compiler.moduleExplodedSourcePath(convention.javaModuleExplodedSourcePath().get(0));
     compiler.moduleTestPath(convention.javaModuleTestPath());
+    
+    // outputs
+    compiler.moduleExplodedSourcePath(convention.javaModuleExplodedSourcePath().get(0));
     compiler.moduleMergedTestPath(convention.javaModuleMergedTestPath().get(0));
     compiler.moduleExplodedTestPath(convention.javaModuleExplodedTestPath().get(0));
+  }
+  
+  @Override
+  public void watch(Config config, WatcherRegistry registry) {
+    Compiler compiler = config.getOrThrow(name(), Compiler.class);
+    compiler.moduleDependencyPath().forEach(registry::watch);
+    compiler.moduleSourcePath().forEach(registry::watch);
+    compiler.moduleTestPath().forEach(registry::watch);
   }
   
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {

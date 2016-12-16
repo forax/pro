@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
@@ -43,8 +44,22 @@ public class LinkerPlugin implements Plugin {
     Linker linker = config.getOrUpdate(name(), Linker.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
-    linker.destination(convention.javaLinkerImagePath());
+    // inputs
+    linker.systemModulePath(convention.javaHome().resolve("jmods"));
+    linker.moduleArtifactSourcePath(convention.javaModuleArtifactSourcePath());
     linker.moduleDependencyPath(convention.javaModuleDependencyPath());
+    
+    // outputs
+    linker.destination(convention.javaLinkerImagePath());
+  }
+  
+  @Override
+  public void watch(Config config, WatcherRegistry registry) {
+    Linker linker = config.getOrThrow(name(), Linker.class);
+    
+    registry.watch(linker.systemModulePath());
+    linker.moduleDependencyPath().forEach(registry::watch);
+    registry.watch(linker.moduleArtifactSourcePath());
   }
   
   enum JlinkOption {
@@ -63,13 +78,6 @@ public class LinkerPlugin implements Plugin {
     }
   }
   
-  static Path systemModulePath(ConventionFacade convention) {
-    Path javaSystemModulePath = convention.javaHome().resolve("jmods");
-    return Optional.of(javaSystemModulePath)
-             .filter(Files::exists)
-             .orElseThrow(() -> new IllegalStateException("unable to find Java system module at " + javaSystemModulePath));
-  }
-  
   @Override
   public int execute(Config config) throws IOException {
     Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
@@ -78,14 +86,13 @@ public class LinkerPlugin implements Plugin {
     ToolProvider jlinkTool = ToolProvider.findFirst("jlink")
         .orElseThrow(() -> new IllegalStateException("can not find jlink"));
     Linker linker = config.getOrThrow(name(), Linker.class);
-    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
-    Path javaSystemModulePath = systemModulePath(convention);
-    if (!(Files.exists(javaSystemModulePath))) {
-      throw new IOException("unable to find Java system module at " + javaSystemModulePath);
+    Path systemModulePath = linker.systemModulePath();
+    if (!(Files.exists(systemModulePath))) {
+      throw new IOException("unable to find system modules at " + systemModulePath);
     }
     
-    ModuleFinder moduleFinder = ModuleFinder.of(convention.javaModuleArtifactSourcePath());
+    ModuleFinder moduleFinder = ModuleFinder.of(linker.moduleArtifactSourcePath());
     List<String> rootModules = linker.rootModules().orElseGet(() -> {
       return moduleFinder.findAll().stream()
           .map(reference -> reference.descriptor().name())
@@ -99,9 +106,9 @@ public class LinkerPlugin implements Plugin {
     List<Path> modulePath =
         linker.modulePath()
           .orElseGet(() -> new StableList<Path>()
-                .append(javaSystemModulePath)
+                .append(systemModulePath)
                 .appendAll(FileHelper.pathFromFilesThatExist(linker.moduleDependencyPath()))
-                .append(convention.javaModuleArtifactSourcePath()));
+                .append(linker.moduleArtifactSourcePath()));
     
     log.debug(rootModules, roots -> "rootModules " + roots);
     Jlink jlink = new Jlink(linker, rootModules, modulePath);
@@ -120,7 +127,7 @@ public class LinkerPlugin implements Plugin {
     if (linker.includeSystemJMODs()) {
       Path jmods = destination.resolve("jmods");
       Files.createDirectories(jmods);
-      try(DirectoryStream<Path> stream = Files.newDirectoryStream(javaSystemModulePath)) {
+      try(DirectoryStream<Path> stream = Files.newDirectoryStream(systemModulePath)) {
         for(Path path: stream) {
           Files.copy(path, jmods.resolve(path.getFileName()));
         }

@@ -26,6 +26,12 @@ public interface Linker {
   Optional<List<Path>> modulePath();
   void modulePath(List<Path> modulePath);
   
+  Path systemModulePath();
+  void systemModulePath(Path resolve);
+  
+  Path moduleArtifactSourcePath();
+  void moduleArtifactSourcePath(Path javaModuleArtifactSourcePath);
+  
   public List<Path> moduleDependencyPath();
   public void moduleDependencyPath(List<Path> path);
   

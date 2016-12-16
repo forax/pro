@@ -18,6 +18,7 @@ import java.util.spi.ToolProvider;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
@@ -39,10 +40,21 @@ public class PackagerPlugin implements Plugin {
   public void configure(MutableConfig config) {
     Packager packager = config.getOrUpdate(name(), Packager.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class); 
+    
+    // inputs
     packager.moduleArtifactSourcePath(convention.javaModuleArtifactSourcePath());
-    packager.moduleExplodedSourcePath(convention.javaModuleExplodedSourcePath());
     packager.moduleArtifactTestPath(convention.javaModuleArtifactTestPath());
+    
+    // outputs
+    packager.moduleExplodedSourcePath(convention.javaModuleExplodedSourcePath());
     packager.moduleExplodedTestPath(convention.javaModuleExplodedTestPath());
+  }
+  
+  @Override
+  public void watch(Config config, WatcherRegistry registry) {
+    Packager packager = config.getOrThrow(name(), Packager.class);
+    packager.moduleExplodedSourcePath().forEach(registry::watch);
+    packager.moduleExplodedTestPath().forEach(registry::watch);
   }
   
   enum JarOption {

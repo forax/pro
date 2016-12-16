@@ -31,6 +31,7 @@ import org.objectweb.asm.commons.Remapper;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
@@ -51,7 +52,19 @@ public class ModuleFixerPlugin implements Plugin {
   public void configure(MutableConfig config) {
     ModuleFixer moduleFxier = config.getOrUpdate(name(), ModuleFixer.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+    
+    // inputs
     moduleFxier.moduleDependencyPath(convention.javaModuleDependencyPath());
+    
+    // outputs
+    //TODO
+  }
+  
+  @Override
+  public void watch(Config config, WatcherRegistry registry) {
+    ModuleFixer moduleFixer = config.getOrThrow(name(), ModuleFixer.class);
+    List<Path> moduleDependencyPath = moduleFixer.moduleDependencyPath();
+    moduleDependencyPath.forEach(registry::watch);
   }
   
   @Override
@@ -61,7 +74,7 @@ public class ModuleFixerPlugin implements Plugin {
     
     ModuleFixer moduleFixer = config.getOrThrow(name(), ModuleFixer.class);
     List<Path> moduleDependencyPath = moduleFixer.moduleDependencyPath();
-    Path moduleDependencyFixerPath = moduleFixer.moduleDependencyFixerPath().orElseGet(() -> Paths.get("target/deps/module-fixer"));
+    Path moduleDependencyFixerPath = moduleFixer.moduleDependencyFixerPath().orElseGet(() -> Paths.get("target/deps/module-fixer"));  //FIXME
     
     class Info {
       final Set<String> requirePackages;

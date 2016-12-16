@@ -6,6 +6,7 @@ import java.util.List;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.WatcherRegistry;
 
 public class ConventionPlugin implements Plugin {
   @Override
@@ -37,6 +38,11 @@ public class ConventionPlugin implements Plugin {
   @Override
   public void configure(MutableConfig config) {
     // empty
+  }
+  
+  @Override
+  public void watch(Config config, WatcherRegistry registry) {
+    throw new UnsupportedOperationException("this plugin can not watch any directories");
   }
   
   @Override

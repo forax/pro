@@ -19,6 +19,7 @@ import com.github.forax.pro.aether.ArtifactQuery;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
@@ -32,17 +33,28 @@ public class ResolverPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    Resolver resolver = config.getOrUpdate(name(), Resolver.class);
+    config.getOrUpdate(name(), Resolver.class);
   }
   
   @Override
   public void configure(MutableConfig config) {
     Resolver resolver = config.getOrUpdate(name(), Resolver.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
-    resolver.moduleDependencyPath(convention.javaModuleDependencyPath());
+    
+    // inputs
     resolver.moduleSourcePath(convention.javaModuleSourcePath());
     resolver.moduleTestPath(convention.javaModuleTestPath());
+    
+    // outputs
+    resolver.moduleDependencyPath(convention.javaModuleDependencyPath());
     resolver.mavenLocalRepositoryPath(convention.javaMavenLocalRepositoryPath());
+  }
+  
+  @Override
+  public void watch(Config config, WatcherRegistry registry) {
+    Resolver resolver = config.getOrThrow(name(), Resolver.class);
+    resolver.moduleSourcePath().forEach(registry::watch);
+    resolver.moduleTestPath().forEach(registry::watch);
   }
   
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
