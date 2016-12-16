@@ -43,9 +43,9 @@ public class Log {
    * @param level the level
    * @return true is this logger is allowed to display message for the level
    */
-  public boolean allows(Level level) {
+  /*public boolean allows(Level level) {
     return this.level <= level.level;
-  }
+  }*/
   
   private static final int DEBUG = Level.DEBUG.level;
   private static final int VERBOSE = Level.VERBOSE.level;
@@ -78,6 +78,18 @@ public class Log {
    */
   public <T> void error(T value, Function<? super T, String> messageFactory) {
     System.err.println(name + messageFactory.apply(value));
+  }
+  
+  /**
+   * log an exception.
+   * @param exception the exception to log. 
+   */
+  public void error(Throwable exception) {
+    if (level == DEBUG) {
+      exception.printStackTrace();
+    } else {
+      System.err.println(name + exception.getMessage());
+    }
   }
   
   /**

@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -160,31 +161,38 @@ public class Pro {
   }
   
   public static void run(String... pluginNames) {
-    int exitCode = 0;
-    Map<String, Plugin> plugins = PLUGINS;
-    for(String pluginName: pluginNames) {
-      Log log = Log.create(pluginName, CONFIG.getOrThrow("loglevel", String.class));
-      
-      Plugin plugin = plugins.get(pluginName);
-      if (plugin == null) {
-        log.error(pluginName, name -> "unknown plugin " + name);
-        exitCode = 1;  // FIXME
-        break;
-      }
-      
-      try {
-        exitCode = plugin.execute(CONFIG.asConfig());
-      } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
-        log.error(null, __ -> e.getMessage());
-        if (log.allows(Level.DEBUG)) {
-          e.printStackTrace();
+    ArrayList<Plugin> plugins = new ArrayList<>();
+    int exitCode = checkPluginNames(PLUGINS, pluginNames, plugins);
+    
+    if (exitCode == 0) {
+      for(Plugin plugin: plugins) {
+        try {
+          exitCode = plugin.execute(CONFIG.asConfig());
+        } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
+          Log log = Log.create(plugin.name(), CONFIG.getOrThrow("loglevel", String.class));
+          log.error(e);
+          exitCode = 1; // FIXME
         }
-        exitCode = 1; // FIXME
       }
     }
+    
     if (exitCode != 0) {
       System.exit(exitCode);
       throw new AssertionError("should have exited with code " + exitCode);
     }
+  }
+
+  private static int checkPluginNames(Map<String, Plugin> allPlugins, String[] pluginNames, ArrayList<Plugin> plugins) {
+    int exitCode = 0;
+    for(String pluginName: pluginNames) {  
+      Plugin plugin = allPlugins.get(pluginName);
+      if (plugin == null) {
+        Log log = Log.create("pro", CONFIG.getOrThrow("loglevel", String.class));
+        log.error(pluginName, name -> "unknown plugin " + name);
+        exitCode = 1;  // FIXME
+      }
+      plugins.add(plugin);
+    }
+    return exitCode;
   }
 }
