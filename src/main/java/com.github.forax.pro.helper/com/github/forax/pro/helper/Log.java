@@ -38,9 +38,10 @@ public class Log {
   }
   
   /**
-   * Returns true is this logger is allowed to display message for that level
+   * Returns true is this logger is allowed to display message
+   * for the level taken as parameter
    * @param level the level
-   * @return true is this logger is allowed to display message for that level
+   * @return true is this logger is allowed to display message for the level
    */
   public boolean allows(Level level) {
     return this.level <= level.level;
