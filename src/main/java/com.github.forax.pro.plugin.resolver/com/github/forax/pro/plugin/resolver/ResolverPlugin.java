@@ -1,32 +1,26 @@
 package com.github.forax.pro.plugin.resolver;
 
-import static java.util.stream.Collectors.toList;
-
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.github.forax.pro.aether.Aether;
-import com.github.forax.pro.aether.ArtifactInfo;
 import com.github.forax.pro.aether.ArtifactDescriptor;
+import com.github.forax.pro.aether.ArtifactInfo;
 import com.github.forax.pro.aether.ArtifactQuery;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.helper.FileHelper;
+import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
 import com.github.forax.pro.helper.StableList;
 
@@ -61,7 +55,8 @@ public class ResolverPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    // System.out.println("execute " + config);
+    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    log.debug(config, conf -> "config " + config);
     
     Resolver resolver = config.getOrThrow(name(), Resolver.class);
     

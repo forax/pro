@@ -32,6 +32,7 @@ import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.helper.FileHelper;
+import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
 
 public class ModuleFixerPlugin implements Plugin {
@@ -55,7 +56,8 @@ public class ModuleFixerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    //System.out.println("execute module fixer " + config);
+    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    log.debug(config, conf -> "config " + config);
     
     ModuleFixer moduleFixer = config.getOrThrow(name(), ModuleFixer.class);
     List<Path> moduleDependencyPath = moduleFixer.moduleDependencyPath();

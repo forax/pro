@@ -19,6 +19,7 @@ import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
+import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
 import com.github.forax.pro.helper.StableList;
 
@@ -71,7 +72,8 @@ public class LinkerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    //System.out.println("execute linker " + config);
+    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    log.debug(config, conf -> "config " + config);
     
     ToolProvider jlinkTool = ToolProvider.findFirst("jlink")
         .orElseThrow(() -> new IllegalStateException("can not find jlink"));
@@ -101,7 +103,7 @@ public class LinkerPlugin implements Plugin {
                 .appendAll(FileHelper.pathFromFilesThatExist(linker.moduleDependencyPath()))
                 .append(convention.javaModuleArtifactSourcePath()));
     
-    //System.out.println("rootModules " + rootModules);
+    log.debug(rootModules, roots -> "rootModules " + roots);
     Jlink jlink = new Jlink(linker, rootModules, modulePath);
     
     Path destination = linker.destination();
@@ -109,7 +111,7 @@ public class LinkerPlugin implements Plugin {
     
     String[] arguments = OptionAction.gatherAll(JlinkOption.class, option -> option.action).apply(jlink, new CmdLine()).toArguments();
     
-    //System.out.println("jlink " + String.join(" ", arguments));
+    log.verbose(arguments, args -> "jlink " + String.join(" ", args));
     int errorCode = jlinkTool.run(System.out, System.err, arguments);
     if (errorCode != 0) {
       return errorCode; 

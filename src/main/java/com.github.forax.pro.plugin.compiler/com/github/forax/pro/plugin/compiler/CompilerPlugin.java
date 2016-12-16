@@ -27,6 +27,7 @@ import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
+import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
 import com.github.forax.pro.helper.StableList;
 
@@ -79,14 +80,16 @@ public class CompilerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    // System.out.println("execute " + config);
+    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    log.debug(config, conf -> "config " + config);
     
     ToolProvider javacTool = ToolProvider.findFirst("javac")
         .orElseThrow(() -> new IllegalStateException("can not find javac"));
     Compiler compiler = config.getOrThrow(name(), Compiler.class);
     
+    
     ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(compiler.moduleSourcePath());
-    int errorCode = compile(javacTool, compiler, compiler.moduleSourcePath(), moduleSourceFinder, List.of(), compiler.moduleExplodedSourcePath(), "source:");
+    int errorCode = compile(log, javacTool, compiler, compiler.moduleSourcePath(), moduleSourceFinder, List.of(), compiler.moduleExplodedSourcePath(), "source:");
     if (errorCode != 0) {
       return errorCode;
     }
@@ -105,10 +108,10 @@ public class CompilerPlugin implements Plugin {
     }
     
     ModuleFinder moduleMergedTestFinder = ModuleHelper.sourceModuleFinder(compiler.moduleMergedTestPath());
-    return compile(javacTool, compiler, List.of(moduleMergedTestPath), moduleMergedTestFinder, List.of(compiler.moduleExplodedSourcePath()), compiler.moduleExplodedTestPath(), "test:");
+    return compile(log, javacTool, compiler, List.of(moduleMergedTestPath), moduleMergedTestFinder, List.of(compiler.moduleExplodedSourcePath()), compiler.moduleExplodedTestPath(), "test:");
   }
 
-  private static int compile(ToolProvider javacTool, Compiler compiler, List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, Path destination, String pass) throws IOException {
+  private static int compile(Log log, ToolProvider javacTool, Compiler compiler, List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, Path destination, String pass) throws IOException {
     Optional<List<Path>> modulePath = modulePathOrDependencyPath(compiler.modulePath(),
         compiler.moduleDependencyPath(), additionalSourcePath);
     
@@ -130,7 +133,7 @@ public class CompilerPlugin implements Plugin {
         ModuleFinder.compose(moduleFinder, dependencyFinder, ModuleFinder.ofSystem()),
         rootSourceNames,
         (moduleName, dependencyChain) -> {
-          System.err.println(pass + " can not resolve " + moduleName + " from " + dependencyChain);
+          log.error(null, __ -> pass + " can not resolve " + moduleName + " from " + dependencyChain);
         });
     if (!resolved) {
       return 1;  //FIXME
@@ -148,7 +151,7 @@ public class CompilerPlugin implements Plugin {
     files.forEach(cmdLine::add);
     String[] arguments = cmdLine.toArguments();
     
-    //System.out.println("javac " + String.join(" ", arguments));
+    log.verbose(arguments, args -> "javac " + String.join(" ", args));
     return javacTool.run(System.out, System.err, arguments);
   }
   

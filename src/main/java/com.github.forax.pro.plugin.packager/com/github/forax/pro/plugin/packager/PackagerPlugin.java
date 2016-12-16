@@ -21,6 +21,7 @@ import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
+import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.plugin.packager.MetadataParser.Metadata;
 
 public class PackagerPlugin implements Plugin {
@@ -60,7 +61,8 @@ public class PackagerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    //System.out.println("execute " + config);
+    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    log.debug(config, conf -> "config " + config);
     
     ToolProvider jarTool = ToolProvider.findFirst("jar")
         .orElseThrow(() -> new IllegalStateException("can not find jar"));
@@ -73,24 +75,24 @@ public class PackagerPlugin implements Plugin {
     
     Map<String, Metadata> metadataMap = packager.moduleMetadata().map(MetadataParser::parse).orElse(Map.of());
     
-    int errorCode = packageModules(jarTool, moduleExplodedSourcePath, moduleArtifactSourcePath, metadataMap, "");
+    int errorCode = packageModules(log, jarTool, moduleExplodedSourcePath, moduleArtifactSourcePath, metadataMap, "");
     if (errorCode != 0) {
       return errorCode;
     }
     if (!moduleExplodedTestPath.stream().anyMatch(Files::exists)) {
       return 0;
     }
-    return packageModules(jarTool, moduleExplodedTestPath, moduleArtifactTestPath, metadataMap, "test-");
+    return packageModules(log, jarTool, moduleExplodedTestPath, moduleArtifactTestPath, metadataMap, "test-");
   }
 
-  private static int packageModules(ToolProvider jarTool, List<Path> moduleExplodedPath, Path moduleArtifactPath, Map<String, Metadata> metadataMap, String prefix) throws IOException {
+  private static int packageModules(Log log, ToolProvider jarTool, List<Path> moduleExplodedPath, Path moduleArtifactPath, Map<String, Metadata> metadataMap, String prefix) throws IOException {
     FileHelper.deleteAllFiles(moduleArtifactPath);
     Files.createDirectories(moduleArtifactPath);
     
     for(Path explodedPath: moduleExplodedPath) {
       try(DirectoryStream<Path> directoryStream = Files.newDirectoryStream(explodedPath)) {
         for(Path moduleExploded: directoryStream) {
-          int exitCode = packageModule(jarTool, moduleExploded, moduleArtifactPath, metadataMap, prefix);
+          int exitCode = packageModule(log, jarTool, moduleExploded, moduleArtifactPath, metadataMap, prefix);
           if (exitCode != 0) {
             return exitCode;
           }
@@ -100,7 +102,7 @@ public class PackagerPlugin implements Plugin {
     return 0;
   }
 
-  private static int packageModule(ToolProvider jarTool, Path moduleExploded,  Path moduleArtifact, Map<String, Metadata> metadataMap, String prefix) {
+  private static int packageModule(Log log, ToolProvider jarTool, Path moduleExploded,  Path moduleArtifact, Map<String, Metadata> metadataMap, String prefix) {
     Set<ModuleReference> set = ModuleFinder.of(moduleExploded).findAll();
     if (set.size() != 1) {
       throw new IllegalStateException("more than one module packaged in the exploded module " + moduleExploded);
@@ -118,7 +120,7 @@ public class PackagerPlugin implements Plugin {
     cmdLine = OptionAction.gatherAll(JarOption.class, option -> option.action).apply(jar, cmdLine);
     String[] arguments = cmdLine.add(".").toArguments();
     
-    //System.out.println("jar " + String.join(" ", arguments));
+    log.verbose(arguments, args -> "jar " + String.join(" ", args));
     int exitCode = jarTool.run(System.out, System.err, arguments);
     return exitCode;
   }

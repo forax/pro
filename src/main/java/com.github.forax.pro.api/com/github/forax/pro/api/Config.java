@@ -7,6 +7,7 @@ import java.util.function.BiConsumer;
 public interface Config {
   public <T> Optional<T> get(String key, Class<T> type);
   
+  // FIXME should return the keys ??
   public void forEach(String key, BiConsumer<String, Object> consumer);
   
   public default <T> T getOrThrow(String key, Class<T> type) {

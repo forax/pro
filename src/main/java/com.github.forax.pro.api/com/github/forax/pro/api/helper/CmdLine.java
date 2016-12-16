@@ -4,14 +4,19 @@ import static java.util.stream.Collectors.joining;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Objects;
 
 public class CmdLine {
   private final ArrayList<String> arguments = new ArrayList<>();
   
   public CmdLine add(Object value) {
-    Objects.requireNonNull(value);
-    arguments.add(value.toString());
+    arguments.add(value.toString());  // implicit nullcheck
+    return this;
+  }
+  
+  public CmdLine addAll(Object... values) {
+    for(Object value: values) {
+      add(value);
+    }
     return this;
   }
   

@@ -15,7 +15,9 @@ import java.util.stream.Stream;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.helper.FileHelper;
+import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.StableList;
 import com.github.forax.pro.ubermain.Main;
 
@@ -40,7 +42,8 @@ public class UberPackagerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    //System.out.println("execute " + config);
+    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    log.debug(config, conf -> "config " + config);
     
     ToolProvider jarTool = ToolProvider.findFirst("jar")
         .orElseThrow(() -> new IllegalStateException("can not find the command jar"));
@@ -89,22 +92,27 @@ public class UberPackagerPlugin implements Plugin {
     }
     
     Path uberjar = packager.moduleUberPath().resolve("uber.jar");
-    
-    jarTool.run(System.out, System.err,
+    CmdLine cmdLine = new CmdLine().addAll(
         "--create",
         "--file", uberjar.toString(),
         "--main-class", mainClass.getName(),
         "-C", uberExplodedPath.toString(),
         "."
         );
+    String[] arguments = cmdLine.toArguments();
+    log.verbose(arguments, args -> "jar " + String.join(" ", args));
+    jarTool.run(System.out, System.err, arguments);
     
     for(Path modulePath: modulePaths) {
-      jarTool.run(System.out, System.err,
+      cmdLine = new CmdLine().addAll(
           "--update",
           "--file", uberjar.toString(),
           "-C", modulePath.toString(),
           "."
           );
+      arguments = cmdLine.toArguments();
+      log.verbose(arguments, args -> "jar " + String.join(" ", args));
+      jarTool.run(System.out, System.err, arguments);
     }
     
     return 0;

@@ -8,6 +8,8 @@ import java.io.IOException;
 
 public class Bootstrap {
   public static void main(String[] args) throws IOException {
+    set("loglevel", "verbose");
+    
     set("packager.moduleMetadata", list(
         "com.github.forax.pro@0.9",
         "com.github.forax.pro.api@0.9",

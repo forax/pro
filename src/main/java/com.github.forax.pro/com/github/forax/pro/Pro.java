@@ -22,6 +22,8 @@ import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.impl.Configs;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
+import com.github.forax.pro.helper.Log;
+import com.github.forax.pro.helper.Log.Level;
 import com.github.forax.pro.helper.StableList;
 
 public class Pro {
@@ -34,17 +36,21 @@ public class Pro {
   static {
     Object root = Configs.root();
     DefaultConfig config = new DefaultConfig(root);
+    Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
+      .map(Log.Level::of)
+      .orElse(Log.Level.INFO);
+    config.set("loglevel",   logLevel.name().toLowerCase());
+    
+    Log log = Log.create("pro", logLevel);
     
     List<Plugin> plugins = Plugins.getAllPlugins();
-    System.out.println("registered plugins " + plugins.stream().map(Plugin::name).collect(Collectors.joining(", ")));
-    
+    log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
     
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
     plugins.forEach(plugin -> plugin.configure(config.asChecked(plugin.name())));
     
     CONFIG = config;
-    PLUGINS = plugins.stream()
-        .collect(toMap(Plugin::name, identity()));
+    PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity()));
   }
   
   @SuppressWarnings("unchecked")  // emulate dynamic behavior here
@@ -153,22 +159,32 @@ public class Pro {
     System.out.println(Arrays.stream(elements).map(Object::toString).collect(Collectors.joining(" ")));
   }
   
-  public static void run(String... pluginNames) throws UncheckedIOException {
+  public static void run(String... pluginNames) {
+    int exitCode = 0;
     Map<String, Plugin> plugins = PLUGINS;
     for(String pluginName: pluginNames) {
-      Plugin plugin = Optional
-          .ofNullable(plugins.get(pluginName))
-          .orElseThrow(() -> new IllegalArgumentException("unknown plugin " + pluginName));
-      int exitCode;
+      Log log = Log.create(pluginName, CONFIG.getOrThrow("loglevel", String.class));
+      
+      Plugin plugin = plugins.get(pluginName);
+      if (plugin == null) {
+        log.error(pluginName, name -> "unknown plugin " + name);
+        exitCode = 1;  // FIXME
+        break;
+      }
+      
       try {
         exitCode = plugin.execute(CONFIG.asConfig());
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
+      } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
+        log.error(null, __ -> e.getMessage());
+        if (log.allows(Level.DEBUG)) {
+          e.printStackTrace();
+        }
+        exitCode = 1; // FIXME
       }
-      if (exitCode != 0) {
-        System.exit(exitCode);
-        throw new AssertionError("should have exited with code " + exitCode);
-      }
+    }
+    if (exitCode != 0) {
+      System.exit(exitCode);
+      throw new AssertionError("should have exited with code " + exitCode);
     }
   }
 }
