@@ -4,6 +4,7 @@ module com.github.forax.pro.helper {
   requires org.objectweb.asm.all.debug;
   
   exports com.github.forax.pro.helper;
+  exports com.github.forax.pro.helper.util;
   
   exports com.github.forax.pro.helper.secret
     to com.github.forax.pro.main;

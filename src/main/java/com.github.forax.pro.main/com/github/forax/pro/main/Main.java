@@ -10,6 +10,7 @@ import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.github.forax.pro.daemon.DaemonService;
 import com.github.forax.pro.helper.secret.Secret;
 import com.github.forax.pro.main.runner.Runner;
 
@@ -40,8 +41,9 @@ public class Main {
   }
   
   enum Command {
-    SHELL(__ -> Secret.jShellTool_main()),
-    RUN(args -> run(args)),
+    SHELL(__ -> shell()),
+    RUN(Main::run),
+    DAEMON(Main::daemon),
     HELP(__ -> help())
     ;
     
@@ -59,6 +61,17 @@ public class Main {
     }
   }
   
+  private static Optional<DaemonService> getDaemonService() {
+    return ServiceLoader.load(DaemonService.class).findFirst();
+  }
+  
+  static void shell() {
+    Secret.jShellTool_main();
+    getDaemonService()
+      .filter(DaemonService::isStarted)
+      .ifPresent(DaemonService::stop);
+  }
+  
   static void run(String[] args) {
     Path configFile = InputFile.find(args)
         .orElseThrow(() -> new IllegalArgumentException("no existing input file specified"));
@@ -74,17 +87,33 @@ public class Main {
         .run();
   }
   
+  static void daemon(String[] args) {
+    DaemonService service =
+        getDaemonService().orElseThrow(() -> new IllegalStateException("daemon service not found"));
+    if (service.isStarted()) {
+      throw new IllegalStateException("daemon service already started");
+    }
+    service.start();
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      if (service.isStarted()) {
+        service.stop();
+      }
+    }));
+    main(args);
+  }
+  
   static void help() {
     System.err.println(
-        "usage: pro [subcommand] args                                                 \n" +
-        "                                                                             \n" +
-        "  subcommands                                                                \n" +
-        "    run [buildfile]  run the build file                                      \n" +
-        "                     use build.json or build.pro if no buildfile is specified\n" +
-        "    shell            start the interactive shell                             \n" +
-        "    help             this help                                               \n" +
-        "                                                                             \n" +
-        "  if no subcommand is specified, 'run' is used                               \n"
+        "usage: pro [subcommand] args                                                   \n" +
+        "                                                                               \n" +
+        "  subcommands                                                                  \n" +
+        "    build [buildfile]  execute the build file                                  \n" +
+        "                       use build.json or build.pro if no buildfile is specified\n" +
+        "    shell              start the interactive shell                             \n" +
+        "    daemon subcommand  start the subcommand in daemon mode                     \n" +
+        "    help               this help                                               \n" +
+        "                                                                               \n" +
+        "  if no subcommand is specified, 'run' is used                                 \n"
     );
   }
   

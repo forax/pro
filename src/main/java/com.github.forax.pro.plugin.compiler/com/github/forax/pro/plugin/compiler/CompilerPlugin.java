@@ -30,7 +30,7 @@ import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
-import com.github.forax.pro.helper.StableList;
+import com.github.forax.pro.helper.util.StableList;
 
 public class CompilerPlugin implements Plugin {
   @Override
@@ -93,7 +93,7 @@ public class CompilerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
     log.debug(config, conf -> "config " + config);
     
     ToolProvider javacTool = ToolProvider.findFirst("javac")
@@ -112,7 +112,7 @@ public class CompilerPlugin implements Plugin {
     }
     
     Path moduleMergedTestPath = compiler.moduleMergedTestPath();
-    deleteAllFiles(moduleMergedTestPath);
+    deleteAllFiles(moduleMergedTestPath, false);
     
     ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(compiler.moduleTestPath());
     errorCode = merge(moduleSourceFinder, moduleTestFinder, moduleMergedTestPath);
@@ -152,7 +152,7 @@ public class CompilerPlugin implements Plugin {
       return 1;  //FIXME
     }
     
-    deleteAllFiles(destination);
+    deleteAllFiles(destination, false);
     
     Javac javac = new Javac(compiler.release(), destination, moduleSourcePath);
     compiler.verbose().ifPresent(javac::verbose);

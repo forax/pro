@@ -25,11 +25,19 @@ public class FileHelper {
     return List.of(paths.stream().filter(Files::exists).toArray(Path[]::new));
   }
   
-  public static void deleteAllFiles(Path directory) throws IOException {
+  /**
+   * Delete recursively all files inside a directory.
+   * @param directory a directory
+   * @param removeDirectory also delete the top level directory.
+   * @throws IOException if a file can not be deleted
+   */
+  public static void deleteAllFiles(Path directory, boolean removeDirectory) throws IOException {
     Files.walkFileTree(directory, new FileVisitor<Path>() {
       @Override
       public FileVisitResult postVisitDirectory(Path path, IOException e) throws IOException {
-        Files.delete(path);
+        if (removeDirectory || !path.equals(directory)) {
+          Files.delete(path);  
+        }
         return FileVisitResult.CONTINUE;
       }
 

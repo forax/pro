@@ -1,4 +1,4 @@
-package com.github.forax.pro.helper;
+package com.github.forax.pro.helper.util;
 
 import java.util.AbstractList;
 import java.util.Arrays;

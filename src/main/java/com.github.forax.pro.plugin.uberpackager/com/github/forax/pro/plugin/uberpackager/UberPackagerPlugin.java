@@ -19,7 +19,7 @@ import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
-import com.github.forax.pro.helper.StableList;
+import com.github.forax.pro.helper.util.StableList;
 import com.github.forax.pro.ubermain.Main;
 
 public class UberPackagerPlugin implements Plugin {
@@ -56,7 +56,7 @@ public class UberPackagerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
     log.debug(config, conf -> "config " + config);
     
     ToolProvider jarTool = ToolProvider.findFirst("jar")
@@ -64,7 +64,7 @@ public class UberPackagerPlugin implements Plugin {
     UberPackager packager = config.getOrThrow(name(), UberPackager.class);
     
     Path uberExplodedPath = packager.moduleUberExplodedPath();
-    FileHelper.deleteAllFiles(uberExplodedPath);
+    FileHelper.deleteAllFiles(uberExplodedPath, false);
     Files.createDirectories(uberExplodedPath);
     
     Class<Main> mainClass = com.github.forax.pro.ubermain.Main.class;

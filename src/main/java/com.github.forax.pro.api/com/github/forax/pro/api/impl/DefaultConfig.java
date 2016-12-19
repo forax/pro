@@ -8,47 +8,52 @@ import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 
 public class DefaultConfig implements MutableConfig {
-  private final ThreadLocal<Object> root = new ThreadLocal<>();
+  private final Object root;
   
   public DefaultConfig(Object root) {
-    this.root.set(Objects.requireNonNull(root));
+    this.root = Objects.requireNonNull(root);
   }
 
   @Override
   public String toString() {
-    return root.get().toString();
+    return root.toString();
   }
   
   @Override
   public <T> Optional<T> get(String key, Class<T> type) {
-    return Configs.get(root.get(), key, type, true);
+    return Configs.get(root, key, type, true);
   }
   
   @Override
   public <T> T getOrUpdate(String key, Class<T> type) {
-    return Configs.get(root.get(), key, type, false).get();
+    return Configs.get(root, key, type, false).get();
   }
   
   @Override
   public void set(String key, Object value) {
-    Configs.set(root.get(), key, value);
+    Configs.set(root, key, value);
   }
   
   @Override
   public void forEach(String key, BiConsumer<String, Object> consumer) {
-     Configs.forEach(root.get(), key, consumer); 
+     Configs.forEach(root, key, consumer); 
   }
   
+  public DefaultConfig duplicate() {
+    return new DefaultConfig(Configs.duplicate(root));
+  }
+  
+  /*
   public void enter(Runnable runnable) {
-    Object oldRoot = root.get();
+    Object oldRoot = root;
     Object newRoot = Configs.duplicate(oldRoot);
-    root.set(newRoot);
+    root = newRoot;
     try {
       runnable.run();
     } finally {
-      root.set(oldRoot);
+      root = oldRoot;
     }
-  }
+  }*/
   
   public MutableConfig asChecked(String prefix) {
     return new MutableConfig() {

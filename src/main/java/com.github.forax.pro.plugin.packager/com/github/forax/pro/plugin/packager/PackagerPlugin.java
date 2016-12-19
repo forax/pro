@@ -73,7 +73,7 @@ public class PackagerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
     log.debug(config, conf -> "config " + config);
     
     ToolProvider jarTool = ToolProvider.findFirst("jar")
@@ -98,7 +98,7 @@ public class PackagerPlugin implements Plugin {
   }
 
   private static int packageModules(Log log, ToolProvider jarTool, List<Path> moduleExplodedPath, Path moduleArtifactPath, Map<String, Metadata> metadataMap, String prefix) throws IOException {
-    FileHelper.deleteAllFiles(moduleArtifactPath);
+    FileHelper.deleteAllFiles(moduleArtifactPath, false);
     Files.createDirectories(moduleArtifactPath);
     
     for(Path explodedPath: moduleExplodedPath) {

@@ -16,23 +16,26 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.impl.Configs;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
+import com.github.forax.pro.daemon.DaemonService;
+import com.github.forax.pro.daemon.DaemonService.PluginFacade;
 import com.github.forax.pro.helper.Log;
-import com.github.forax.pro.helper.Log.Level;
-import com.github.forax.pro.helper.StableList;
+import com.github.forax.pro.helper.util.StableList;
 
 public class Pro {
   private Pro() {
     throw new AssertionError();
   }
   
-  private static final DefaultConfig CONFIG;
+  private static final ThreadLocal<DefaultConfig> CONFIG = new ThreadLocal<>();
   private static final Map<String, Plugin> PLUGINS;
   static {
     Object root = Configs.root();
@@ -50,7 +53,7 @@ public class Pro {
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
     plugins.forEach(plugin -> plugin.configure(config.asChecked(plugin.name())));
     
-    CONFIG = config;
+    CONFIG.set(config);
     PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity()));
   }
   
@@ -60,17 +63,17 @@ public class Pro {
   }
   
   public static void set(String key, Object value) {
-    CONFIG.set(key, value);
+    CONFIG.get().set(key, value);
   }
   
   public static <T> T get(String key, Class<T> type) {
-    return CONFIG.get(key, type)
+    return CONFIG.get().get(key, type)
         .orElseThrow(() -> new IllegalStateException("unknown key " + key));
   }
   
-  public static void scope(Runnable runnable) {
+  /*public static void scope(Runnable runnable) {
     CONFIG.enter(runnable);
-  }
+  }*/
   
   public static Path location(String location) {
     return Paths.get(location);
@@ -160,39 +163,64 @@ public class Pro {
     System.out.println(Arrays.stream(elements).map(Object::toString).collect(Collectors.joining(" ")));
   }
   
-  public static void run(String... pluginNames) {
-    ArrayList<Plugin> plugins = new ArrayList<>();
-    int exitCode = checkPluginNames(PLUGINS, pluginNames, plugins);
-    
-    if (exitCode == 0) {
-      for(Plugin plugin: plugins) {
-        try {
-          exitCode = plugin.execute(CONFIG.asConfig());
-        } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
-          Log log = Log.create(plugin.name(), CONFIG.getOrThrow("loglevel", String.class));
-          log.error(e);
-          exitCode = 1; // FIXME
-        }
-      }
-    }
-    
-    if (exitCode != 0) {
-      System.exit(exitCode);
-      throw new AssertionError("should have exited with code " + exitCode);
-    }
-  }
+  
 
-  private static int checkPluginNames(Map<String, Plugin> allPlugins, String[] pluginNames, ArrayList<Plugin> plugins) {
+  private static int checkPluginNames(Map<String, Plugin> allPlugins, String[] pluginNames, Config config, ArrayList<Plugin> plugins) {
     int exitCode = 0;
     for(String pluginName: pluginNames) {  
       Plugin plugin = allPlugins.get(pluginName);
       if (plugin == null) {
-        Log log = Log.create("pro", CONFIG.getOrThrow("loglevel", String.class));
+        Log log = Log.create("pro", config.get("loglevel", String.class).orElse("debug"));
         log.error(pluginName, name -> "unknown plugin " + name);
         exitCode = 1;  // FIXME
       }
       plugins.add(plugin);
     }
     return exitCode;
+  }
+  
+  public static void run(String... pluginNames) {
+    Config config = CONFIG.get().duplicate().asConfig();
+    
+    ArrayList<Plugin> plugins = new ArrayList<>();
+    int errorCode = checkPluginNames(PLUGINS, pluginNames, config, plugins);
+    exitIfNonZero(errorCode);
+    
+    Optional<DaemonService> daemonService = ServiceLoader.load(DaemonService.class).findFirst();
+    daemonService.filter(DaemonService::isStarted).ifPresentOrElse(service -> {
+      service.run(plugins, PluginFacade.of(
+          (plugin,  registry) -> plugin.watch(config, registry),
+          plugin -> Pro.execute(plugin, config)));
+    }, () -> {
+      runAll(plugins, config); 
+    });
+  }
+  
+  private static void runAll(List<Plugin> plugins, Config config) {
+    for(Plugin plugin: plugins) {
+      int errorCode = execute(plugin, config);
+      exitIfNonZero(errorCode);
+    }
+  }
+  
+  static int execute(Plugin plugin, Config config) {
+    int errorCode;
+    try {
+      errorCode = plugin.execute(config);
+    } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
+      e.printStackTrace();
+      String logLevel = config.get("loglevel", String.class).orElse("debug");
+      Log log = Log.create(plugin.name(), logLevel);
+      log.error(e);
+      errorCode = 1; // FIXME
+    }
+    return errorCode;
+  }
+  
+  private static void exitIfNonZero(int errorCode) {
+    if (errorCode != 0) {
+      System.exit(errorCode);
+      throw new AssertionError("should have exited with code " + errorCode);
+    }
   }
 }

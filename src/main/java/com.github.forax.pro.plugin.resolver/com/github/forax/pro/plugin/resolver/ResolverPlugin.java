@@ -23,7 +23,7 @@ import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
-import com.github.forax.pro.helper.StableList;
+import com.github.forax.pro.helper.util.StableList;
 
 public class ResolverPlugin implements Plugin {
   @Override
@@ -67,7 +67,7 @@ public class ResolverPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
     log.debug(config, conf -> "config " + config);
     
     Resolver resolver = config.getOrThrow(name(), Resolver.class);

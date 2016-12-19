@@ -69,7 +69,7 @@ public class ModuleFixerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("loglevel", String.class));
+    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
     log.debug(config, conf -> "config " + config);
     
     ModuleFixer moduleFixer = config.getOrThrow(name(), ModuleFixer.class);
@@ -166,7 +166,7 @@ public class ModuleFixerPlugin implements Plugin {
     //  return 1;
     //}
     
-    FileHelper.deleteAllFiles(moduleDependencyFixerPath);
+    FileHelper.deleteAllFiles(moduleDependencyFixerPath, false);
     Files.createDirectories(moduleDependencyFixerPath);
     
     // patch jars with calculated module-info

@@ -30,7 +30,8 @@ class Vanity {
     }
     
     // change image directory
-    FileHelper.deleteAllFiles(imagePath.resolveSibling("pro"));
-    Files.move(imagePath, imagePath.resolveSibling("pro"));
+    Path proDirectory = imagePath.resolveSibling("pro");
+    FileHelper.deleteAllFiles(proDirectory, true);
+    Files.move(imagePath, proDirectory);
   }
 }
