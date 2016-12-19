@@ -107,7 +107,6 @@ public class Daemon implements DaemonService {
   private Thread thread;
   
   // changed at each run, mutated only by the daemon thread
-  private WatchService watcher;
   private Thread watcherThread;
   private List<Plugin> plugins = List.of();
   private PluginFacade pluginFacade;
@@ -302,7 +301,6 @@ public class Daemon implements DaemonService {
         watcherThread.interrupt();
         join(watcherThread);
       }
-      watcher = null;
       watcherThread = null;
       
       // stop daemon thread
@@ -371,7 +369,6 @@ public class Daemon implements DaemonService {
       this.plugins = plugins;
       this.pluginFacade = pluginFacade;
       this.pathRegistry = pathRegistry;
-      this.watcher = watcher;
       this.watcherThread = watcherThread;
     });
   }
