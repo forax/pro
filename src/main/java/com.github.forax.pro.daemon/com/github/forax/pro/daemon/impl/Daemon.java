@@ -12,79 +12,36 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.daemon.DaemonService;
-import com.github.forax.pro.daemon.impl.Daemon.WorkQueue.Result;
 
 public class Daemon implements DaemonService {
-  static class PathRegistry {
-    private final HashMap<Path, Set<Plugin>> pathRegistry = new HashMap<>();  
+  static class Refresher {
+    private boolean refresh;
+    private final Object lock = new Object();
     
-    public void register(Path path, Plugin plugin) {
-      pathRegistry.computeIfAbsent(path, __ -> new HashSet<>()).add(plugin);
-    }
-    
-    public Set<Plugin> findInRegistry(Path path) {
-      for(Path parent = path; parent != null; parent = parent.getParent()) {
-        Set<Plugin> plugins = pathRegistry.get(parent);
-        if (plugins != null) {
-          return plugins;
+    public void waitARefresh() throws InterruptedException {
+      synchronized(lock) {
+        while(!refresh) {
+          lock.wait();
         }
-      }
-      return Set.of();
-    }
-
-    public Set<Path> paths() {
-      return pathRegistry.keySet();
-    }
-  }
-  
-  static class WorkQueue<E> {
-    private boolean overflow;
-    private final LinkedHashSet<E> set = new LinkedHashSet<>();
-    
-    public enum Result { OVERFLOW, NORMAL }
-    
-    public void put(E element) {
-      synchronized(set) {
-        if (set.add(element) && set.size() == 1) {
-          set.notify();
-        }
+        refresh = false;
       }
     }
     
-    public void overflow() {
-      synchronized(set) {
-        overflow = true;
-        set.clear();
-        set.notify();
-      }
-    }
-    
-    public Result drain(List<? super E> dest) throws InterruptedException {
-      synchronized(set) {
-        while (!overflow && set.isEmpty()) {
-          set.wait();
-        }
-        if (overflow) {
-          overflow = false;
-          return Result.OVERFLOW;
-        }
-        dest.addAll(set);
-        set.clear();
-        return Result.NORMAL;
+    public void notifyARefresh() {
+      synchronized(lock) {
+        refresh = true;
+        lock.notify();
       }
     }
   }
@@ -101,7 +58,7 @@ public class Daemon implements DaemonService {
   
   // non mutable
   private final ArrayBlockingQueue<Runnable> commandQueue = new ArrayBlockingQueue<>(64);
-  private final WorkQueue<Path> pathQueue = new WorkQueue<>();
+  private final Refresher refresher = new Refresher();
   
   // changed by the main thread
   private Thread thread;
@@ -110,57 +67,31 @@ public class Daemon implements DaemonService {
   private Thread watcherThread;
   private List<Plugin> plugins = List.of();
   private PluginFacade pluginFacade;
-  private PathRegistry pathRegistry = new PathRegistry();
   
   private void mainLoop() {
-    ArrayList<Path> paths = new ArrayList<>();
-    LinkedHashSet<Plugin> scheduledPlugins = new LinkedHashSet<>();
     for(;;) {
-      Result result;
       try {
-        result = pathQueue.drain(paths);
+        refresher.waitARefresh();
       } catch (InterruptedException e) {
         // command requested
-        result = null;
-      }
-      
-      if (result == Result.OVERFLOW) {
-        // TODO
+        Runnable runnable;
+        while((runnable = commandQueue.poll()) != null) {
+          try {
+            runnable.run();
+          } catch(ExitException __) {
+            return;
+          }
+        }
+        
         continue;
       }
       
-      // paths modified
-      if (result == Result.NORMAL) {
-        paths.forEach(path -> {
-          System.out.println("mainLoop: path " + path);
-          Set<Plugin> contextPlugins = pathRegistry.findInRegistry(path);
-          scheduledPlugins.addAll(contextPlugins);
-        });
-        paths.clear();
-      }
-      
-      // commands
-      Runnable runnable;
-      while((runnable = commandQueue.poll()) != null) {
-        try {
-          runnable.run();
-        } catch(ExitException __) {
-          return;
-        }
-      }
-      
-      System.out.println("scheduledPlugins " + scheduledPlugins);
-      
       // run plugins
-      if(!scheduledPlugins.isEmpty()) {
-        List<Plugin> selectedPlugins = plugins.stream().filter(scheduledPlugins::contains).collect(Collectors.toList());
-        scheduledPlugins.clear();
-        for(Plugin plugin: selectedPlugins) {
-          int errorCode = pluginFacade.execute(plugin);
-          if (errorCode != 0) {
-            break;
-          }
-        }
+      for(Plugin plugin: plugins) {
+        int errorCode = pluginFacade.execute(plugin);
+        if (errorCode != 0) {
+          break;
+        } 
       }
     }
   }
@@ -177,7 +108,7 @@ public class Daemon implements DaemonService {
             ENTRY_MODIFY, DIRECTORY_MODIFY);
   }
   
-  private static void watcherLoop(WatchService watcher, WorkQueue<Path> pathQueue, Set<Path> roots) {
+  private static void watcherLoop(WatchService watcher, Refresher refresher, Set<Path> roots) {
     // scan roots
     HashMap<Path, Boolean> rootMap = new HashMap<>();
     for(Path root: roots) {
@@ -201,6 +132,7 @@ public class Daemon implements DaemonService {
         return;
       }
       
+      boolean modified = false;
       if (key != null) {
 
         do {
@@ -219,11 +151,11 @@ public class Daemon implements DaemonService {
                 if (Files.isDirectory(path)) {
                   System.out.println("register new directory " + path);
                   registerSubDirectories(path, watcher);
-                  pathQueue.put(path); 
                 }
+                modified = true;
                 continue;
               case DIRECTORY_MODIFY:
-                pathQueue.put(path);
+                modified = true;
                 continue;
               default:
                 throw new AssertionError("invalid kind " + kind);
@@ -257,10 +189,14 @@ public class Daemon implements DaemonService {
         if (!available && exists) {
           System.out.println("create root directory " + root);
           registerSubDirectories(root, watcher);
-          pathQueue.put(root); 
+          modified = true;
         }
         entry.setValue(exists);
       } 
+      
+      if (modified) {
+        refresher.notifyARefresh();
+      }
     }  
   }
   
@@ -344,6 +280,10 @@ public class Daemon implements DaemonService {
       throw new IllegalStateException("no thread was started");
     }
     
+    if (plugins.isEmpty()) {  // do nothing
+      return;
+    }
+    
     send(() -> {
       // stop watcher thread
       if (this.watcherThread != null) {
@@ -359,16 +299,15 @@ public class Daemon implements DaemonService {
         throw new UncheckedIOException(e);
       }
       
-      PathRegistry pathRegistry = new PathRegistry();
-      plugins.forEach(plugin -> pluginFacade.watch(plugin, path -> pathRegistry.register(path, plugin)));
+      HashSet<Path> roots = new HashSet<>();
+      pluginFacade.watch(plugins.get(0), roots::add);
       
       // start a new watcher thread
-      Thread watcherThread = new Thread(() -> watcherLoop(watcher, pathQueue, pathRegistry.paths()));
+      Thread watcherThread = new Thread(() -> watcherLoop(watcher, refresher, roots));
       watcherThread.start();
       
       this.plugins = plugins;
       this.pluginFacade = pluginFacade;
-      this.pathRegistry = pathRegistry;
       this.watcherThread = watcherThread;
     });
   }
