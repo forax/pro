@@ -54,6 +54,10 @@ public class Daemon implements DaemonService {
     // enforce singleton
   }
   
+  /**
+   * Returns the singleton Daemon.
+   * @return the singleton Daemon.
+   */
   public static Daemon provider() {
     return INSTANCE;
   }
