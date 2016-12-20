@@ -10,7 +10,7 @@ import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.github.forax.pro.daemon.DaemonService;
+import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.secret.Secret;
 import com.github.forax.pro.main.runner.Runner;
 
@@ -61,15 +61,15 @@ public class Main {
     }
   }
   
-  private static Optional<DaemonService> getDaemonService() {
-    return ServiceLoader.load(DaemonService.class).findFirst();
+  private static Optional<Daemon> getDaemonService() {
+    return ServiceLoader.load(Daemon.class).findFirst();
   }
   
   static void shell() {
     Secret.jShellTool_main();
     getDaemonService()
-      .filter(DaemonService::isStarted)
-      .ifPresent(DaemonService::stop);
+      .filter(Daemon::isStarted)
+      .ifPresent(Daemon::stop);
   }
   
   static void run(String[] args) {
@@ -88,7 +88,7 @@ public class Main {
   }
   
   static void daemon(String[] args) {
-    DaemonService service =
+    Daemon service =
         getDaemonService().orElseThrow(() -> new IllegalStateException("daemon service not found"));
     if (service.isStarted()) {
       throw new IllegalStateException("daemon service already started");

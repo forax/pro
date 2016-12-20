@@ -8,7 +8,7 @@ module com.github.forax.pro.main {
   
   exports com.github.forax.pro.main.runner;
   
-  uses com.github.forax.pro.daemon.DaemonService;
+  uses com.github.forax.pro.daemon.Daemon;
   uses com.github.forax.pro.main.runner.Runner;
   
   provides com.github.forax.pro.main.runner.Runner

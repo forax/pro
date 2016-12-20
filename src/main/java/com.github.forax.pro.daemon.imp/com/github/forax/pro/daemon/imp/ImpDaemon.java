@@ -1,4 +1,4 @@
-package com.github.forax.pro.daemon.impl;
+package com.github.forax.pro.daemon.imp;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -23,10 +23,13 @@ import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
-import com.github.forax.pro.daemon.DaemonService;
+import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.Log;
 
-public class Daemon implements DaemonService {
+/**
+ * A small and simple implementation of a daemon.
+ */
+public class ImpDaemon implements Daemon {
   static class Refresher {
     private boolean refresh;
     private final Object lock = new Object();
@@ -48,9 +51,9 @@ public class Daemon implements DaemonService {
     }
   }
   
-  private static final Daemon INSTANCE = new Daemon();
+  private static final ImpDaemon INSTANCE = new ImpDaemon();
   
-  Daemon() {
+  ImpDaemon() {
     // enforce singleton
   }
   
@@ -58,7 +61,7 @@ public class Daemon implements DaemonService {
    * Returns the singleton Daemon.
    * @return the singleton Daemon.
    */
-  public static Daemon provider() {
+  public static ImpDaemon provider() {
     return INSTANCE;
   }
   

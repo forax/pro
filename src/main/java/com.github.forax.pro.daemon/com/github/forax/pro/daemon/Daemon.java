@@ -9,7 +9,7 @@ import com.github.forax.pro.api.Plugin;
  * An interface to interact with a daemon that watch directories and
  * run a list of plugins if one of file the directories change.
  */
-public interface DaemonService {
+public interface Daemon {
   /**
    * start the daemon
    */

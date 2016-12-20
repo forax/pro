@@ -26,7 +26,7 @@ import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.impl.Configs;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
-import com.github.forax.pro.daemon.DaemonService;
+import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.util.StableList;
 
@@ -194,9 +194,9 @@ public class Pro {
     
     Config config = CONFIG.get().duplicate().asConfig();
     
-    Optional<DaemonService> daemonService = ServiceLoader.load(DaemonService.class).findFirst();
+    Optional<Daemon> daemonService = ServiceLoader.load(Daemon.class).findFirst();
     BiConsumer<List<Plugin>, Config> consumer = daemonService
-        .filter(DaemonService::isStarted)
+        .filter(Daemon::isStarted)
         .<BiConsumer<List<Plugin>, Config>>map(daemon -> daemon::run)
         .orElse(Pro::runAll);
     consumer.accept(plugins, config);

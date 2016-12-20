@@ -6,5 +6,5 @@ module com.github.forax.pro {
   exports com.github.forax.pro;
   
   uses com.github.forax.pro.api.Plugin;
-  uses com.github.forax.pro.daemon.DaemonService;
+  uses com.github.forax.pro.daemon.Daemon;
 }
