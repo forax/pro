@@ -203,10 +203,16 @@ public class Pro {
   }
   
   private static void runAll(List<Plugin> plugins, Config config) {
+    long start = System.currentTimeMillis();
     for(Plugin plugin: plugins) {
       int errorCode = execute(plugin, config);
       exitIfNonZero(errorCode);
     }
+    long end = System.currentTimeMillis();
+    long elapsed = end - start;
+    String logLevel = config.get("loglevel", String.class).orElse("debug");
+    Log log = Log.create("pro", logLevel);
+    log.info(elapsed, time -> String.format("DONE !          elapsed time %,d ms", time));
   }
   
   private static int execute(Plugin plugin, Config config) {
