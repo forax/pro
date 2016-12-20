@@ -194,7 +194,7 @@ public class Configs {
   }
   
   
-  public static Object root() {
+  public static Object newRoot() {
     return proxy(Group.class, new HashMap<>(), false);
   }
   

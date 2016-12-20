@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,7 +27,6 @@ import com.github.forax.pro.api.impl.Configs;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
 import com.github.forax.pro.daemon.DaemonService;
-import com.github.forax.pro.daemon.DaemonService.PluginFacade;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.util.StableList;
 
@@ -35,25 +35,33 @@ public class Pro {
     throw new AssertionError();
   }
   
-  private static final ThreadLocal<DefaultConfig> CONFIG = new ThreadLocal<>();
+  private static final ThreadLocal<DefaultConfig> CONFIG = new ThreadLocal<DefaultConfig>() {
+    @Override
+    protected DefaultConfig initialValue() {
+      Object root = Configs.newRoot();
+      DefaultConfig config = new DefaultConfig(root);
+      Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
+        .map(Log.Level::of)
+        .orElse(Log.Level.INFO);
+      config.set("loglevel",   logLevel.name().toLowerCase());
+      return config;
+    }
+    @Override
+    public void set(DefaultConfig value) {
+      throw new UnsupportedOperationException();
+    }
+  };
   private static final Map<String, Plugin> PLUGINS;
   static {
-    Object root = Configs.root();
-    DefaultConfig config = new DefaultConfig(root);
-    Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
-      .map(Log.Level::of)
-      .orElse(Log.Level.INFO);
-    config.set("loglevel",   logLevel.name().toLowerCase());
-    
-    Log log = Log.create("pro", logLevel);
+    DefaultConfig config = CONFIG.get();
     
     List<Plugin> plugins = Plugins.getAllPlugins();
+    Log log = Log.create("pro", config.getOrThrow("loglevel", String.class));
     log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
     
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
     plugins.forEach(plugin -> plugin.configure(config.asChecked(plugin.name())));
     
-    CONFIG.set(config);
     PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity()));
   }
   
@@ -180,20 +188,18 @@ public class Pro {
   }
   
   public static void run(String... pluginNames) {
-    Config config = CONFIG.get().duplicate().asConfig();
-    
     ArrayList<Plugin> plugins = new ArrayList<>();
-    int errorCode = checkPluginNames(PLUGINS, pluginNames, config, plugins);
+    int errorCode = checkPluginNames(PLUGINS, pluginNames, CONFIG.get(), plugins);
     exitIfNonZero(errorCode);
     
+    Config config = CONFIG.get().duplicate().asConfig();
+    
     Optional<DaemonService> daemonService = ServiceLoader.load(DaemonService.class).findFirst();
-    daemonService.filter(DaemonService::isStarted).ifPresentOrElse(service -> {
-      service.run(plugins, PluginFacade.of(
-          (plugin,  registry) -> plugin.watch(config, registry),
-          plugin -> Pro.execute(plugin, config)));
-    }, () -> {
-      runAll(plugins, config); 
-    });
+    BiConsumer<List<Plugin>, Config> consumer = daemonService
+        .filter(DaemonService::isStarted)
+        .<BiConsumer<List<Plugin>, Config>>map(daemon -> daemon::run)
+        .orElse(Pro::runAll);
+    consumer.accept(plugins, config);
   }
   
   private static void runAll(List<Plugin> plugins, Config config) {
@@ -203,7 +209,7 @@ public class Pro {
     }
   }
   
-  static int execute(Plugin plugin, Config config) {
+  private static int execute(Plugin plugin, Config config) {
     int errorCode;
     try {
       errorCode = plugin.execute(config);
