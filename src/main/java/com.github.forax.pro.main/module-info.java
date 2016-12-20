@@ -9,9 +9,9 @@ module com.github.forax.pro.main {
   exports com.github.forax.pro.main.runner;
   
   uses com.github.forax.pro.daemon.Daemon;
-  uses com.github.forax.pro.main.runner.Runner;
+  uses com.github.forax.pro.main.runner.ConfigRunner;
   
-  provides com.github.forax.pro.main.runner.Runner
-    with com.github.forax.pro.main.JSONRunner,
-         com.github.forax.pro.main.JShellRunner;
+  provides com.github.forax.pro.main.runner.ConfigRunner
+    with com.github.forax.pro.main.JSONConfigRunner,
+         com.github.forax.pro.main.JShellConfigRunner;
 }

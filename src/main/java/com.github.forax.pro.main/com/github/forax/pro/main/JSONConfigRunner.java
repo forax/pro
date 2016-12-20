@@ -14,9 +14,9 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import com.github.forax.pro.Pro;
-import com.github.forax.pro.main.runner.Runner;
+import com.github.forax.pro.main.runner.ConfigRunner;
 
-public class JSONRunner implements Runner {
+public class JSONConfigRunner implements ConfigRunner {
   @Override
   public Optional<Runnable> accept(Path config) {
     return Optional.<Runnable>of(() -> run(config))

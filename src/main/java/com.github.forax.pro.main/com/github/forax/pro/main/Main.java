@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.secret.Secret;
-import com.github.forax.pro.main.runner.Runner;
+import com.github.forax.pro.main.runner.ConfigRunner;
 
 public class Main {
   private Main() {
@@ -42,7 +42,7 @@ public class Main {
   
   enum Command {
     SHELL(__ -> shell()),
-    RUN(Main::run),
+    BUILD(Main::build),
     DAEMON(Main::daemon),
     HELP(__ -> help())
     ;
@@ -61,37 +61,37 @@ public class Main {
     }
   }
   
-  private static Optional<Daemon> getDaemonService() {
+  private static Optional<Daemon> getDaemon() {
     return ServiceLoader.load(Daemon.class).findFirst();
   }
   
   static void shell() {
     Secret.jShellTool_main();
-    getDaemonService()
+    getDaemon()
       .filter(Daemon::isStarted)
       .ifPresent(Daemon::stop);
   }
   
-  static void run(String[] args) {
+  static void build(String[] args) {
     Path configFile = InputFile.find(args)
         .orElseThrow(() -> new IllegalArgumentException("no existing input file specified"));
     
-    ServiceLoader<Runner> loader = ServiceLoader.load(Runner.class, Runner.class.getClassLoader());
-    ArrayList<Runner> runners = new ArrayList<>();
-    loader.forEach(runners::add);
+    ServiceLoader<ConfigRunner> loader = ServiceLoader.load(ConfigRunner.class, ConfigRunner.class.getClassLoader());
+    ArrayList<ConfigRunner> configRunners = new ArrayList<>();
+    loader.forEach(configRunners::add);
     
-    runners.stream()
-        .flatMap(runner -> runner.accept(configFile).stream())
+    configRunners.stream()
+        .flatMap(configRunner -> configRunner.accept(configFile).stream())
         .findFirst()
-        .orElseThrow(() -> new IllegalStateException("no runner available for config file " + configFile))
+        .orElseThrow(() -> new IllegalStateException("no config runner available for config file " + configFile))
         .run();
   }
   
   static void daemon(String[] args) {
     Daemon service =
-        getDaemonService().orElseThrow(() -> new IllegalStateException("daemon service not found"));
+        getDaemon().orElseThrow(() -> new IllegalStateException("daemon not found"));
     if (service.isStarted()) {
-      throw new IllegalStateException("daemon service already started");
+      throw new IllegalStateException("daemon already started");
     }
     service.start();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -113,7 +113,7 @@ public class Main {
         "    daemon subcommand  start the subcommand in daemon mode                     \n" +
         "    help               this help                                               \n" +
         "                                                                               \n" +
-        "  if no subcommand is specified, 'run' is used                                 \n"
+        "  if no subcommand is specified, 'build' is used                               \n"
     );
   }
   
@@ -121,7 +121,7 @@ public class Main {
     Command command;
     String[] arguments;
     if (args.length == 0) {
-      command = Command.RUN;
+      command = Command.BUILD;
       arguments = args;
     } else {
       command = Command.command(args[0]);

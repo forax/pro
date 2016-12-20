@@ -4,9 +4,9 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import com.github.forax.pro.helper.secret.Secret;
-import com.github.forax.pro.main.runner.Runner;
+import com.github.forax.pro.main.runner.ConfigRunner;
 
-public class JShellRunner implements Runner {
+public class JShellConfigRunner implements ConfigRunner {
   @Override
   public Optional<Runnable> accept(Path configFile) {
     return Optional.<Runnable>of(() -> run(configFile))
