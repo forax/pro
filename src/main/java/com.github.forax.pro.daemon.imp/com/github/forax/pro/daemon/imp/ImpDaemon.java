@@ -96,11 +96,17 @@ public class ImpDaemon implements Daemon {
       }
       
       // run plugins
+      int errorCode = 0;
       for(Plugin plugin: plugins) {
-        int errorCode = execute(plugin, config);
+        errorCode = execute(plugin, config);
         if (errorCode != 0) {
           break;
         } 
+      }
+      if (errorCode == 0) {
+        String logLevel = config.get("loglevel", String.class).orElse("debug");
+        Log log = Log.create("daemon", logLevel);
+        log.info(null, __ -> "DONE !");
       }
     }
   }
