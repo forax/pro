@@ -35,7 +35,7 @@ public class Pro {
     throw new AssertionError();
   }
   
-  private static final ThreadLocal<DefaultConfig> CONFIG = new ThreadLocal<DefaultConfig>() {
+  private static final ThreadLocal<DefaultConfig> CONFIG = new ThreadLocal<>() {
     @Override
     protected DefaultConfig initialValue() {
       Object root = Configs.newRoot();

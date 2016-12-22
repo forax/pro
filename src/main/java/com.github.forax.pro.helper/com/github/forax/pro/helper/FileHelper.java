@@ -75,7 +75,7 @@ public class FileHelper {
     public R apply(T element, U element2) throws IOException;
   }
 
-  public static <T> Runnable unchecked(IORunnable runnable) {
+  public static Runnable unchecked(IORunnable runnable) {
     return () -> {
       try {
         runnable.run();
