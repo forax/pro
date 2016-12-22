@@ -1,5 +1,6 @@
 #!/bin/bash
-export JAVA_HOME=/usr/jdk/jdk-9-jigsaw-b146
+#export JAVA_HOME=/usr/jdk/jdk-9-jigsaw-b146
+export JAVA_HOME=/usr/jdk/jdk-9
 export java=$JAVA_HOME/bin/java
 export javac=$JAVA_HOME/bin/javac
 

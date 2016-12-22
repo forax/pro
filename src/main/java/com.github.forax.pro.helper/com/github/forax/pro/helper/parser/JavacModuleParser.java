@@ -91,7 +91,7 @@ public class JavacModuleParser {
     }
     
     public void visitExports(ExportsTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
-      moduleVisitor.visitExports(qualifiedString(node.getExportName()), asList(node.getModuleNames()));
+      moduleVisitor.visitExports(qualifiedString(node.getPackageName()), asList(node.getModuleNames()));
     }
 
     public void visitUses(UsesTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
