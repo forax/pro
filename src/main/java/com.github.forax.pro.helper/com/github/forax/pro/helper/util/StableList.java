@@ -7,6 +7,8 @@ import java.util.Objects;
 import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collector;
 
 /**
@@ -101,6 +103,30 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   }
   
   /**
+   * Returns a stable list consisting of the elements of this list
+   * that match the given predicate.
+   * 
+   * @param predicate a function that returns true is the element will be
+   *        in the resulting list.
+   * @param a new stable list
+   */
+  public StableList<E> filter(Predicate<? super E> predicate) {
+    return stream().filter(predicate).collect(toStableList());
+  }
+  
+  /**
+   * Returns a stable list consisting of the results of applying the given
+   * function to the elements of this list. 
+   * 
+   * @param mapper a function that takes an element and returns the new
+   *        element to be stored in the new list
+   * @param a new stable list
+   */
+  public <R> StableList<R> map(Function<? super E, ? extends R> mapper) {
+    return stream().map(mapper).collect(toStableList());
+  }
+  
+  /**
    * Create an empty StableList.
    * @return an empty StableList.
    */
@@ -121,7 +147,7 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   }
   
   @SuppressWarnings("unchecked")
-  public static <T> Collector<T, ?, StableList<T>> asStableList() {
+  public static <T> Collector<T, ?, StableList<T>> toStableList() {
     return Collector.of(() -> (StableList<T>[])new StableList<?>[] { StableList.of() },
         (array, element) -> array[0] = array[0].append(element),
         (array1, array2) -> { array1[0] = array1[0].appendAll(array2[0]); return array1; },
