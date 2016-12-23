@@ -126,7 +126,7 @@ public class Pro {
     return StableList.<T>of().appendAll(collection);
   }
   public static <T> StableList<T> list(Stream<? extends T> stream) {
-    return list(stream.collect(StableList.asStableList()));
+    return list(stream.collect(StableList.toStableList()));
   }
   
   public static Path resolve(Path location, Path child) {
@@ -171,6 +171,21 @@ public class Pro {
     System.out.println(Arrays.stream(elements).map(Object::toString).collect(Collectors.joining(" ")));
   }
   
+  /*
+  public static void exec(String... commands) {
+    ProcessBuilder processBuilder = new ProcessBuilder(commands);
+    processBuilder.inheritIO();
+    int errorCode;
+    try {
+      Process process = processBuilder.start();
+      errorCode = process.waitFor();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    } catch (InterruptedException e) {
+      return;  //TODO revisit ?
+    }
+    exitIfNonZero(errorCode);
+  }*/
   
 
   private static int checkPluginNames(Map<String, Plugin> allPlugins, String[] pluginNames, Config config, ArrayList<Plugin> plugins) {
