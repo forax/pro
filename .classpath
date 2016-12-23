@@ -12,6 +12,7 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.compiler" path="src/main/java/com.github.forax.pro.plugin.compiler"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.packager" path="src/main/java/com.github.forax.pro.plugin.packager"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.linker" path="src/main/java/com.github.forax.pro.plugin.linker"/>
+	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.runner" path="src/main/java/com.github.forax.pro.plugin.runner"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.uberpackager" path="src/main/java/com.github.forax.pro.plugin.uberpackager"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.bootstrap" path="src/main/java/com.github.forax.pro.bootstrap"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.ubermain" path="src/main/java/com.github.forax.pro.ubermain"/>

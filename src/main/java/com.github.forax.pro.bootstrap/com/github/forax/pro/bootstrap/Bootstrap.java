@@ -23,6 +23,7 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.compiler@0.9",
         "com.github.forax.pro.plugin.packager@0.9",
         "com.github.forax.pro.plugin.linker@0.9",
+        "com.github.forax.pro.plugin.runner@0.9",
         "com.github.forax.pro.plugin.uberpackager@0.9", 
         "com.github.forax.pro.plugin.bootstrap@0.9",
         "com.github.forax.pro.ubermain@0.9",
@@ -51,6 +52,7 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.compiler",
         "com.github.forax.pro.plugin.packager",
         "com.github.forax.pro.plugin.linker",
+        "com.github.forax.pro.plugin.runner",
         "com.github.forax.pro.plugin.uberpackager",
         "com.github.forax.pro.uberbooter",            // needed by ubermain
         "com.github.forax.pro.daemon.imp",
