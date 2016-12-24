@@ -53,7 +53,7 @@ public class ImpDaemon implements Daemon {
   
   private static final ImpDaemon INSTANCE = new ImpDaemon();
   
-  ImpDaemon() {
+  private ImpDaemon() {
     // enforce singleton
   }
   

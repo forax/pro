@@ -62,14 +62,15 @@ public class Main {
   }
   
   private static Optional<Daemon> getDaemon() {
-    return ServiceLoader.load(Daemon.class).findFirst();
+    return ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
   }
   
   static void shell() {
+    System.out.println(getDaemon());
+    if (getDaemon().isPresent()) {
+      throw new IllegalStateException("shell doesn't currently support daemon mode :(");
+    }
     Secret.jShellTool_main();
-    getDaemon()
-      .filter(Daemon::isStarted)
-      .ifPresent(Daemon::stop);
   }
   
   static void build(String[] args) {

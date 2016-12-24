@@ -15,7 +15,6 @@ public class JShellConfigRunner implements ConfigRunner {
   
   private static void run(Path configFile) {
     //System.out.println("run with jshell " + configFile);
-    
-    Secret.jShellTool_main(configFile.toString());  
+    Secret.jShellTool_main(configFile.toString());
   }
 }

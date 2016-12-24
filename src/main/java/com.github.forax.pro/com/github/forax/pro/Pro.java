@@ -209,7 +209,7 @@ public class Pro {
     
     Config config = CONFIG.get().duplicate().asConfig();
     
-    Optional<Daemon> daemonService = ServiceLoader.load(Daemon.class).findFirst();
+    Optional<Daemon> daemonService = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
     BiConsumer<List<Plugin>, Config> consumer = daemonService
         .filter(Daemon::isStarted)
         .<BiConsumer<List<Plugin>, Config>>map(daemon -> daemon::run)
