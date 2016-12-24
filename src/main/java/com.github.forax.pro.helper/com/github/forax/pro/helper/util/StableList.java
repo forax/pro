@@ -10,6 +10,7 @@ import java.util.Spliterators;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * An unmodifiable list that tries to share it's backing array if possible.
@@ -127,6 +128,31 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   }
   
   /**
+   * Concatenate all elements separated by a delimiter. The prefix is added before  
+   * @param delimiter a delimiter
+   * @param prefix a prefix
+   * @param suffix a suffix
+   * @return a string joining a string representation of all elements separated
+   *         by the delimiter
+   */
+  public String join(String delimiter, String prefix, String suffix) {
+    return stream().map(Object::toString).collect(Collectors.joining(delimiter, prefix, suffix));
+  }
+  
+  /**
+   * Concatenate all elements separated by a delimiter.
+   * This call is equivalent to
+   * {@link #join(String, String, String) join(delimiter, "", "")}.
+   * 
+   * @param delimiter a delimiter
+   * @return a string joining a string representation of all elements separated
+   *         by the delimiter
+   */
+  public String join(String delimiter) {
+    return join(delimiter, "", "");
+  }
+  
+  /**
    * Create an empty StableList.
    * @return an empty StableList.
    */
@@ -146,6 +172,10 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
     return StableList.<E>of().appendAll(elements);
   }
   
+  /**
+   * Returns a collector that store all elements in a stable list.
+   * @return a stable list storing all elements.
+   */
   @SuppressWarnings("unchecked")
   public static <T> Collector<T, ?, StableList<T>> toStableList() {
     return Collector.of(() -> (StableList<T>[])new StableList<?>[] { StableList.of() },
