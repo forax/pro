@@ -66,8 +66,7 @@ public class Main {
   }
   
   static void shell() {
-    System.out.println(getDaemon());
-    if (getDaemon().isPresent()) {
+    if (getDaemon().filter(Daemon::isStarted).isPresent()) {
       throw new IllegalStateException("shell doesn't currently support daemon mode :(");
     }
     Secret.jShellTool_main();
