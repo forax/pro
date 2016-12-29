@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
-public interface Compiler {
+public interface CompilerConf {
   int release();
   void release(int release);
   

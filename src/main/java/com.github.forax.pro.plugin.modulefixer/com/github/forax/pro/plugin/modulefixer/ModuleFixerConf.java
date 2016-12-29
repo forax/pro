@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
-public interface ModuleFixer {
+public interface ModuleFixerConf {
   List<Path> moduleDependencyPath();
   void moduleDependencyPath(List<Path> path);
   

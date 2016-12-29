@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
-public interface Runner {
+public interface RunnerConf {
   Path javaCommand();
   void javaCommand(Path javaCommand);
   

@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
-public interface Linker {
+public interface LinkerConf {
   Path destination();
   void destination(Path destination);
   

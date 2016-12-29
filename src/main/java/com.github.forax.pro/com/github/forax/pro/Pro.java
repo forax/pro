@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.impl.Configs;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
@@ -40,10 +41,12 @@ public class Pro {
     protected DefaultConfig initialValue() {
       Object root = Configs.newRoot();
       DefaultConfig config = new DefaultConfig(root);
+      ProConf master = config.getOrUpdate("pro", ProConf.class);
+      
       Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
         .map(Log.Level::of)
         .orElse(Log.Level.INFO);
-      config.set("loglevel",   logLevel.name().toLowerCase());
+      master.loglevel(logLevel.name().toLowerCase());
       return config;
     }
     @Override
@@ -56,7 +59,7 @@ public class Pro {
     DefaultConfig config = CONFIG.get();
     
     List<Plugin> plugins = Plugins.getAllPlugins();
-    Log log = Log.create("pro", config.getOrThrow("loglevel", String.class));
+    Log log = Log.create("pro", config.getOrThrow("pro", ProConf.class).loglevel());
     log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
     
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
@@ -225,7 +228,7 @@ public class Pro {
     }
     long end = System.currentTimeMillis();
     long elapsed = end - start;
-    String logLevel = config.get("loglevel", String.class).orElse("debug");
+    String logLevel = config.getOrThrow("pro", ProConf.class).loglevel();
     Log log = Log.create("pro", logLevel);
     log.info(elapsed, time -> String.format("DONE !          elapsed time %,d ms", time));
   }
@@ -236,7 +239,7 @@ public class Pro {
       errorCode = plugin.execute(config);
     } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
       e.printStackTrace();
-      String logLevel = config.get("loglevel", String.class).orElse("debug");
+      String logLevel = config.getOrThrow("pro", ProConf.class).loglevel();
       Log log = Log.create(plugin.name(), logLevel);
       log.error(e);
       errorCode = 1; // FIXME

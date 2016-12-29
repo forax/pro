@@ -17,6 +17,7 @@ import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
@@ -31,7 +32,7 @@ public class LinkerPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    Linker linker = config.getOrUpdate(name(), Linker.class);
+    LinkerConf linker = config.getOrUpdate(name(), LinkerConf.class);
     linker.compressLevel(0);
     linker.stripDebug(false);
     linker.stripNativeCommands(false);
@@ -40,7 +41,7 @@ public class LinkerPlugin implements Plugin {
   
   @Override
   public void configure(MutableConfig config) {
-    Linker linker = config.getOrUpdate(name(), Linker.class);
+    LinkerConf linker = config.getOrUpdate(name(), LinkerConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
@@ -54,7 +55,7 @@ public class LinkerPlugin implements Plugin {
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    Linker linker = config.getOrThrow(name(), Linker.class);
+    LinkerConf linker = config.getOrThrow(name(), LinkerConf.class);
     
     registry.watch(linker.systemModulePath());
     linker.moduleDependencyPath().forEach(registry::watch);
@@ -79,12 +80,12 @@ public class LinkerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
+    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
     ToolProvider jlinkTool = ToolProvider.findFirst("jlink")
         .orElseThrow(() -> new IllegalStateException("can not find jlink"));
-    Linker linker = config.getOrThrow(name(), Linker.class);
+    LinkerConf linker = config.getOrThrow(name(), LinkerConf.class);
     
     Path systemModulePath = linker.systemModulePath();
     if (!(Files.exists(systemModulePath))) {

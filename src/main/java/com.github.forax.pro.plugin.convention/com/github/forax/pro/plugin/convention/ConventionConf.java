@@ -6,7 +6,7 @@ import java.util.List;
 import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
-public interface Convention {
+public interface ConventionConf {
   Path javaHome();
   void javaHome(Path path);
 

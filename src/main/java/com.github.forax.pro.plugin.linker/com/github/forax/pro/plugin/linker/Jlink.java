@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Objects;
 
 class Jlink {
-  private final Linker linker;
+  private final LinkerConf linker;
   private final List<String> rootModules;
   private final List<Path> modulePath;
 
-  Jlink(Linker linker, List<String> rootModules, List<Path> modulePath) {
+  Jlink(LinkerConf linker, List<String> rootModules, List<Path> modulePath) {
     this.linker = Objects.requireNonNull(linker);
     this.rootModules = Objects.requireNonNull(rootModules);
     this.modulePath = Objects.requireNonNull(modulePath);

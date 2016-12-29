@@ -6,7 +6,7 @@ import java.util.List;
 import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
-public interface UberPackager {
+public interface UberPackagerConf {
   Path moduleArtifactSourcePath();
   void moduleArtifactSourcePath(Path destination);
   

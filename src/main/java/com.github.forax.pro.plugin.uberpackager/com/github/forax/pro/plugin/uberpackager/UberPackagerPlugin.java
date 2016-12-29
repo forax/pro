@@ -17,6 +17,7 @@ import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.util.StableList;
@@ -30,12 +31,12 @@ public class UberPackagerPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    config.getOrUpdate(name(), UberPackager.class);
+    config.getOrUpdate(name(), UberPackagerConf.class);
   }
   
   @Override
   public void configure(MutableConfig config) {
-    UberPackager packager = config.getOrUpdate(name(), UberPackager.class);
+    UberPackagerConf packager = config.getOrUpdate(name(), UberPackagerConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class); 
     
     // inputs
@@ -49,19 +50,19 @@ public class UberPackagerPlugin implements Plugin {
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    UberPackager packager = config.getOrThrow(name(), UberPackager.class);
+    UberPackagerConf packager = config.getOrThrow(name(), UberPackagerConf.class);
     packager.moduleArtifactSourcePath().forEach(registry::watch);
     packager.moduleDependencyPath().forEach(registry::watch);
   }
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
+    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
     ToolProvider jarTool = ToolProvider.findFirst("jar")
         .orElseThrow(() -> new IllegalStateException("can not find the command jar"));
-    UberPackager packager = config.getOrThrow(name(), UberPackager.class);
+    UberPackagerConf packager = config.getOrThrow(name(), UberPackagerConf.class);
     
     Path uberExplodedPath = packager.moduleUberExplodedPath();
     FileHelper.deleteAllFiles(uberExplodedPath, false);

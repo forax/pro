@@ -26,6 +26,7 @@ import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
@@ -40,13 +41,13 @@ public class CompilerPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    Compiler compiler = config.getOrUpdate(name(), Compiler.class);
+    CompilerConf compiler = config.getOrUpdate(name(), CompilerConf.class);
     compiler.release(9);
   }
   
   @Override
   public void configure(MutableConfig config) {
-    Compiler compiler = config.getOrUpdate(name(), Compiler.class);
+    CompilerConf compiler = config.getOrUpdate(name(), CompilerConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
@@ -62,7 +63,7 @@ public class CompilerPlugin implements Plugin {
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    Compiler compiler = config.getOrThrow(name(), Compiler.class);
+    CompilerConf compiler = config.getOrThrow(name(), CompilerConf.class);
     compiler.moduleDependencyPath().forEach(registry::watch);
     compiler.moduleSourcePath().forEach(registry::watch);
     compiler.moduleTestPath().forEach(registry::watch);
@@ -93,12 +94,12 @@ public class CompilerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
+    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
     ToolProvider javacTool = ToolProvider.findFirst("javac")
         .orElseThrow(() -> new IllegalStateException("can not find javac"));
-    Compiler compiler = config.getOrThrow(name(), Compiler.class);
+    CompilerConf compiler = config.getOrThrow(name(), CompilerConf.class);
     
     
     ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(compiler.moduleSourcePath());
@@ -124,7 +125,7 @@ public class CompilerPlugin implements Plugin {
     return compile(log, javacTool, compiler, List.of(moduleMergedTestPath), moduleMergedTestFinder, List.of(compiler.moduleExplodedSourcePath()), compiler.moduleExplodedTestPath(), "test:");
   }
 
-  private static int compile(Log log, ToolProvider javacTool, Compiler compiler, List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, Path destination, String pass) throws IOException {
+  private static int compile(Log log, ToolProvider javacTool, CompilerConf compiler, List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, Path destination, String pass) throws IOException {
     Optional<List<Path>> modulePath = modulePathOrDependencyPath(compiler.modulePath(),
         compiler.moduleDependencyPath(), additionalSourcePath);
     

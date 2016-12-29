@@ -20,6 +20,7 @@ import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
@@ -33,12 +34,12 @@ public class ResolverPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    config.getOrUpdate(name(), Resolver.class);
+    config.getOrUpdate(name(), ResolverConf.class);
   }
   
   @Override
   public void configure(MutableConfig config) {
-    Resolver resolver = config.getOrUpdate(name(), Resolver.class);
+    ResolverConf resolver = config.getOrUpdate(name(), ResolverConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
@@ -52,7 +53,7 @@ public class ResolverPlugin implements Plugin {
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    Resolver resolver = config.getOrThrow(name(), Resolver.class);
+    ResolverConf resolver = config.getOrThrow(name(), ResolverConf.class);
     resolver.moduleSourcePath().forEach(registry::watch);
     resolver.moduleTestPath().forEach(registry::watch);
   }
@@ -67,10 +68,10 @@ public class ResolverPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
+    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
-    Resolver resolver = config.getOrThrow(name(), Resolver.class);
+    ResolverConf resolver = config.getOrThrow(name(), ResolverConf.class);
     
     ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(resolver.moduleSourcePath());
     

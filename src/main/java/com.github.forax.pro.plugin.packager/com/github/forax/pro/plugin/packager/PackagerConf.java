@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
-public interface Packager {
+public interface PackagerConf {
   List<Path> moduleExplodedSourcePath();
   void moduleExplodedSourcePath(List<Path> moduleExplodedPath);
   Path moduleArtifactSourcePath();

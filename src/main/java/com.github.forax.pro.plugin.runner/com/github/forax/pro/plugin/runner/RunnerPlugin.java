@@ -17,6 +17,7 @@ import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.util.StableList;
@@ -29,12 +30,12 @@ public class RunnerPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    config.getOrUpdate(name(), Runner.class);
+    config.getOrUpdate(name(), RunnerConf.class);
   }
   
   @Override
   public void configure(MutableConfig config) {
-    Runner runner = config.getOrUpdate(name(), Runner.class);
+    RunnerConf runner = config.getOrUpdate(name(), RunnerConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class); 
     
     // inputs
@@ -46,7 +47,7 @@ public class RunnerPlugin implements Plugin {
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    Runner runner = config.getOrThrow(name(), Runner.class);
+    RunnerConf runner = config.getOrThrow(name(), RunnerConf.class);
     runner.modulePath().forEach(registry::watch);
   }
   
@@ -88,10 +89,10 @@ public class RunnerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
+    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
-    Runner runner = config.getOrThrow(name(), Runner.class);
+    RunnerConf runner = config.getOrThrow(name(), RunnerConf.class);
     
     Optional<String> moduleName = runner.module()
         .or(() -> findMainModule(runner.modulePath(), log));

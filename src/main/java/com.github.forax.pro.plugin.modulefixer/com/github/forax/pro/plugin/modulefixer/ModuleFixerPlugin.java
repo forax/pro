@@ -32,6 +32,7 @@ import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
@@ -44,13 +45,13 @@ public class ModuleFixerPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    ModuleFixer moduleFixer = config.getOrUpdate(name(), ModuleFixer.class);
+    ModuleFixerConf moduleFixer = config.getOrUpdate(name(), ModuleFixerConf.class);
     moduleFixer.force(false);
   }
   
   @Override
   public void configure(MutableConfig config) {
-    ModuleFixer moduleFxier = config.getOrUpdate(name(), ModuleFixer.class);
+    ModuleFixerConf moduleFxier = config.getOrUpdate(name(), ModuleFixerConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
@@ -62,17 +63,17 @@ public class ModuleFixerPlugin implements Plugin {
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    ModuleFixer moduleFixer = config.getOrThrow(name(), ModuleFixer.class);
+    ModuleFixerConf moduleFixer = config.getOrThrow(name(), ModuleFixerConf.class);
     List<Path> moduleDependencyPath = moduleFixer.moduleDependencyPath();
     moduleDependencyPath.forEach(registry::watch);
   }
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.get("loglevel", String.class).orElse("debug"));
+    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
-    ModuleFixer moduleFixer = config.getOrThrow(name(), ModuleFixer.class);
+    ModuleFixerConf moduleFixer = config.getOrThrow(name(), ModuleFixerConf.class);
     List<Path> moduleDependencyPath = moduleFixer.moduleDependencyPath();
     Path moduleDependencyFixerPath = moduleFixer.moduleDependencyFixerPath().orElseGet(() -> Paths.get("target/deps/module-fixer"));  //FIXME
     

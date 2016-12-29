@@ -16,7 +16,7 @@ public class ConventionPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    Convention convention = config.getOrUpdate(name(), Convention.class);
+    ConventionConf convention = config.getOrUpdate(name(), ConventionConf.class);
     convention.javaHome(Paths.get(System.getProperty("java.home")));
     
     convention.javaModuleSourcePath(List.of(Paths.get("src/main/java")));
