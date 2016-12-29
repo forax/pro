@@ -1,6 +1,6 @@
 package com.github.forax.pro.bootstrap;
 
-import static com.github.forax.pro.Pro.list;
+import static com.github.forax.pro.Pro.*;
 import static com.github.forax.pro.Pro.run;
 import static com.github.forax.pro.Pro.set;
 
@@ -8,7 +8,8 @@ import java.io.IOException;
 
 public class Bootstrap {
   public static void main(String[] args) throws IOException {
-    set("loglevel", "verbose");
+    set("pro.loglevel", "verbose");
+    set("pro.exitOnError", true);
     
     set("packager.moduleMetadata", list(
         "com.github.forax.pro@0.9",

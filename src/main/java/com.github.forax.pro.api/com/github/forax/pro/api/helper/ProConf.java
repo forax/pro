@@ -6,4 +6,7 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 public interface ProConf {
   public String loglevel();
   public void loglevel(String loglevel);
+  
+  public boolean exitOnError();
+  public void exitOnError(boolean exitOnError);
 }

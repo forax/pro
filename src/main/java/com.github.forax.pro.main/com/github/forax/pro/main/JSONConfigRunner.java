@@ -61,6 +61,8 @@ public class JSONConfigRunner implements ConfigRunner {
       throw new UncheckedIOException(e);
     }
     
+    Pro.set("pro.exitOnError", true);
+    
     String[] plugins = pluginNames.stream().map(Object::toString).toArray(String[]::new);
     //System.out.println("run " + String.join(" -> ", plugins));
     Pro.run(plugins);

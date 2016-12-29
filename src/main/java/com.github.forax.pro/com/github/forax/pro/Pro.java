@@ -41,12 +41,13 @@ public class Pro {
     protected DefaultConfig initialValue() {
       Object root = Configs.newRoot();
       DefaultConfig config = new DefaultConfig(root);
-      ProConf master = config.getOrUpdate("pro", ProConf.class);
+      ProConf proConf = config.getOrUpdate("pro", ProConf.class);
       
       Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
         .map(Log.Level::of)
         .orElse(Log.Level.INFO);
-      master.loglevel(logLevel.name().toLowerCase());
+      proConf.loglevel(logLevel.name().toLowerCase());
+      proConf.exitOnError(false);
       return config;
     }
     @Override
@@ -206,31 +207,48 @@ public class Pro {
   }
   
   public static void run(String... pluginNames) {
-    ArrayList<Plugin> plugins = new ArrayList<>();
-    int errorCode = checkPluginNames(PLUGINS, pluginNames, CONFIG.get(), plugins);
-    exitIfNonZero(errorCode);
+    DefaultConfig config = CONFIG.get();
+    ProConf proConf = config.getOrThrow("pro", ProConf.class);
     
-    Config config = CONFIG.get().duplicate().asConfig();
+    ArrayList<Plugin> plugins = new ArrayList<>();
+    int errorCode = checkPluginNames(PLUGINS, pluginNames, config, plugins);
+    if (errorCode != 0) {
+      exit(proConf.exitOnError(), errorCode);
+      return;
+    }
+    
+    Config pluginConfig = config.duplicate().asConfig();
     
     Optional<Daemon> daemonService = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
     BiConsumer<List<Plugin>, Config> consumer = daemonService
         .filter(Daemon::isStarted)
         .<BiConsumer<List<Plugin>, Config>>map(daemon -> daemon::run)
         .orElse(Pro::runAll);
-    consumer.accept(plugins, config);
+    consumer.accept(plugins, pluginConfig);
   }
   
   private static void runAll(List<Plugin> plugins, Config config) {
+    ProConf proConf = config.getOrThrow("pro", ProConf.class);
+    boolean exitOnError = proConf.exitOnError();
+    
+    int errorCode = 0;
     long start = System.currentTimeMillis();
     for(Plugin plugin: plugins) {
-      int errorCode = execute(plugin, config);
-      exitIfNonZero(errorCode);
+      errorCode = execute(plugin, config);
+      if (errorCode != 0) {
+        exit(exitOnError, errorCode);
+        break;
+      }
     }
     long end = System.currentTimeMillis();
     long elapsed = end - start;
-    String logLevel = config.getOrThrow("pro", ProConf.class).loglevel();
-    Log log = Log.create("pro", logLevel);
-    log.info(elapsed, time -> String.format("DONE !          elapsed time %,d ms", time));
+    
+    Log log = Log.create("pro", proConf.loglevel());
+    if (errorCode == 0) {
+      log.info(elapsed, time -> String.format("DONE !          elapsed time %,d ms", time));
+    } else {
+      log.error(elapsed, time -> String.format("FAILED !        elapsed time %,d ms", time));
+    }
   }
   
   private static int execute(Plugin plugin, Config config) {
@@ -247,8 +265,8 @@ public class Pro {
     return errorCode;
   }
   
-  private static void exitIfNonZero(int errorCode) {
-    if (errorCode != 0) {
+  private static void exit(boolean exitOnError, int errorCode) {
+    if (exitOnError) {
       System.exit(errorCode);
       throw new AssertionError("should have exited with code " + errorCode);
     }
