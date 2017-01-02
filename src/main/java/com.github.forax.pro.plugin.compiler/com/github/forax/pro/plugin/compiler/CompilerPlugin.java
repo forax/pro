@@ -112,10 +112,14 @@ public class CompilerPlugin implements Plugin {
       return 0;
     }
     
+    ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(compiler.moduleTestPath());
+    if (moduleTestFinder.findAll().isEmpty()) {  // there is no test module-info defined
+      return 0;
+    }
+    
     Path moduleMergedTestPath = compiler.moduleMergedTestPath();
     deleteAllFiles(moduleMergedTestPath, false);
     
-    ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(compiler.moduleTestPath());
     errorCode = merge(moduleSourceFinder, moduleTestFinder, moduleMergedTestPath);
     if (errorCode != 0) {
       return errorCode;
