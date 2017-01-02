@@ -156,7 +156,12 @@ public class ModuleHelper {
   public static ModuleDescriptor sourceModuleDescriptor(Path moduleInfoPath) {
     ModuleInfo moduleInfo = sourceModuleInfo(moduleInfoPath);
     //ModuleDescriptor.Builder builder = Secret.moduleDescriptor_Builder_init(moduleInfo.getName(), true);
-    ModuleDescriptor.Builder builder = ModuleDescriptor.module(moduleInfo.getName());
+    
+    boolean open = (moduleInfo.modifiers & ACC_OPEN) != 0;
+    ModuleDescriptor.Builder builder = open?
+        ModuleDescriptor.openModule(moduleInfo.getName()):
+        ModuleDescriptor.module(moduleInfo.getName());
+    
     moduleInfo.requires.forEach((module, modifiers) -> builder.requires(requireModifiers(modifiers), module));
     moduleInfo.exports.forEach((packaze, modules) -> {
       if (modules.isEmpty()) {
@@ -261,7 +266,10 @@ public class ModuleHelper {
 
   
   public static ModuleDescriptor mergeModuleDescriptor(ModuleDescriptor sourceModule, ModuleDescriptor testModule) {
-    Builder builder = ModuleDescriptor.module(testModule.name());  //FIXME open module ?
+    boolean open = sourceModule.isOpen() | testModule.isOpen();
+    Builder builder = open?
+        ModuleDescriptor.openModule(testModule.name()):
+        ModuleDescriptor.module(testModule.name());
     
     HashMap<String, Set<Requires.Modifier>> requires = merge(ModuleDescriptor::requires,
         Requires::name, Requires::modifiers, ModuleHelper::mergeRequiresModifiers, sourceModule, testModule);
@@ -361,6 +369,7 @@ public class ModuleHelper {
     }
     
     return new Generator()
+          .$("%s",             desc -> desc.isOpen()? "open":"")
           .$("module %s {",    ModuleDescriptor::name)
           .$("  requires %s;", ModuleDescriptor::requires, Requires::name)
           .$("  exports %s;",  ModuleDescriptor::exports,  Exports::source,   "to %s", Exports::targets)
