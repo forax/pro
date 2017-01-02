@@ -20,10 +20,10 @@ public class ConventionPlugin implements Plugin {
     convention.javaHome(Paths.get(System.getProperty("java.home")));
     
     convention.javaModuleSourcePath(List.of(Paths.get("src/main/java")));
-    convention.javaModuleExplodedSourcePath(List.of(Paths.get("target/src/exploded")));
-    convention.javaModuleArtifactSourcePath(Paths.get("target/src/artifact"));
+    convention.javaModuleExplodedSourcePath(List.of(Paths.get("target/main/exploded")));
+    convention.javaModuleArtifactSourcePath(Paths.get("target/main/artifact"));
     
-    convention.javaModuleTestPath(List.of(Paths.get("test/main/java")));
+    convention.javaModuleTestPath(List.of(Paths.get("src/test/java")));
     convention.javaModuleMergedTestPath(List.of(Paths.get("target/test/merged")));
     convention.javaModuleExplodedTestPath(List.of(Paths.get("target/test/exploded")));
     convention.javaModuleArtifactTestPath(Paths.get("target/test/artifact"));
