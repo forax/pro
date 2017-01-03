@@ -31,6 +31,7 @@ import com.sun.source.tree.IdentifierTree;
 import com.sun.source.tree.MemberSelectTree;
 import com.sun.source.tree.ModuleTree;
 import com.sun.source.tree.ModuleTree.ModuleKind;
+import com.sun.source.tree.OpensTree;
 import com.sun.source.tree.ProvidesTree;
 import com.sun.source.tree.RequiresTree;
 import com.sun.source.tree.Tree;
@@ -94,6 +95,10 @@ public class JavacModuleParser {
       moduleVisitor.visitExports(qualifiedString(node.getPackageName()), asList(node.getModuleNames()));
     }
 
+    public void visitOpens(OpensTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
+      moduleVisitor.visitOpens(qualifiedString(node.getPackageName()), asList(node.getModuleNames()));
+    }
+    
     public void visitUses(UsesTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
       moduleVisitor.visitUses(qualifiedString(node.getServiceName()));
     }
@@ -149,7 +154,7 @@ public class JavacModuleParser {
           (proxy, method, args) -> {
             ModuleHandler.METHOD_MAP
             .getOrDefault(method.getName(), (handler, node, v) -> { 
-              throw new AssertionError("invalid node " + node);
+              throw new AssertionError("invalid node " + node.getClass());
             })
             .visit(moduleHandler, (Tree)args[0], (TreeVisitor<?,?>)proxy);
             return null;
