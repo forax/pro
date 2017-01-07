@@ -1,6 +1,7 @@
 package com.github.forax.pro.helper;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.objectweb.asm.Opcodes.*;
 import static org.objectweb.asm.Opcodes.ACC_OPEN;
 import static org.objectweb.asm.Opcodes.V1_9;
@@ -13,8 +14,11 @@ import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -26,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -36,7 +41,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.objectweb.asm.ClassWriter;
-//import org.objectweb.asm.ModuleVisitor;
+import org.objectweb.asm.ModuleVisitor;
+import org.objectweb.asm.tree.ModuleNode;
+import org.objectweb.asm.tree.ModuleRequireNode;
 
 import com.github.forax.pro.helper.parser.JavacModuleParser;
 
@@ -50,94 +57,58 @@ public class ModuleHelper {
      return serviceNames.stream().anyMatch(provides::contains);
   } 
   
-  public static Set<String> findAllModulesWhichProvideAService(List<String> serviceNames, ModuleFinder finder) {
+  public static Stream<ModuleReference> findAllModulesWhichProvideAService(List<String> serviceNames, ModuleFinder finder) {
     return finder.findAll().stream()
-        .filter(ref -> containsAtLeastAService(ref, serviceNames))
-        .map(ref -> ref.descriptor().name())
-        .collect(Collectors.toSet());
+        .filter(ref -> containsAtLeastAService(ref, serviceNames));
   }
   
   private static Set<Requires.Modifier> requireModifiers(int modifiers) {
-    if ((modifiers & ModuleVisitor.ACC_TRANSITIVE) != 0) {
-      return Set.of(Requires.Modifier.TRANSITIVE);
-    }
-    return Set.of();
+    return Map.of(
+        ACC_MANDATED, Requires.Modifier.MANDATED,
+        ACC_SYNTHETIC, Requires.Modifier.SYNTHETIC,
+        ACC_TRANSITIVE, Requires.Modifier.TRANSITIVE,
+        ACC_STATIC_PHASE, Requires.Modifier.STATIC)
+      .entrySet()
+      .stream()
+      .map(entry -> (modifiers & entry.getKey()) != 0? entry.getValue(): null)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
   }
   
-  static class ModuleInfo {
-    int modifiers;
-    String name;
-    final LinkedHashMap<String, Integer> requires = new LinkedHashMap<>();
-    final LinkedHashMap<String, Set<String>> exports = new LinkedHashMap<>();
-    final LinkedHashMap<String, Set<String>> opens = new LinkedHashMap<>();
-    final LinkedHashSet<String> uses = new LinkedHashSet<>();
-    final LinkedHashMap<String, List<String>> provides = new LinkedHashMap<>();
-    
-    public int getModifiers() {
-      return modifiers;
-    }
-    public String getName() {
-      return name;
-    }
-    public Map<String, Integer> getRequires() {
-      return requires;
-    }
-    public Map<String, Set<String>> getExports() {
-      return exports;
-    }
-    public Map<String, Set<String>> getOpens() {
-      return opens;
-    }
-    public Map<String, List<String>> getProvides() {
-      return provides;
-    }
-  }
-  
-  public static void parseModule(Path moduleInfoPath, ModuleVisitor visitor) {
+  public static void parseModule(Path moduleInfoPath, ModuleClassVisitor visitor) {
     try {
-      //ModuleParser.parse(moduleInfoPath, visitor);
       JavacModuleParser.parse(moduleInfoPath, visitor);
     } catch(IOException e) {
       throw new UncheckedIOException(e);
     }
   }
   
-  private static ModuleInfo sourceModuleInfo(Path moduleInfoPath) {
-    ModuleInfo moduleInfo = new ModuleInfo();
-    moduleInfo.requires.put("java.base", ACC_MANDATED);
-    ModuleVisitor visitor = new ModuleVisitor() {
-      @Override
-      public void visitModule(int modifiers, String name) {
-        moduleInfo.modifiers = modifiers;
-        moduleInfo.name = name;
-      }
+  private static ModuleNode sourceModuleInfo(Path moduleInfoPath) {
+    class Visitor implements  ModuleClassVisitor {
+      ModuleNode moduleNode;
       
       @Override
-      public void visitRequires(int modifiers, String module) {
-        moduleInfo.requires.put(module, modifiers);
+      public ModuleVisitor visitModule(String name, int flags, String version) {
+        return moduleNode = new ModuleNode(name, flags, version);
       }
-      @Override
-      public void visitExports(String packaze, List<String> toModules) {
-        moduleInfo.exports.put(packaze, new LinkedHashSet<>(toModules));
-      }
-      
-      @Override
-      public void visitOpens(String packaze, List<String> toModules) {
-        moduleInfo.opens.put(packaze, new LinkedHashSet<>(toModules));
-      }
-      
-      @Override
-      public void visitUses(String service) {
-        moduleInfo.uses.add(service);
-      }
-      
-      @Override
-      public void visitProvides(String service, List<String> providers) {
-        moduleInfo.provides.put(service, providers);
-      }
-    };
+    }
+    
+    Visitor visitor = new Visitor();
     parseModule(moduleInfoPath, visitor);
-    return moduleInfo;
+    ModuleNode moduleNode = visitor.moduleNode;
+    moduleNode.requires = fixNull(moduleNode.requires);
+    if (moduleNode.requires.stream().noneMatch(require -> require.module.equals("java.base"))) {
+      moduleNode.requires.add(new ModuleRequireNode("java.base", ACC_MANDATED, null));
+    }
+    moduleNode.exports = fixNull(moduleNode.exports);
+    moduleNode.opens = fixNull(moduleNode.opens);
+    moduleNode.uses = fixNull(moduleNode.uses);
+    moduleNode.provides = fixNull(moduleNode.provides);
+    return moduleNode;
+  }
+  
+  private static <T> List<T> fixNull(List<T> list) {
+    return list == null? new ArrayList<>(): list;
   }
   
   private static Set<String> findJavaPackages(Path moduleDirectory) {
@@ -154,36 +125,35 @@ public class ModuleHelper {
   }
   
   public static ModuleDescriptor sourceModuleDescriptor(Path moduleInfoPath) {
-    ModuleInfo moduleInfo = sourceModuleInfo(moduleInfoPath);
-    //ModuleDescriptor.Builder builder = Secret.moduleDescriptor_Builder_init(moduleInfo.getName(), true);
+    ModuleNode moduleNode = sourceModuleInfo(moduleInfoPath);
     
-    boolean open = (moduleInfo.modifiers & ACC_OPEN) != 0;
-    ModuleDescriptor.Builder builder = open?
-        ModuleDescriptor.openModule(moduleInfo.getName()):
-        ModuleDescriptor.module(moduleInfo.getName());
+    boolean isOpen = (moduleNode.access & ACC_OPEN) != 0;
+    ModuleDescriptor.Builder builder = isOpen?
+        ModuleDescriptor.openModule(moduleNode.name):
+        ModuleDescriptor.module(moduleNode.name);
     
-    moduleInfo.requires.forEach((module, modifiers) -> builder.requires(requireModifiers(modifiers), module));
-    moduleInfo.exports.forEach((packaze, modules) -> {
-      if (modules.isEmpty()) {
-        builder.exports(packaze);
+    moduleNode.requires.forEach(require -> builder.requires(requireModifiers(require.access), require.module));
+    moduleNode.exports.forEach(export -> {
+      if (export.modules.isEmpty()) {
+        builder.exports(export.packaze);
       } else {
-        builder.exports(packaze, modules);
+        builder.exports(export.packaze, export.modules.stream().collect(toSet()));
       }
     });
-    moduleInfo.opens.forEach((packaze, modules) -> {
-      if (modules.isEmpty()) {
-        builder.opens(packaze);
+    moduleNode.opens.forEach(open -> {
+      if (open.modules.isEmpty()) {
+        builder.opens(open.packaze);
       } else {
-        builder.opens(packaze, modules);
+        builder.opens(open.packaze, open.modules.stream().collect(toSet()));
       }
     });
-    moduleInfo.uses.forEach(builder::uses);
-    moduleInfo.provides.forEach(builder::provides);
+    moduleNode.uses.forEach(builder::uses);
+    moduleNode.provides.forEach(provide -> builder.provides(provide.service, provide.providers));
 
     Path moduleDirectory = moduleInfoPath.getParent();
     Set<String> javaPackages = findJavaPackages(moduleDirectory);
-    javaPackages.removeAll(moduleInfo.exports.keySet());
-    javaPackages.removeAll(moduleInfo.opens.keySet());
+    javaPackages.removeAll(moduleNode.exports.stream().map(export -> export.packaze).collect(Collectors.toList()));
+    javaPackages.removeAll(moduleNode.opens.stream().map(export -> export.packaze).collect(Collectors.toList()));
     builder.contains(javaPackages);
 
     ModuleDescriptor descriptor = builder.build();
@@ -211,7 +181,16 @@ public class ModuleHelper {
           .flatMap(path -> Optional.of(path.resolve("module-info.java"))
                                    .filter(Files::exists)
                                    .map(ModuleHelper::sourceModuleDescriptor)
-                                   .map(descriptor -> new ModuleReference(descriptor, path.toUri(), () -> null)));
+                                   .map(descriptor -> moduleReference(descriptor, path.toUri(), null)));
+      }
+    };
+  }
+  
+  static ModuleReference moduleReference(ModuleDescriptor descriptor, URI uri, ModuleReader moduleReader) {
+    return new ModuleReference(descriptor, uri) {
+      @Override
+      public ModuleReader open() throws IOException {
+        return moduleReader;
       }
     };
   }
@@ -383,18 +362,35 @@ public class ModuleHelper {
 
   public static byte[] moduleDescriptorToBinary(ModuleDescriptor descriptor) {
     ClassWriter classWriter = new ClassWriter(0);
-    classWriter.visit(V1_9, ACC_MODULE, null, null, null, null);
-    org.objectweb.asm.ModuleVisitor mv = classWriter.visitModule(descriptor.name().replace('.', '/'), ACC_OPEN);
-    descriptor.version().ifPresent(version -> mv.visitVersion(version.toString()));
+    classWriter.visit(V1_9, ACC_MODULE, "module-info", null, null, null);
+    int moduleFlags = (descriptor.isOpen()? ACC_OPEN: 0) | ACC_SYNTHETIC;   // mark all generated module-info.class as synthetic    
+    String moduleVersion = descriptor.version().map(Version::toString).orElse(null);
+    org.objectweb.asm.ModuleVisitor mv = classWriter.visitModule(descriptor.name(), moduleFlags, moduleVersion);
+    descriptor.packages().forEach(packaze -> mv.visitPackage(packaze.replace('.', '/')));
+    
+    descriptor.mainClass().ifPresent(mainClass -> mv.visitMainClass(mainClass.replace('.', '/')));
+    
+    String osName = descriptor.osName().orElse(null);
+    String osArch = descriptor.osArch().orElse(null);
+    String osVersion = descriptor.osName().orElse(null);
+    mv.visitTarget(osName, osArch, osVersion);
+    
     descriptor.requires().forEach(require -> {
       int modifiers = require.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
-      mv.visitRequire(require.name().replace('.', '/'), modifiers);
+      mv.visitRequire(require.name(), modifiers, null);
     });
     descriptor.exports().forEach(export -> {
       int modifiers = export.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
       mv.visitExport(export.source().replace('.', '/'), modifiers, export.targets().toArray(new String[0]));
     });
-    //FIXME add support of packages, uses and provides
+    descriptor.opens().forEach(open -> {
+      int modifiers = open.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
+      mv.visitExport(open.source().replace('.', '/'), modifiers, open.targets().toArray(new String[0]));
+    });
+    descriptor.uses().forEach(service -> mv.visitUse(service));
+    descriptor.provides().forEach(provide -> {
+      mv.visitProvide(provide.service().replace('.', '/'), provide.providers().stream().map(name -> name.replace('.', '/')).toArray(String[]::new));
+    });
     mv.visitEnd();
     classWriter.visitEnd();
     return classWriter.toByteArray();
@@ -416,6 +412,17 @@ public class ModuleHelper {
   }
   
   private static int modifierToInt(Exports.Modifier modifier) {
+    switch(modifier) {
+    case MANDATED:
+      return ACC_MANDATED;
+    case SYNTHETIC:
+      return ACC_SYNTHETIC;
+    default:
+      throw new IllegalStateException("unknown modifier " + modifier);
+    }
+  }
+  
+  private static int modifierToInt(Opens.Modifier modifier) {
     switch(modifier) {
     case MANDATED:
       return ACC_MANDATED;

@@ -15,6 +15,7 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.reflect.Layer;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -113,13 +114,12 @@ public class Main {
           packages.remove(packageOf(mainClassName));
           packages.forEach(builder::contains);
           
-          main = new ModuleReference(builder.build(), ref.location().get(), () -> {
-            try {
+          main = new ModuleReference(builder.build(), ref.location().get()) {
+            @Override
+            public ModuleReader open() throws IOException {
               return ref.open();
-            } catch (IOException e) {
-              throw new UncheckedIOException(e);
             }
-          });
+          };
         }
         return Optional.of(main);
       }

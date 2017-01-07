@@ -2,21 +2,28 @@ package com.github.forax.pro.plugin.linker;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 class Jlink {
   private final LinkerConf linker;
-  private final List<String> rootModules;
+  private final Set<String> rootModules;
+  private final Map<String, String> launchers;
   private final List<Path> modulePath;
 
-  Jlink(LinkerConf linker, List<String> rootModules, List<Path> modulePath) {
+  Jlink(LinkerConf linker, Set<String> rootModules, Map<String, String> launchers, List<Path> modulePath) {
     this.linker = Objects.requireNonNull(linker);
     this.rootModules = Objects.requireNonNull(rootModules);
+    this.launchers = Objects.requireNonNull(launchers);
     this.modulePath = Objects.requireNonNull(modulePath);
   }
   
-  public List<String> rootModules() {
+  public Set<String> rootModules() {
     return rootModules;
+  }
+  public Map<String, String> launchers() {
+    return launchers;
   }
   public List<Path> modulePath() {
     return modulePath;

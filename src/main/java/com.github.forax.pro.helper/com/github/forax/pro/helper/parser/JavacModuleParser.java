@@ -1,10 +1,9 @@
 package com.github.forax.pro.helper.parser;
 
 
-import static com.github.forax.pro.helper.ModuleVisitor.ACC_OPEN;
-import static com.github.forax.pro.helper.ModuleVisitor.ACC_STATIC;
-import static com.github.forax.pro.helper.ModuleVisitor.ACC_TRANSITIVE;
-import static java.util.stream.Collectors.toList;
+import static org.objectweb.asm.Opcodes.ACC_OPEN;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -23,7 +22,9 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
-import com.github.forax.pro.helper.ModuleVisitor;
+import org.objectweb.asm.ModuleVisitor;
+
+import com.github.forax.pro.helper.ModuleClassVisitor;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExportsTree;
 import com.sun.source.tree.ExpressionTree;
@@ -41,10 +42,13 @@ import com.sun.source.util.JavacTask;
 
 public class JavacModuleParser { 
   static class ModuleHandler {
-    private final ModuleVisitor moduleVisitor;
+    private static final String[] EMPTY_ARRAY = new String[0];
     
-    ModuleHandler(ModuleVisitor moduleVisitor) {
-      this.moduleVisitor = moduleVisitor;
+    private final ModuleClassVisitor moduleClassVisitor;
+    private ModuleVisitor mv;
+    
+    ModuleHandler(ModuleClassVisitor moduleClassVisitor) {
+      this.moduleClassVisitor = moduleClassVisitor;
     }
     
     private static void accept(TreeVisitor<?, ?> visitor, Tree node) {
@@ -63,11 +67,11 @@ public class JavacModuleParser {
       }
     }
     
-    private static List<String> asList(List<? extends ExpressionTree> trees) {
+    private static String[] toArray(List<? extends ExpressionTree> trees) {
       if (trees == null) {
-        return List.of();
+        return EMPTY_ARRAY;
       }
-      return trees.stream().map(ModuleHandler::qualifiedString).collect(toList());
+      return trees.stream().map(ModuleHandler::qualifiedString).toArray(String[]::new);
     }
     
     @SuppressWarnings("static-method")
@@ -81,30 +85,33 @@ public class JavacModuleParser {
     }
     
     public void visitModule(ModuleTree node, TreeVisitor<?, ?> visitor) {
-      int modifiers = node.getModuleType() == ModuleKind.OPEN? ACC_OPEN: 0;
-      moduleVisitor.visitModule(modifiers, qualifiedString(node.getName()));
+      String name = qualifiedString(node.getName());
+      int flags = node.getModuleType() == ModuleKind.OPEN? ACC_OPEN: 0;
+      
+      mv = moduleClassVisitor.visitModule(name, flags, null);
+      
       node.getDirectives().forEach(n -> accept(visitor, n));
     }
 
     public void visitRequires(RequiresTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
       int modifiers = (node.isStatic()? ACC_STATIC: 0) | (node.isTransitive()? ACC_TRANSITIVE: 0);
-      moduleVisitor.visitRequires(modifiers, qualifiedString(node.getModuleName()));
+      mv.visitRequire(qualifiedString(node.getModuleName()), modifiers, null);
     }
     
     public void visitExports(ExportsTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
-      moduleVisitor.visitExports(qualifiedString(node.getPackageName()), asList(node.getModuleNames()));
+      mv.visitExport(qualifiedString(node.getPackageName()), 0, toArray(node.getModuleNames()));
     }
 
     public void visitOpens(OpensTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
-      moduleVisitor.visitOpens(qualifiedString(node.getPackageName()), asList(node.getModuleNames()));
+      mv.visitOpen(qualifiedString(node.getPackageName()), 0, toArray(node.getModuleNames()));
     }
     
     public void visitUses(UsesTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
-      moduleVisitor.visitUses(qualifiedString(node.getServiceName()));
+      mv.visitUse(qualifiedString(node.getServiceName()));
     }
     
     public void visitProvides(ProvidesTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
-      moduleVisitor.visitProvides(qualifiedString(node.getServiceName()), asList(node.getImplementationNames()));
+      mv.visitProvide(qualifiedString(node.getServiceName()), toArray(node.getImplementationNames()));
     }
     
     
@@ -140,7 +147,7 @@ public class JavacModuleParser {
     }
   }
   
-  public static void parse(Path moduleInfoPath, ModuleVisitor moduleVisitor) throws IOException {
+  public static void parse(Path moduleInfoPath, ModuleClassVisitor moduleClassVisitor) throws IOException {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     try(StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
       Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjects(moduleInfoPath);
@@ -149,7 +156,7 @@ public class JavacModuleParser {
       Iterable<? extends CompilationUnitTree> units= javacTask.parse();
       CompilationUnitTree unit = units.iterator().next();
 
-      ModuleHandler moduleHandler = new ModuleHandler(moduleVisitor);
+      ModuleHandler moduleHandler = new ModuleHandler(moduleClassVisitor);
       TreeVisitor<?,?> visitor = (TreeVisitor<?,?>)Proxy.newProxyInstance(TreeVisitor.class.getClassLoader(), new Class<?>[]{ TreeVisitor.class},
           (proxy, method, args) -> {
             ModuleHandler.METHOD_MAP

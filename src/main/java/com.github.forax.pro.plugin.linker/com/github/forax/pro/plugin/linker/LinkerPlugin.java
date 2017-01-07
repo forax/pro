@@ -4,11 +4,18 @@ import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
 
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.spi.ToolProvider;
 import java.util.stream.Collectors;
 
@@ -62,9 +69,17 @@ public class LinkerPlugin implements Plugin {
     registry.watch(linker.moduleArtifactSourcePath());
   }
   
+  public static OptionAction<Jlink> launcherAction(String optionName, Function<? super Jlink, ? extends Map<String,String>> mapper) {
+    return config -> Optional.of(line -> {
+      mapper.apply(config).forEach((name, mainClass) -> line.add(optionName).add(name + '=' + mainClass));
+      return line;
+    });
+  }
+  
   enum JlinkOption {
     MODULE_PATH(action("--module-path", Jlink::modulePath, ":")),
     ADD_MODULES(action("--add-modules", Jlink::rootModules, ",")),
+    LAUNCHER(launcherAction("--launcher", Jlink::launchers)),
     COMPRESS(action("--compress", Jlink::compressLevel)),
     STRIP_DEBUG(exists("--strip-debug", Jlink::stripDebug)),
     STRIP_NATIVE_COMMANDS(exists("--strip-native-commands", Jlink::stripNativeCommands)),
@@ -76,6 +91,10 @@ public class LinkerPlugin implements Plugin {
     private JlinkOption(OptionAction<Jlink> action) {
       this.action = action;
     }
+  }
+  
+  private static String launcher(ModuleDescriptor moduleDescriptor) {
+    return moduleDescriptor.name();  //TODO add user input
   }
   
   @Override
@@ -93,15 +112,28 @@ public class LinkerPlugin implements Plugin {
     }
     
     ModuleFinder moduleFinder = ModuleFinder.of(linker.moduleArtifactSourcePath());
-    List<String> rootModules = linker.rootModules().orElseGet(() -> {
+    Set<String> rootModules = linker.rootModules().map(HashSet::new).orElseGet(() -> {
       return moduleFinder.findAll().stream()
           .map(reference -> reference.descriptor().name())
-          .collect(Collectors.toList());
+          .collect(Collectors.toCollection(HashSet::new));
     });
     linker.serviceNames().ifPresent(serviceNames -> {
       ModuleFinder rootFinder = ModuleFinder.compose(moduleFinder, ModuleFinder.ofSystem());
-      rootModules.addAll(ModuleHelper.findAllModulesWhichProvideAService(serviceNames, rootFinder));
+      ModuleHelper.findAllModulesWhichProvideAService(serviceNames, rootFinder)
+        .map(ref -> ref.descriptor().name())
+        .forEach(rootModules::add);
     });
+    
+    // find launcher main classes
+    Map<String, String> launchers = rootModules.stream()
+      .flatMap(root -> moduleFinder.find(root).stream())
+      .map(ModuleReference::descriptor)
+      .filter(desc -> desc.mainClass().isPresent())
+      .collect(Collectors.toMap(desc -> launcher(desc), desc -> desc.name() + '/' + desc.mainClass().get()));
+    if (launchers.isEmpty()) {
+      log.error(null, __ -> "no main class found among root modules");
+      return 1; //FIXME
+    }
     
     List<Path> modulePath =
         linker.modulePath()
@@ -111,7 +143,8 @@ public class LinkerPlugin implements Plugin {
                 .append(linker.moduleArtifactSourcePath()));
     
     log.debug(rootModules, roots -> "rootModules " + roots);
-    Jlink jlink = new Jlink(linker, rootModules, modulePath);
+    log.debug(launchers, launcherMains -> "launchers " + launcherMains);
+    Jlink jlink = new Jlink(linker, rootModules, launchers, modulePath);
     
     Path destination = linker.destination();
     FileHelper.deleteAllFiles(destination, true);

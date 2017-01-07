@@ -1,6 +1,7 @@
 package com.github.forax.pro.plugin.modulefixer;
 
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -109,7 +110,7 @@ public class ModuleFixerPlugin implements Plugin {
       Set<String> exports;
       ModuleDescriptor descriptor = ref.descriptor();
       String name = descriptor.name();
-      if (descriptor.isAutomatic() || (force && additionalRequireMap.containsKey(name))) {
+      if (descriptor.isAutomatic() || /*descriptor.isSynthetic() ||*/ (force && additionalRequireMap.containsKey(name))) {
         HashSet<String> requires = new HashSet<>();
         exports = new HashSet<>();
         findRequiresAndExports(ref, requires, exports);
@@ -130,7 +131,7 @@ public class ModuleFixerPlugin implements Plugin {
     int errorCode = 0;
     for(Map.Entry<String, List<ModuleReference>> entry: exportMap.entrySet()) {
       String packageName = entry.getKey();
-      List<ModuleReference> refs = entry.getValue();
+      List<String> refs = entry.getValue().stream().map(ref -> ref.descriptor().toNameAndVersion()).collect(toList());
       if (refs.size() != 1) {
         System.err.println("[modulefixer] multiple modules " + refs + " contains package " + packageName);
         errorCode = 1;
@@ -223,16 +224,17 @@ public class ModuleFixerPlugin implements Plugin {
           try(InputStream input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource))) {
             ClassReader classReader = new ClassReader(input);
             String className = classReader.getClassName();
-            if (className == null) { //FIXME, module name is null !!
+            if (className.equals("module-info")) {
               return;  // skip module-info
             }
-            exports.add(packageOf(className));
+            String packageName = packageOf(className);
+            exports.add(packageName);
             classReader.accept(new ClassRemapper(null, new Remapper() {
               @Override
               public String map(String typeName) {
                 String packageName = packageOf(typeName);
                 requires.add(packageName);
-                return packageName;
+                return typeName;
               }
             }) {
               // consider that annotations are not real dependencies
@@ -253,7 +255,7 @@ public class ModuleFixerPlugin implements Plugin {
   static String packageOf(String typeName) {
     int index = typeName.lastIndexOf('/');
     if (index == -1) {
-      return typeName;
+      return "";
     }
     return typeName.substring(0, index);
   }
