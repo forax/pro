@@ -27,4 +27,9 @@ public class CmdLine {
   public String[] toArguments() {
     return arguments.toArray(new String[0]);
   }
+  
+  @Override
+  public String toString() {
+    return arguments.stream().collect(joining(" "));
+  }
 }

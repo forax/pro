@@ -168,6 +168,7 @@ public class CompilerPlugin implements Plugin {
         () -> walkIfNecessary(moduleSourcePath, pathFilenameEndsWith(".java")));  //FIXME, use rootNames ??
     files.forEach(cmdLine::add);
     String[] arguments = cmdLine.toArguments();
+    log.verbose(files, fs -> OptionAction.toPrettyString(JavacOption.class, option -> option.action).apply(javac, "javac") + "\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
     
     log.verbose(arguments, args -> "javac " + String.join(" ", args));
     return javacTool.run(System.out, System.err, arguments);

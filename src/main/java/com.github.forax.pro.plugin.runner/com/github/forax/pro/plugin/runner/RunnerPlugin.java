@@ -102,6 +102,7 @@ public class RunnerPlugin implements Plugin {
     
     Java java = new Java(runner.javaCommand(), runner.modulePath(), moduleName.get());
     String[] arguments = OptionAction.gatherAll(RunnerOption.class, option -> option.action).apply(java, new CmdLine()).toArguments();
+    log.verbose(java, _java -> OptionAction.toPrettyString(RunnerOption.class, option -> option.action).apply(_java, "java"));
     
     Path javaCommand = java.getJavaCommand();
     if (!Files.exists(javaCommand)) {

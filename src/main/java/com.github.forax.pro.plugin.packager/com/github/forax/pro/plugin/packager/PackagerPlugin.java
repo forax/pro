@@ -133,7 +133,7 @@ public class PackagerPlugin implements Plugin {
     cmdLine = OptionAction.gatherAll(JarOption.class, option -> option.action).apply(jar, cmdLine);
     String[] arguments = cmdLine.add(".").toArguments();
     
-    log.verbose(arguments, args -> "jar " + String.join(" ", args));
+    log.verbose(jar, _jar -> OptionAction.toPrettyString(JarOption.class, option -> option.action).apply(_jar, "jar"));
     int exitCode = jarTool.run(System.out, System.err, arguments);
     return exitCode;
   }

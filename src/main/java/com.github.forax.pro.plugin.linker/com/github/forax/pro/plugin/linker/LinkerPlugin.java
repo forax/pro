@@ -150,8 +150,8 @@ public class LinkerPlugin implements Plugin {
     FileHelper.deleteAllFiles(destination, true);
     
     String[] arguments = OptionAction.gatherAll(JlinkOption.class, option -> option.action).apply(jlink, new CmdLine()).toArguments();
+    log.verbose(null, __ -> OptionAction.toPrettyString(JlinkOption.class, option -> option.action).apply(jlink, "jlink"));
     
-    log.verbose(arguments, args -> "jlink " + String.join(" ", args));
     int errorCode = jlinkTool.run(System.out, System.err, arguments);
     if (errorCode != 0) {
       return errorCode; 
