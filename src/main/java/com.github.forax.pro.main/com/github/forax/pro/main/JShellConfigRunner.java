@@ -2,8 +2,8 @@ package com.github.forax.pro.main;
 
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.ServiceLoader;
 
-import com.github.forax.pro.helper.secret.Secret;
 import com.github.forax.pro.main.runner.ConfigRunner;
 
 public class JShellConfigRunner implements ConfigRunner {
@@ -19,6 +19,8 @@ public class JShellConfigRunner implements ConfigRunner {
     // jshell use another process, so config is lost   FIXME
     //Pro.set("pro.exitOnError", true);
     
-    Secret.jShellTool_main(configFile.toString());
+    //Secret.jShellTool_main(configFile.toString());
+    
+    JShellWrapper.run(System.in, System.out, System.err, configFile.toString());
   }
 }

@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.github.forax.pro.daemon.Daemon;
-import com.github.forax.pro.helper.secret.Secret;
 import com.github.forax.pro.main.runner.ConfigRunner;
 
 public class Main {
@@ -69,7 +68,7 @@ public class Main {
     if (getDaemon().filter(Daemon::isStarted).isPresent()) {
       throw new IllegalStateException("shell doesn't currently support daemon mode :(");
     }
-    Secret.jShellTool_main();
+    JShellWrapper.run(System.in, System.out, System.err);
   }
   
   static void build(String[] args) {
