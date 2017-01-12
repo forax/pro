@@ -2,7 +2,6 @@ package com.github.forax.pro.main;
 
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.ServiceLoader;
 
 import com.github.forax.pro.main.runner.ConfigRunner;
 
