@@ -80,6 +80,7 @@ public class CompilerPlugin implements Plugin {
   enum JavacOption {
     RELEASE(action("--release", Javac::release)),
     VERBOSE(exists("--verbose", Javac::verbose)),
+    LINT(javac -> javac.lint().map(lint -> line -> line.add("-Xlint:" + lint))),
     DESTINATION(action("-d", Javac::destination)),
     MODULE_SOURCE_PATH(action("--module-source-path", Javac::moduleSourcePath, ":")),
     MODULE_PATH(actionMaybe("--module-path", Javac::modulePath, ":")),
@@ -161,6 +162,7 @@ public class CompilerPlugin implements Plugin {
     
     Javac javac = new Javac(compiler.release(), destination, moduleSourcePath);
     compiler.verbose().ifPresent(javac::verbose);
+    compiler.lint().ifPresent(javac::lint);
     modulePath.ifPresent(javac::modulePath);
     
     CmdLine cmdLine = gatherAll(JavacOption.class, option -> option.action).apply(javac, new CmdLine());

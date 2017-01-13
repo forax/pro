@@ -1,4 +1,4 @@
-package com.github.forax.pro.helper;
+package com.github.forax.pro.helper.parser;
 
 import org.objectweb.asm.ModuleVisitor;
 

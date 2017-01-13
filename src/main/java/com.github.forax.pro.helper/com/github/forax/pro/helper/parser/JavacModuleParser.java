@@ -24,7 +24,6 @@ import javax.tools.ToolProvider;
 
 import org.objectweb.asm.ModuleVisitor;
 
-import com.github.forax.pro.helper.ModuleClassVisitor;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExportsTree;
 import com.sun.source.tree.ExpressionTree;

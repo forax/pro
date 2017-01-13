@@ -12,6 +12,7 @@ class Javac {
   
   private List<Path> modulePath;
   private boolean verbose; 
+  private String lint;
   
   Javac(int release, Path destination, List<Path> moduleSourcePath) {
     this.release = release;
@@ -34,6 +35,13 @@ class Javac {
   }
   public void verbose(boolean verbose) {
     this.verbose = verbose;
+  }
+  
+  public Optional<String> lint() {
+    return Optional.ofNullable(lint);
+  }
+  public void lint(String lint) {
+    this.lint = Objects.requireNonNull(lint);
   }
   
   public Optional<List<Path>> modulePath() {

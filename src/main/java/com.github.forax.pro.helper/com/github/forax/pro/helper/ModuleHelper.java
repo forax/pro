@@ -46,6 +46,7 @@ import org.objectweb.asm.tree.ModuleNode;
 import org.objectweb.asm.tree.ModuleRequireNode;
 
 import com.github.forax.pro.helper.parser.JavacModuleParser;
+import com.github.forax.pro.helper.parser.ModuleClassVisitor;
 
 public class ModuleHelper {
   private ModuleHelper() {
@@ -75,7 +76,7 @@ public class ModuleHelper {
       .collect(Collectors.toSet());
   }
   
-  public static void parseModule(Path moduleInfoPath, ModuleClassVisitor visitor) {
+  private static void parseModule(Path moduleInfoPath, ModuleClassVisitor visitor) {
     try {
       JavacModuleParser.parse(moduleInfoPath, visitor);
     } catch(IOException e) {

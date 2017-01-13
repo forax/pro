@@ -14,6 +14,9 @@ public interface CompilerConf {
   Optional<Boolean> verbose();
   void verbose(boolean verbose);
   
+  Optional<String> lint();
+  void lint(String lintOptions);
+  
   List<Path> moduleSourcePath();
   void moduleSourcePath(List<Path> modulePath);
   Path moduleExplodedSourcePath();
