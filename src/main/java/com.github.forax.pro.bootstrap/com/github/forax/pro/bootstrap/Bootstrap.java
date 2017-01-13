@@ -11,7 +11,8 @@ public class Bootstrap {
     set("pro.loglevel", "verbose");
     set("pro.exitOnError", true);
     
-    set("compiler.lint", "exports,module");
+    //set("compiler.lint", "exports,module");
+    set("compiler.lint", "all,-varargs,-overloads");
     
     set("packager.moduleMetadata", list(
         "com.github.forax.pro@0.9",
