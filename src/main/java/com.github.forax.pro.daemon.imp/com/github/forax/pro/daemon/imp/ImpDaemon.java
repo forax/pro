@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.Log;
 
@@ -104,8 +105,7 @@ public class ImpDaemon implements Daemon {
         } 
       }
       if (errorCode == 0) {
-        String logLevel = config.get("loglevel", String.class).orElse("debug");
-        Log log = Log.create("daemon", logLevel);
+        Log log = Log.create("daemon", config.getOrThrow("pro", ProConf.class).loglevel());
         log.info(null, __ -> "DONE !");
       }
     }
@@ -329,7 +329,7 @@ public class ImpDaemon implements Daemon {
       plugins.get(0).watch(config, roots::add);
       
       // start a new watcher thread
-      Log log = Log.create("daemon", config.get("loglevel", String.class).orElse("debug"));
+      Log log = Log.create("daemon", config.getOrThrow("pro", ProConf.class).loglevel());
       Thread watcherThread = new Thread(() -> watcherLoop(watcher, refresher, log, roots));
       watcherThread.start();
       
