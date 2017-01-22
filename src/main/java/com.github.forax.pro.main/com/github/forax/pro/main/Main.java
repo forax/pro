@@ -1,14 +1,19 @@
 package com.github.forax.pro.main;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.main.runner.ConfigRunner;
@@ -43,6 +48,7 @@ public class Main {
     SHELL(__ -> shell()),
     BUILD(Main::build),
     DAEMON(Main::daemon),
+    SCAFFOLD(__ -> scaffold()), 
     HELP(__ -> help())
     ;
     
@@ -57,6 +63,36 @@ public class Main {
           .filter(command -> command.name().toLowerCase().equals(name))
           .findFirst()
           .orElseThrow(() -> { throw new IllegalArgumentException("unknown sub command " + name); });
+    }
+  }
+  
+  static void scaffold() {
+    List<String> lines = List.of(
+        "{                                                                             ",
+        "  resolver: {                                                                 ",
+        "    dependencies: [                                                           ",          
+        "//    \"org.junit=junit:junit:4.12\"                                          ",
+        "    ]                                                                         ",
+        "  },                                                                          ",
+        "  packager: {                                                                 ",
+        "    moduleMetadata: [                                                         ",
+        "//    \"my.module@1.0/com.foo.my.module.Main\"                                ",
+        "    ]                                                                         ",
+        "  },                                                                          ",
+        "//run: [\"resolver\", \"modulefixer\", \"compiler\", \"packager\", \"runner\"]",
+        "  run: [\"compiler\", \"packager\"]                                           ",
+        "}                                                                             "
+      );
+    
+    try {
+      Files.write(Paths.get("build.json"),
+          (Iterable<String>)lines.stream().filter(l -> !l.startsWith("//"))::iterator,
+          StandardOpenOption.CREATE_NEW);
+      System.out.println(String.join("\n", lines));
+      
+      Files.createDirectories(Paths.get("src", "main", "java"));
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
   
@@ -108,8 +144,9 @@ public class Main {
         "  subcommands                                                                  \n" +
         "    build [buildfile]  execute the build file                                  \n" +
         "                       use build.json or build.pro if no buildfile is specified\n" +
-        "    shell              start the interactive shell                             \n" +
         "    daemon subcommand  start the subcommand in daemon mode                     \n" +
+        "    shell              start the interactive shell                             \n" +
+        "    scaffold           create a default build.json                             \n" +
         "    help               this help                                               \n" +
         "                                                                               \n" +
         "  if no subcommand is specified, 'build' is used                               \n"
