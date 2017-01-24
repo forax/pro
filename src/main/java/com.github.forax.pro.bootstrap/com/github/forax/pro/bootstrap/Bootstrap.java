@@ -5,6 +5,9 @@ import static com.github.forax.pro.Pro.run;
 import static com.github.forax.pro.Pro.set;
 
 import java.io.IOException;
+import java.lang.module.ModuleFinder;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Bootstrap {
   public static void main(String[] args) throws IOException {
@@ -59,12 +62,11 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.runner",
         "com.github.forax.pro.plugin.uberpackager",
         "com.github.forax.pro.uberbooter",            // needed by ubermain
-        "com.github.forax.pro.daemon.imp",
-        "jdk.compiler",
-        "jdk.zipfs",      // needed by the compiler to open compressed zip !
-        "jdk.jartool",
-        "jdk.jlink",
-        "jdk.jshell"));
+        "com.github.forax.pro.daemon.imp"
+        )                                             // then add all system modules
+        .appendAll(ModuleFinder.ofSystem().findAll().stream()
+                  .map(ref -> ref.descriptor().name())
+                  .collect(Collectors.toSet())));
     
     //set("linker.stripNativeCommands", true);
     //set("linker.serviceNames", list("java.util.spi.ToolProvider"));

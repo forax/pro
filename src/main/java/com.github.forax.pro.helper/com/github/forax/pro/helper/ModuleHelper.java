@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -36,6 +37,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -206,6 +208,26 @@ public class ModuleHelper {
         directories.stream()
                    .map(ModuleHelper::sourceModuleFinder)
                    .toArray(ModuleFinder[]::new));
+  }
+  
+  public static ModuleFinder filter(ModuleFinder finder, Predicate<? super ModuleReference> predicate) {
+    return new ModuleFinder() {
+      private Set<ModuleReference> filtered;
+      
+      @Override
+      public Set<ModuleReference> findAll() {
+        if (filtered != null) {
+          return filtered;
+        }
+        return filtered = Collections.unmodifiableSet(
+            finder.findAll().stream().filter(predicate).collect(Collectors.toSet()));
+      }
+      
+      @Override
+      public Optional<ModuleReference> find(String name) {
+        return finder.find(name).filter(predicate);
+      }
+    };
   }
   
   public interface ResolverFailureListener {
