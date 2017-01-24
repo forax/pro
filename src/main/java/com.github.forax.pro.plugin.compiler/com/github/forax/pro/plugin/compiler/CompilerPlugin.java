@@ -116,6 +116,7 @@ public class CompilerPlugin implements Plugin {
     
     ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(compiler.moduleTestPath());
     if (moduleTestFinder.findAll().isEmpty()) {  // there is no test module-info defined
+      log.info(compiler.moduleTestPath(), testPath -> "test: can not find any test modules in " + testPath.stream().map(Path::toString).collect(Collectors.joining(", ")));
       return 0;
     }
     
@@ -144,6 +145,10 @@ public class CompilerPlugin implements Plugin {
     List<String> rootSourceNames = moduleFinder.findAll().stream()
             .map(ref -> ref.descriptor().name())
             .collect(Collectors.toList());
+    if (rootSourceNames.isEmpty()) {
+      log.error(moduleSourcePath, sourcePath -> pass + " can not find any modules in " + sourcePath.stream().map(Path::toString).collect(Collectors.joining(", ")));
+      return 1; //FIXME
+    }
     
     /*
     Configuration.resolveRequires(ModuleFinder.compose(sourceModuleFinder, dependencyFinder),
