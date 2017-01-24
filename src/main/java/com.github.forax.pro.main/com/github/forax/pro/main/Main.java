@@ -2,6 +2,7 @@ package com.github.forax.pro.main;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleDescriptor.Version;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,7 +49,8 @@ public class Main {
     BUILD(Main::build),
     DAEMON(Main::daemon),
     SCAFFOLD(__ -> scaffold()), 
-    HELP(__ -> help())
+    HELP(__ -> help()),
+    VERSION(__ -> version())
     ;
     
     final Consumer<String[]> consumer;
@@ -93,6 +95,12 @@ public class Main {
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+  
+  static void version() {
+    System.out.println(
+        "pro " + Main.class.getModule().getDescriptor().version().map(Version::toString).orElse("unknown") +
+        " / jdk " + Runtime.version());
   }
   
   private static Optional<Daemon> getDaemon() {
@@ -146,6 +154,7 @@ public class Main {
         "    daemon subcommand  start the subcommand in daemon mode                     \n" +
         "    shell              start the interactive shell                             \n" +
         "    scaffold           create a default build.json                             \n" +
+        "    version            print the current version                               \n" +
         "    help               this help                                               \n" +
         "                                                                               \n" +
         "  if no subcommand is specified, 'build' is used                               \n"
