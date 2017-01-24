@@ -13,7 +13,6 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.main.runner.ConfigRunner;
