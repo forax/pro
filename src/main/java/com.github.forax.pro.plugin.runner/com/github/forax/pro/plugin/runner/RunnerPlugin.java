@@ -1,6 +1,7 @@
 package com.github.forax.pro.plugin.runner;
 
 import static com.github.forax.pro.api.helper.OptionAction.action;
+import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
@@ -17,8 +18,8 @@ import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
-import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.helper.OptionAction;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.util.StableList;
 
@@ -53,6 +54,7 @@ public class RunnerPlugin implements Plugin {
   
   enum RunnerOption {
     MODULE_PATH(action("--module-path", Java::modulePath, ":")),
+    ROOT_MODULES(actionMaybe("--add-modules", Java::rootModules, ",")),
     MODULE(action("--module", Java::module))
     ;
     
@@ -101,6 +103,8 @@ public class RunnerPlugin implements Plugin {
     }
     
     Java java = new Java(runner.javaCommand(), runner.modulePath(), moduleName.get());
+    runner.rootModules().ifPresent(java::rootModules);
+    
     String[] arguments = OptionAction.gatherAll(RunnerOption.class, option -> option.action).apply(java, new CmdLine()).toArguments();
     log.verbose(java, _java -> OptionAction.toPrettyString(RunnerOption.class, option -> option.action).apply(_java, "java"));
     

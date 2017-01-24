@@ -32,8 +32,8 @@ public interface LinkerConf {
   Path moduleArtifactSourcePath();
   void moduleArtifactSourcePath(Path javaModuleArtifactSourcePath);
   
-  public List<Path> moduleDependencyPath();
-  public void moduleDependencyPath(List<Path> path);
+  List<Path> moduleDependencyPath();
+  void moduleDependencyPath(List<Path> path);
   
   Optional<List<String>> rootModules();
   void rootModules(List<String> rootModules);

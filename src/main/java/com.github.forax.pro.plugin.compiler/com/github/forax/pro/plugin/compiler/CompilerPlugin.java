@@ -83,6 +83,7 @@ public class CompilerPlugin implements Plugin {
     LINT(javac -> javac.lint().map(lint -> line -> line.add("-Xlint:" + lint))),
     DESTINATION(action("-d", Javac::destination)),
     MODULE_SOURCE_PATH(action("--module-source-path", Javac::moduleSourcePath, ":")),
+    ROOT_MODULES(actionMaybe("--add-modules", Javac::rootModules, ",")),
     MODULE_PATH(actionMaybe("--module-path", Javac::modulePath, ":")),
     ;
     
@@ -164,6 +165,8 @@ public class CompilerPlugin implements Plugin {
     compiler.verbose().ifPresent(javac::verbose);
     compiler.lint().ifPresent(javac::lint);
     modulePath.ifPresent(javac::modulePath);
+    compiler.rootModules().ifPresent(javac::rootModules);
+    
     
     CmdLine cmdLine = gatherAll(JavacOption.class, option -> option.action).apply(javac, new CmdLine());
     List<Path> files = compiler.files().orElseGet(

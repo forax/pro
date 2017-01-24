@@ -32,8 +32,11 @@ public interface CompilerConf {
   Optional<List<Path>> modulePath();
   void modulePath(List<Path> modulePath);
   
-  public List<Path> moduleDependencyPath();
-  public void moduleDependencyPath(List<Path> path);
+  List<Path> moduleDependencyPath();
+  void moduleDependencyPath(List<Path> path);
+  
+  Optional<List<String>> rootModules();
+  void rootModules(List<String> rootModules);
   
   Optional<List<Path>> files();
   void files(List<Path> files);

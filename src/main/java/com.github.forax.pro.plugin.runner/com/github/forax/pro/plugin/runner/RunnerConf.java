@@ -16,4 +16,7 @@ public interface RunnerConf {
   
   Optional<String> module();
   void module(String moduleName);
+  
+  Optional<List<String>> rootModules();
+  void rootModules(List<String> rootModules);
 }

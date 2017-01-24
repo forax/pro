@@ -78,7 +78,7 @@ public class LinkerPlugin implements Plugin {
   
   enum JlinkOption {
     MODULE_PATH(action("--module-path", Jlink::modulePath, ":")),
-    ADD_MODULES(action("--add-modules", Jlink::rootModules, ",")),
+    ROOT_MODULES(action("--add-modules", Jlink::rootModules, ",")),
     LAUNCHER(launcherAction("--launcher", Jlink::launchers)),
     COMPRESS(action("--compress", Jlink::compressLevel)),
     STRIP_DEBUG(exists("--strip-debug", Jlink::stripDebug)),
