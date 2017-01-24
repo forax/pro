@@ -84,7 +84,7 @@ public class ModuleHelper {
     }
   }
   
-  private static ModuleNode sourceModuleInfo(Path moduleInfoPath) {
+  private static Optional<ModuleNode> sourceModuleInfo(Path moduleInfoPath) {
     class Visitor implements  ModuleClassVisitor {
       ModuleNode moduleNode;
       
@@ -97,6 +97,9 @@ public class ModuleHelper {
     Visitor visitor = new Visitor();
     parseModule(moduleInfoPath, visitor);
     ModuleNode moduleNode = visitor.moduleNode;
+    if (moduleNode == null) {
+      return Optional.empty();
+    }
     moduleNode.requires = fixNull(moduleNode.requires);
     if (moduleNode.requires.stream().noneMatch(require -> require.module.equals("java.base"))) {
       moduleNode.requires.add(new ModuleRequireNode("java.base", ACC_MANDATED, null));
@@ -105,7 +108,7 @@ public class ModuleHelper {
     moduleNode.opens = fixNull(moduleNode.opens);
     moduleNode.uses = fixNull(moduleNode.uses);
     moduleNode.provides = fixNull(moduleNode.provides);
-    return moduleNode;
+    return Optional.of(moduleNode);
   }
   
   private static <T> List<T> fixNull(List<T> list) {
@@ -125,9 +128,11 @@ public class ModuleHelper {
     }
   }
   
-  public static ModuleDescriptor sourceModuleDescriptor(Path moduleInfoPath) {
-    ModuleNode moduleNode = sourceModuleInfo(moduleInfoPath);
-    
+  public static Optional<ModuleDescriptor> sourceModuleDescriptor(Path moduleInfoPath) {
+    return sourceModuleInfo(moduleInfoPath).map(moduleNode -> createModuleDescriptor(moduleNode, moduleInfoPath));
+  }
+  
+  private static ModuleDescriptor createModuleDescriptor(ModuleNode moduleNode, Path moduleInfoPath) {
     boolean isOpen = (moduleNode.access & ACC_OPEN) != 0;
     ModuleDescriptor.Builder builder = isOpen?
         ModuleDescriptor.openModule(moduleNode.name):
@@ -181,7 +186,7 @@ public class ModuleHelper {
           .filter(Files::isDirectory)
           .flatMap(path -> Optional.of(path.resolve("module-info.java"))
                                    .filter(Files::exists)
-                                   .map(ModuleHelper::sourceModuleDescriptor)
+                                   .flatMap(ModuleHelper::sourceModuleDescriptor)
                                    .map(descriptor -> moduleReference(descriptor, path.toUri(), null)));
       }
     };
