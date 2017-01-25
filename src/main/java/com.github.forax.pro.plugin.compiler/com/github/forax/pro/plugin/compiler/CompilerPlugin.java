@@ -144,7 +144,7 @@ public class CompilerPlugin implements Plugin {
         List.of(moduleMergedTestPath),
         moduleMergedTestFinder,
         List.of(compiler.moduleExplodedSourcePath()),
-        compiler.moduleTestResourcesPath(),
+        StableList.<Path>of().appendAll(compiler.moduleSourceResourcesPath()).appendAll(compiler.moduleTestResourcesPath()),
         compiler.moduleExplodedTestPath(),
         "test:");
   }
