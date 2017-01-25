@@ -7,12 +7,14 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
 public interface ConventionFacade {
-  public List<Path> javaModuleSourcePath();
-  public List<Path> javaModuleExplodedSourcePath();
+  List<Path> javaModuleSourcePath();
+  List<Path> javaModuleSourceResourcesPath();
+  List<Path> javaModuleExplodedSourcePath();
   
-  public List<Path> javaModuleTestPath();
-  public List<Path> javaModuleMergedTestPath();
-  public List<Path> javaModuleExplodedTestPath();
+  List<Path> javaModuleTestPath();
+  List<Path> javaModuleTestResourcesPath();
+  List<Path> javaModuleMergedTestPath();
+  List<Path> javaModuleExplodedTestPath();
   
-  public List<Path> javaModuleDependencyPath();
+  List<Path> javaModuleDependencyPath();
 }

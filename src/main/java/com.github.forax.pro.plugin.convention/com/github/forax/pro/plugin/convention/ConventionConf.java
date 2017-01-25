@@ -12,6 +12,8 @@ public interface ConventionConf {
 
   List<Path> javaModuleSourcePath();
   void javaModuleSourcePath(List<Path> path);
+  List<Path> javaModuleSourceResourcesPath();
+  void javaModuleSourceResourcesPath(List<Path> path);
   List<Path> javaModuleExplodedSourcePath();
   void javaModuleExplodedSourcePath(List<Path> path);
   Path javaModuleArtifactSourcePath();
@@ -19,6 +21,8 @@ public interface ConventionConf {
 
   List<Path> javaModuleTestPath();
   void javaModuleTestPath(List<Path> path);
+  List<Path> javaModuleTestResourcesPath();
+  void javaModuleTestResourcesPath(List<Path> path);
   List<Path> javaModuleMergedTestPath();
   void javaModuleMergedTestPath(List<Path> path);
   List<Path> javaModuleExplodedTestPath();

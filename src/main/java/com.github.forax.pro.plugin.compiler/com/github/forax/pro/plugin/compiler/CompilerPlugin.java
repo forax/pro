@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.spi.ToolProvider;
 import java.util.stream.Collectors;
@@ -53,7 +54,9 @@ public class CompilerPlugin implements Plugin {
     // inputs
     compiler.moduleDependencyPath(convention.javaModuleDependencyPath());
     compiler.moduleSourcePath(convention.javaModuleSourcePath());
+    compiler.moduleSourceResourcesPath(convention.javaModuleSourceResourcesPath());
     compiler.moduleTestPath(convention.javaModuleTestPath());
+    compiler.moduleTestResourcesPath(convention.javaModuleTestResourcesPath());
     
     // outputs
     compiler.moduleExplodedSourcePath(convention.javaModuleExplodedSourcePath().get(0));
@@ -66,7 +69,9 @@ public class CompilerPlugin implements Plugin {
     CompilerConf compiler = config.getOrThrow(name(), CompilerConf.class);
     compiler.moduleDependencyPath().forEach(registry::watch);
     compiler.moduleSourcePath().forEach(registry::watch);
+    compiler.moduleSourceResourcesPath().forEach(registry::watch);
     compiler.moduleTestPath().forEach(registry::watch);
+    compiler.moduleTestResourcesPath().forEach(registry::watch);
   }
   
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
@@ -105,7 +110,13 @@ public class CompilerPlugin implements Plugin {
     
     
     ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(compiler.moduleSourcePath());
-    int errorCode = compile(log, javacTool, compiler, compiler.moduleSourcePath(), moduleSourceFinder, List.of(), compiler.moduleExplodedSourcePath(), "source:");
+    int errorCode = compile(log, javacTool, compiler,
+        compiler.moduleSourcePath(),
+        moduleSourceFinder,
+        List.of(),
+        compiler.moduleSourceResourcesPath(),
+        compiler.moduleExplodedSourcePath(),
+        "source:");
     if (errorCode != 0) {
       return errorCode;
     }
@@ -129,10 +140,16 @@ public class CompilerPlugin implements Plugin {
     }
     
     ModuleFinder moduleMergedTestFinder = ModuleHelper.sourceModuleFinder(compiler.moduleMergedTestPath());
-    return compile(log, javacTool, compiler, List.of(moduleMergedTestPath), moduleMergedTestFinder, List.of(compiler.moduleExplodedSourcePath()), compiler.moduleExplodedTestPath(), "test:");
+    return compile(log, javacTool, compiler,
+        List.of(moduleMergedTestPath),
+        moduleMergedTestFinder,
+        List.of(compiler.moduleExplodedSourcePath()),
+        compiler.moduleTestResourcesPath(),
+        compiler.moduleExplodedTestPath(),
+        "test:");
   }
 
-  private static int compile(Log log, ToolProvider javacTool, CompilerConf compiler, List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, Path destination, String pass) throws IOException {
+  private static int compile(Log log, ToolProvider javacTool, CompilerConf compiler, List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, List<Path> resourcesPath, Path destination, String pass) throws IOException {
     Optional<List<Path>> modulePath = modulePathOrDependencyPath(compiler.modulePath(),
         compiler.moduleDependencyPath(), additionalSourcePath);
     
@@ -189,7 +206,24 @@ public class CompilerPlugin implements Plugin {
     String[] arguments = cmdLine.toArguments();
     log.verbose(files, fs -> OptionAction.toPrettyString(JavacOption.class, option -> option.action).apply(javac, "javac") + "\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
     
-    return javacTool.run(System.out, System.err, arguments);
+    int errorCode = javacTool.run(System.out, System.err, arguments);
+    if (errorCode != 0) {
+      return errorCode;
+    }
+    
+    //copy all resources
+    for(Path resources: resourcesPath) {
+      if (Files.exists(resources)) {
+        log.debug(null, __ -> "copy " + resources + " to " + destination);
+        FileHelper.walkAndFindCounterpart(resources, destination, Function.identity(), (src, dest) -> {
+          if (Files.isDirectory(src) && Files.isDirectory(dest)) { // do not overwrite directory
+            return;
+          }
+          Files.copy(src, dest); 
+        });
+      }
+    }
+    return 0;
   }
   
   private static int merge(ModuleFinder moduleSourceFinder, ModuleFinder moduleTestFinder,

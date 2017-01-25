@@ -19,11 +19,15 @@ public interface CompilerConf {
   
   List<Path> moduleSourcePath();
   void moduleSourcePath(List<Path> modulePath);
+  List<Path> moduleSourceResourcesPath();
+  void moduleSourceResourcesPath(List<Path> modulePath);
   Path moduleExplodedSourcePath();
   void moduleExplodedSourcePath(Path destination);
   
   List<Path> moduleTestPath();
   void moduleTestPath(List<Path> modulePath);
+  List<Path> moduleTestResourcesPath();
+  void moduleTestResourcesPath(List<Path> modulePath);
   Path moduleMergedTestPath();
   void moduleMergedTestPath(Path modulePath);
   Path moduleExplodedTestPath();
