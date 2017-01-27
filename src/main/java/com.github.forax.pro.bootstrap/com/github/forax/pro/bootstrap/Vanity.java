@@ -23,11 +23,13 @@ class Vanity {
                imagePath.resolve("bin/pro"));
     
     // remove other commands
+    // FIXME temporary fix to enable windows build
+    /*
     try(Stream<Path> stream = Files.list(imagePath.resolve("bin"))) {
       stream.filter(p -> !p.getFileName().toString().equals("pro") &&
                          !p.getFileName().toString().equals("java"))
             .forEach(unchecked(Files::delete));
-    }
+    }*/
     
     // change image directory
     Path proDirectory = imagePath.resolveSibling("pro");

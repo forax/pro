@@ -3,6 +3,7 @@ package com.github.forax.pro.plugin.linker;
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
@@ -24,8 +25,8 @@ import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
-import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.helper.OptionAction;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
@@ -77,7 +78,7 @@ public class LinkerPlugin implements Plugin {
   }
   
   enum JlinkOption {
-    MODULE_PATH(action("--module-path", Jlink::modulePath, ":")),
+    MODULE_PATH(action("--module-path", Jlink::modulePath, File.pathSeparator)),
     ROOT_MODULES(action("--add-modules", Jlink::rootModules, ",")),
     LAUNCHER(launcherAction("--launcher", Jlink::launchers)),
     COMPRESS(action("--compress", Jlink::compressLevel)),
