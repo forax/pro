@@ -15,15 +15,20 @@ class Vanity {
     throw new AssertionError();
   }
 
+  private static boolean keep(Path path) {
+    String fileName = path.getFileName().toString();
+    return fileName.equals("pro") || fileName.equals("pro.bat") ||
+           fileName.equals("java") ||
+           fileName.endsWith(".dll") ||
+           Files.isDirectory(path);
+  }
+  
   static void postOperations() throws IOException {
     Path imagePath = get("convention.javaLinkerImagePath", Path.class);
     
-    // remove other commands
+    // remove unnecessary commands
     try(Stream<Path> stream = Files.list(imagePath.resolve("bin"))) {
-      stream.filter(p -> !p.getFileName().toString().equals("pro") &&
-                         !p.getFileName().toString().equals("java") &&
-                         !p.getFileName().toString().endsWith(".dll") &&
-                         !Files.isDirectory(p))
+      stream.filter(path -> !keep(path))
             .forEach(unchecked(Files::delete));
     }
     
