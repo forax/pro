@@ -3,10 +3,8 @@ set "JAVA_HOME=C:\Program Files\Java\jdk-9"
 set "java=%JAVA_HOME%\bin\java"
 set "javac=%JAVA_HOME%\bin\javac"
 
-if exist bootstrap (
-rmdir /s /q bootstrap 
+if exist bootstrap rmdir /s /q bootstrap 
 mkdir bootstrap
-)
 
 dir /s /b /a:-d src\main\java > bootstrap\files.txt
 
