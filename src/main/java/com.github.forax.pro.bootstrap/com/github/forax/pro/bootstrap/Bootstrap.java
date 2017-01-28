@@ -51,6 +51,9 @@ public class Bootstrap {
         ));
     
     set("linker.includeSystemJMODs", true);
+    set("linker.launchers", list(
+        "pro=com.github.forax.pro.main/com.github.forax.pro.main.Main"
+        ));
     set("linker.rootModules", list(
         "com.github.forax.pro.main",
         "com.github.forax.pro.plugin.convention",

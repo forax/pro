@@ -40,4 +40,7 @@ public interface LinkerConf {
   
   Optional<List<String>> serviceNames();
   void serviceNames(List<String> serviceNames);
+  
+  Optional<List<String>>  launchers();
+  void launchers(List<String> launchers);
 }

@@ -1,11 +1,11 @@
 package com.github.forax.pro.plugin.linker;
 
 import static com.github.forax.pro.api.helper.OptionAction.action;
+import static com.github.forax.pro.api.helper.OptionAction.actionLoop;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.nio.file.DirectoryStream;
@@ -13,10 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.spi.ToolProvider;
 import java.util.stream.Collectors;
 
@@ -70,17 +67,10 @@ public class LinkerPlugin implements Plugin {
     registry.watch(linker.moduleArtifactSourcePath());
   }
   
-  public static OptionAction<Jlink> launcherAction(String optionName, Function<? super Jlink, ? extends Map<String,String>> mapper) {
-    return config -> Optional.of(line -> {
-      mapper.apply(config).forEach((name, mainClass) -> line.add(optionName).add(name + '=' + mainClass));
-      return line;
-    });
-  }
-  
   enum JlinkOption {
     MODULE_PATH(action("--module-path", Jlink::modulePath, File.pathSeparator)),
     ROOT_MODULES(action("--add-modules", Jlink::rootModules, ",")),
-    LAUNCHER(launcherAction("--launcher", Jlink::launchers)),
+    LAUNCHER(actionLoop("--launcher", Jlink::launchers)),
     COMPRESS(action("--compress", Jlink::compressLevel)),
     STRIP_DEBUG(exists("--strip-debug", Jlink::stripDebug)),
     STRIP_NATIVE_COMMANDS(exists("--strip-native-commands", Jlink::stripNativeCommands)),
@@ -94,8 +84,12 @@ public class LinkerPlugin implements Plugin {
     }
   }
   
-  private static String launcher(ModuleDescriptor moduleDescriptor) {
-    return moduleDescriptor.name();  //TODO add user input
+  private static List<String> findLaunchersFromMainClasses(Set<String> rootModules, ModuleFinder moduleFinder) {
+    return rootModules.stream()
+             .flatMap(root -> moduleFinder.find(root).stream())
+             .map(ModuleReference::descriptor)
+             .flatMap(desc -> desc.mainClass().map(main -> desc.name() + '=' + desc.name() + '/' + main).stream())
+             .collect(Collectors.toList());
   }
   
   @Override
@@ -125,14 +119,10 @@ public class LinkerPlugin implements Plugin {
         .forEach(rootModules::add);
     });
     
-    // find launcher main classes
-    Map<String, String> launchers = rootModules.stream()
-      .flatMap(root -> moduleFinder.find(root).stream())
-      .map(ModuleReference::descriptor)
-      .filter(desc -> desc.mainClass().isPresent())
-      .collect(Collectors.toMap(desc -> launcher(desc), desc -> desc.name() + '/' + desc.mainClass().get()));
+    // find launchers
+    List<String> launchers = linker.launchers().orElseGet(() -> findLaunchersFromMainClasses(rootModules, moduleFinder));
     if (launchers.isEmpty()) {
-      log.error(null, __ -> "no main class found among root modules");
+      log.error(null, __ -> "no launcher found and no main classes defined in the root modules");
       return 1; //FIXME
     }
     

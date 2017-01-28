@@ -18,10 +18,6 @@ class Vanity {
   static void postOperations() throws IOException {
     Path imagePath = get("convention.javaLinkerImagePath", Path.class);
     
-    // rename to command to pro
-    Files.move(imagePath.resolve("bin/com.github.forax.pro.main"),
-               imagePath.resolve("bin/pro"));
-    
     // remove other commands
     // FIXME temporary fix to enable windows build
     /*

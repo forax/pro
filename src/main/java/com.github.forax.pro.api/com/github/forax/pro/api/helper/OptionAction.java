@@ -24,6 +24,9 @@ public interface OptionAction<C> {
   public static <C> OptionAction<C> action(String optionName, Function<? super C, ? extends Collection<?>> mapper, String separator) {
     return actionMaybe(optionName, mapper.andThen(Optional::of), separator);
   }
+  public static <C> OptionAction<C> actionLoop(String optionName, Function<? super C, ? extends Collection<?>> mapper) {
+    return config -> mapper.apply(config).stream().<UnaryOperator<CmdLine>>map(value -> line -> line.add(optionName).add(value)).reduce((op1, op2) -> line -> op2.apply(op1.apply(line)));
+  }
   public static <C> OptionAction<C> actionMaybe(String optionName, Function<? super C, ? extends Optional<?>> mapper) {
     return config -> mapper.apply(config).map(value -> line -> line.add(optionName).add(value));
   }
