@@ -19,13 +19,13 @@ class Vanity {
     Path imagePath = get("convention.javaLinkerImagePath", Path.class);
     
     // remove other commands
-    // FIXME temporary fix to enable windows build
-    /*
     try(Stream<Path> stream = Files.list(imagePath.resolve("bin"))) {
       stream.filter(p -> !p.getFileName().toString().equals("pro") &&
-                         !p.getFileName().toString().equals("java"))
+                         !p.getFileName().toString().equals("java") &&
+                         !p.getFileName().toString().endsWith(".dll") &&
+                         !Files.isDirectory(p))
             .forEach(unchecked(Files::delete));
-    }*/
+    }
     
     // change image directory
     Path proDirectory = imagePath.resolveSibling("pro");
