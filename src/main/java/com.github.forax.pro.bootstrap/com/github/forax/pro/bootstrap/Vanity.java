@@ -18,7 +18,7 @@ class Vanity {
   private static boolean keep(Path path) {
     String fileName = path.getFileName().toString();
     return fileName.equals("pro") || fileName.equals("pro.bat") ||
-           fileName.equals("java") ||
+           fileName.equals("java") || fileName.equals("java.exe") ||
            fileName.endsWith(".dll") ||
            Files.isDirectory(path);
   }
