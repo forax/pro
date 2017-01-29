@@ -8,6 +8,7 @@ import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
@@ -87,9 +88,9 @@ public class CompilerPlugin implements Plugin {
     VERBOSE(exists("--verbose", Javac::verbose)),
     LINT(javac -> javac.lint().map(lint -> line -> line.add("-Xlint:" + lint))),
     DESTINATION(action("-d", Javac::destination)),
-    MODULE_SOURCE_PATH(action("--module-source-path", Javac::moduleSourcePath, ":")),
+    MODULE_SOURCE_PATH(action("--module-source-path", Javac::moduleSourcePath, File.pathSeparator)),
     ROOT_MODULES(actionMaybe("--add-modules", Javac::rootModules, ",")),
-    MODULE_PATH(actionMaybe("--module-path", Javac::modulePath, ":")),
+    MODULE_PATH(actionMaybe("--module-path", Javac::modulePath, File.pathSeparator)),
     ;
     
     final OptionAction<Javac> action;

@@ -3,6 +3,7 @@ package com.github.forax.pro.plugin.runner;
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
@@ -43,7 +44,7 @@ public class RunnerPlugin implements Plugin {
     runner.modulePath(StableList.of(convention.javaModuleArtifactSourcePath())
         .appendAll(convention.javaModuleDependencyPath())
         .appendAll(convention.javaModuleExplodedSourcePath()));
-    runner.javaCommand(convention.javaHome().resolve("bin/java"));
+    runner.javaCommand(convention.javaHome().resolve("bin/java"));   //FIXME may be java.bat ??
   }
   
   @Override
@@ -53,7 +54,7 @@ public class RunnerPlugin implements Plugin {
   }
   
   enum RunnerOption {
-    MODULE_PATH(action("--module-path", Java::modulePath, ":")),
+    MODULE_PATH(action("--module-path", Java::modulePath, File.pathSeparator)),
     ROOT_MODULES(actionMaybe("--add-modules", Java::rootModules, ",")),
     MODULE(action("--module", Java::module))
     ;
