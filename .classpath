@@ -23,7 +23,7 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/samples/com.foo.acme.amodule" path="samples/simple/src/main/java/com.foo.acme.amodule"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/samples/com.foo.acme.anothermodule" path="samples/simple/src/main/java/com.foo.acme.anothermodule"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/samples/com.foo.getstarted" path="samples/getstarted/src/main/java/com.foo.getstarted"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-9"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-9"/>
 	<classpathentry kind="lib" path="deps/aether.api-1.0.1.jar"/>
 	<classpathentry kind="lib" path="deps/aether.connector.basic-1.0.1.jar"/>
 	<classpathentry kind="lib" path="deps/aether.impl-1.0.1.jar"/>

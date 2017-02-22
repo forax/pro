@@ -12,6 +12,7 @@ import java.lang.invoke.MethodType;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
@@ -94,9 +95,10 @@ public class Main {
         if (main == null) {
           ModuleReference ref = moduleOpt.get();
           ModuleDescriptor descriptor = ref.descriptor();
-          ModuleDescriptor.Builder builder = descriptor.isOpen()? ModuleDescriptor.openModule(name):
-            descriptor.isAutomatic()? ModuleDescriptor.automaticModule(name):
-              ModuleDescriptor.module(name);
+          
+          Set<Modifier> modifiers = descriptor.isOpen()? Set.of(Modifier.OPEN):
+            descriptor.isAutomatic()? Set.of(Modifier.AUTOMATIC): Set.of();
+          ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(name, modifiers);
           descriptor.version().ifPresent(builder::version);
           
           descriptor.requires().forEach(builder::requires);
@@ -111,7 +113,7 @@ public class Main {
           packages.removeAll(descriptor.exports().stream().map(Exports::source).collect(Collectors.toSet()));
           packages.removeAll(descriptor.opens().stream().map(Opens::source).collect(Collectors.toSet()));
           packages.remove(packageOf(mainClassName));
-          packages.forEach(builder::contains);
+          builder.packages(packages);
           
           main = new ModuleReference(builder.build(), ref.location().get()) {
             @Override
@@ -125,7 +127,7 @@ public class Main {
     };
     
     Layer parent = Layer.boot();
-    Configuration cf = parent.configuration().resolveRequiresAndUses(patchedFinder, ModuleFinder.of(), List.of("com.github.forax.pro.uberbooter", mainModule));
+    Configuration cf = parent.configuration().resolveAndBind(patchedFinder, ModuleFinder.of(), List.of("com.github.forax.pro.uberbooter", mainModule));
     Layer layer = Layer.defineModulesWithOneLoader(cf, List.of(parent), ClassLoader.getSystemClassLoader()).layer();
     
     ClassLoader loader = layer.findLoader("com.github.forax.pro.uberbooter");

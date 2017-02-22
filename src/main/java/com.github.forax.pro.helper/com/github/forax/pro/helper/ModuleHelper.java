@@ -11,6 +11,7 @@ import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires;
@@ -135,10 +136,8 @@ public class ModuleHelper {
   }
   
   private static ModuleDescriptor createModuleDescriptor(ModuleNode moduleNode, Path moduleInfoPath) {
-    boolean isOpen = (moduleNode.access & ACC_OPEN) != 0;
-    ModuleDescriptor.Builder builder = isOpen?
-        ModuleDescriptor.openModule(moduleNode.name):
-        ModuleDescriptor.module(moduleNode.name);
+    Set<Modifier> modifiers = (moduleNode.access & ACC_OPEN) != 0? Set.of(Modifier.OPEN): Set.of();
+    ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(moduleNode.name, modifiers);
     
     moduleNode.requires.forEach(require -> builder.requires(requireModifiers(require.access), require.module));
     moduleNode.exports.forEach(export -> {
@@ -162,7 +161,7 @@ public class ModuleHelper {
     Set<String> javaPackages = findJavaPackages(moduleDirectory);
     javaPackages.removeAll(moduleNode.exports.stream().map(export -> export.packaze).collect(Collectors.toList()));
     javaPackages.removeAll(moduleNode.opens.stream().map(export -> export.packaze).collect(Collectors.toList()));
-    builder.contains(javaPackages);
+    builder.packages(javaPackages);
 
     ModuleDescriptor descriptor = builder.build();
     //System.out.println(descriptor.name() + " " + descriptor.packages());
@@ -274,9 +273,8 @@ public class ModuleHelper {
   
   public static ModuleDescriptor mergeModuleDescriptor(ModuleDescriptor sourceModule, ModuleDescriptor testModule) {
     boolean open = sourceModule.isOpen() | testModule.isOpen();
-    Builder builder = open?
-        ModuleDescriptor.openModule(testModule.name()):
-        ModuleDescriptor.module(testModule.name());
+    Set<Modifier> moduleModifiers = open? Set.of(Modifier.OPEN): Set.of();
+    Builder builder = ModuleDescriptor.newModule(testModule.name(), moduleModifiers);
     
     HashMap<String, Set<Requires.Modifier>> requires = merge(ModuleDescriptor::requires,
         Requires::name, Requires::modifiers, ModuleHelper::mergeRequiresModifiers, sourceModule, testModule);
@@ -300,7 +298,7 @@ public class ModuleHelper {
       }
     });
     packages.keySet().removeAll(exports.keySet());
-    packages.keySet().forEach(builder::contains);
+    builder.packages(packages.keySet());
     opens.forEach((source, target) -> {
       if (target.isEmpty()) {
         builder.opens(Set.of(), source);

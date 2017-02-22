@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
@@ -206,7 +207,7 @@ public class ModuleFixerPlugin implements Plugin {
     Path modulePatchPath = moduleDependencyFixerPath.resolve(moduleName);
     Files.createDirectories(modulePatchPath);
     
-    ModuleDescriptor.Builder builder = ModuleDescriptor.openModule(moduleName);
+    ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(moduleName, Set.of(Modifier.OPEN));
     ref.descriptor().version().ifPresent(version -> builder.version(version.toString()));
     requires.forEach(builder::requires);
     exports.forEach(export -> builder.exports(export.replace('/', '.')));
