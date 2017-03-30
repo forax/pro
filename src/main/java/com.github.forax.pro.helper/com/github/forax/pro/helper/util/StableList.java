@@ -173,6 +173,16 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   }
   
   /**
+   * Create a new StableList and populate it with the elements of the list taken as parameters.
+   * @param list a list of elements.
+   * @return a new StableList with all elements of the list.
+   * @throws NPE if one element of the array is null.
+   */
+  public static <E> StableList<E> from(Collection<? extends E> list) {
+    return StableList.<E>of().appendAll(list);
+  }
+  
+  /**
    * Returns a collector that store all elements in a stable list.
    * @return a stable list storing all elements.
    */
