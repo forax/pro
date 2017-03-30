@@ -70,7 +70,7 @@ public class Aether {
     
     // remote repositories
     List<RemoteRepository> remotes = StableList.from(remoteRepositories)
-      .map(uri -> new RemoteRepository.Builder(null, null, uri.toString()).build())
+      .map(uri -> new RemoteRepository.Builder(null, "default", uri.toString()).build())
       .append(central);
     
     return new Aether(system, session, remotes);
