@@ -15,7 +15,7 @@ esac
 
 #export JAVA_HOME=/usr/jdk/jdk-9-jigsaw-b146
 # For Cygwin, ensure paths are in UNIX format before anything is touched
-export JAVA_HOME=/usr/jdk/jdk-9
+[ -z "$JAVA_HOME" ] && export JAVA_HOME=/usr/jdk/jdk-9
 
 if $darwin; then
   [ -n "$JAVA_HOME" ] && JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-9.jdk/Contents/Home/"
@@ -34,5 +34,3 @@ $javac --module-source-path src/main/java \
 
 $java --module-path bootstrap/modules:deps \
       --module com.github.forax.pro.bootstrap/com.github.forax.pro.bootstrap.Bootstrap
-      
-      
