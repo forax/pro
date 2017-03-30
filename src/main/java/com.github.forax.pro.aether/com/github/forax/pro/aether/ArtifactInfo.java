@@ -27,4 +27,9 @@ public class ArtifactInfo {
   public int hashCode() {
     return artifact.getGroupId().hashCode() ^ artifact.getArtifactId().hashCode();
   }
+  
+  @Override
+  public String toString() {
+    return getArtifactKey();
+  }
 }

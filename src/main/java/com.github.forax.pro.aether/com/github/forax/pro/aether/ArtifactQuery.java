@@ -12,4 +12,9 @@ public class ArtifactQuery {
   public String getArtifactKey() {
     return artifact.getGroupId() + ':' + artifact.getArtifactId();
   }
+  
+  @Override
+  public String toString() {
+    return getArtifactKey();
+  }
 }

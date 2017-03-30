@@ -45,6 +45,6 @@ public class ArtifactDescriptor {
   
   @Override
   public String toString() {
-    return artifact.toString();
+    return getGroupId() + ':' + getArtifactId() + ':' + getVersion();
   }
 }
