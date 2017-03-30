@@ -1,5 +1,6 @@
 package com.github.forax.pro.plugin.resolver;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,9 @@ public interface ResolverConf {
   
   Path mavenLocalRepositoryPath();
   void mavenLocalRepositoryPath(Path path);
+  
+  Optional<List<URI>> remoteRepositories();
+  void remoteRepositories(List<URI> remoteRepositories);
   
   List<Path> moduleDependencyPath();
   void moduleDependencyPath(List<Path> path);

@@ -25,6 +25,7 @@ module com.github.forax.pro.aether {
   requires plexus.utils;
   
   requires com.github.forax.pro.aether.fakeguava;
+  requires com.github.forax.pro.helper;
   
   exports com.github.forax.pro.aether;
 }

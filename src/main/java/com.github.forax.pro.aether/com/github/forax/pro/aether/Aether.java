@@ -1,6 +1,7 @@
 package com.github.forax.pro.aether;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,18 +31,20 @@ import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
 
+import com.github.forax.pro.helper.util.StableList;
+
 public class Aether {
   private final RepositorySystem system;
   private final DefaultRepositorySystemSession session;
-  private final RemoteRepository mavenCentral;
+  private final List<RemoteRepository> remoteRepositories;
   
-  private Aether(RepositorySystem system, DefaultRepositorySystemSession session, RemoteRepository mavenCentral) {
+  private Aether(RepositorySystem system, DefaultRepositorySystemSession session, List<RemoteRepository> remoteRepositories) {
     this.system = system;
     this.session = session;
-    this.mavenCentral = mavenCentral;
+    this.remoteRepositories = remoteRepositories;
   }
 
-  public static Aether create(Path mavenLocalRepository) {
+  public static Aether create(Path mavenLocalRepository, List<URI> remoteRepositories) {
     // respository system
     DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
     locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
@@ -61,11 +64,16 @@ public class Aether {
     LocalRepository localRepo = new LocalRepository(mavenLocalRepository.toString());
     session.setLocalRepositoryManager(system.newLocalRepositoryManager(session, localRepo));
 
-    // repository
-    RemoteRepository mavenCentral = new RemoteRepository.Builder("central", "default",
+    // central repository
+    RemoteRepository central = new RemoteRepository.Builder("central", "default",
         "http://central.maven.org/maven2/").build();
     
-    return new Aether(system, session, mavenCentral);
+    // remote repositories
+    List<RemoteRepository> remotes = StableList.from(remoteRepositories)
+      .map(uri -> new RemoteRepository.Builder(null, null, uri.toString()).build())
+      .append(central);
+    
+    return new Aether(system, session, remotes);
   }
   
   @SuppressWarnings("static-method")
@@ -79,7 +87,7 @@ public class Aether {
 
     CollectRequest collectRequest = new CollectRequest();
     collectRequest.setRoot(new Dependency(artifact, ""));
-    collectRequest.setRepositories(List.of(mavenCentral));
+    collectRequest.setRepositories(remoteRepositories);
 
     CollectResult collectResult;
     try {
@@ -112,7 +120,7 @@ public class Aether {
   public List<ArtifactDescriptor> download(List<ArtifactInfo> unresolvedArtifacts) throws IOException {
     System.out.println("download unresolvedArtifacts " + unresolvedArtifacts);
 
-    List<RemoteRepository> repositories = List.of(mavenCentral);
+    List<RemoteRepository> repositories = this.remoteRepositories;
     List<ArtifactRequest> artifactRequests = unresolvedArtifacts.stream()
         .map(dependency -> {
           ArtifactRequest artifactRequest = new ArtifactRequest();

@@ -2,6 +2,7 @@ package com.github.forax.pro.plugin.resolver;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -107,9 +108,12 @@ public class ResolverPlugin implements Plugin {
       return 0;
     }
     
-    System.out.println("resolver: unresolvedModules " + unresolvedModules);
+    log.debug(unresolvedModules, unresolved -> "unresolvedModules " + unresolved);
     
-    Aether aether = Aether.create(resolver.mavenLocalRepositoryPath());
+    List<URI> remoteRepositories = resolver.remoteRepositories().orElse(List.of());
+    log.debug(remoteRepositories, remotes -> "remoteRepositories " + remotes);
+    
+    Aether aether = Aether.create(resolver.mavenLocalRepositoryPath(), remoteRepositories);
     
     // mapping between module name and Maven artifact name
     List<String> dependencies = resolver.dependencies();
@@ -133,13 +137,13 @@ public class ResolverPlugin implements Plugin {
     List<ArtifactQuery> unresolvedRootArtifacts = unresolvedModules.stream()
         .map(moduleToArtifactMap::get)
         .collect(Collectors.toList());
-      System.out.println("resolver: unresolved root artifacts " + unresolvedRootArtifacts);
+    log.debug(unresolvedRootArtifacts, unresolvedRoots -> "unresolved root artifacts " + unresolvedRoots);
     
     LinkedHashSet<ArtifactInfo> unresolvedArtifacts = new LinkedHashSet<>();
     for(ArtifactQuery unresolvedRootArtifact: unresolvedRootArtifacts) {
       unresolvedArtifacts.addAll(aether.dependencies(unresolvedRootArtifact));  
     }
-    System.out.println("resolver: unresolved artifacts " + unresolvedArtifacts);
+    log.debug(unresolvedArtifacts, unresolvedArtifactList -> "unresolved artifacts " + unresolvedArtifactList);
     
     verifyDeclaration("artifacts",
         unresolvedArtifacts.stream().map(ArtifactInfo::getArtifactKey).collect(Collectors.toSet()),
@@ -148,19 +152,18 @@ public class ResolverPlugin implements Plugin {
     List<ArtifactDescriptor> resolvedArtifacts =
         aether.download(new ArrayList<>(unresolvedArtifacts));
     
-    System.out.println("resolver: resolved artifacts " + resolvedArtifacts);
+    log.info(resolvedArtifacts, resolvedArtifactList -> "resolved artifacts " + resolvedArtifactList);
     
     Path moduleDependencyPath = resolver.moduleDependencyPath().get(0);
     Files.createDirectories(moduleDependencyPath);
     
     ArrayList<ArtifactDescriptor> undeclaredArtifactIds = new ArrayList<>();
     for(ArtifactDescriptor resolvedArtifact: resolvedArtifacts) {
-      
       String moduleName = artifactKeyToModuleMap.get(resolvedArtifact.getArtifactKey());
       if (moduleName == null) {
         undeclaredArtifactIds.add(resolvedArtifact);
       } else {
-        System.out.println(moduleName + " (" + resolvedArtifact + ") resolved from maven central");
+        log.info(null, __ -> moduleName + " (" + resolvedArtifact + ") downloaded from repositories");
         Files.copy(resolvedArtifact.getPath(), moduleDependencyPath.resolve(moduleName + ".jar"));
       }
     }
