@@ -1,6 +1,6 @@
 package com.github.forax.pro.plugin.compiler;
 
-import static com.github.forax.pro.api.helper.OptionAction.action;
+import static com.github.forax.pro.api.helper.OptionAction.*;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
 import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
@@ -87,6 +87,7 @@ public class CompilerPlugin implements Plugin {
     RELEASE(action("--release", Javac::release)),
     VERBOSE(exists("--verbose", Javac::verbose)),
     LINT(javac -> javac.lint().map(lint -> line -> line.add("-Xlint:" + lint))),
+    RAW_ARGUMENTS(rawValues(Javac::rawArguments)),
     DESTINATION(action("-d", Javac::destination)),
     MODULE_SOURCE_PATH(action("--module-source-path", Javac::moduleSourcePath, File.pathSeparator)),
     ROOT_MODULES(actionMaybe("--add-modules", Javac::rootModules, ",")),
@@ -196,6 +197,7 @@ public class CompilerPlugin implements Plugin {
     Javac javac = new Javac(compiler.release(), destination, moduleSourcePath);
     compiler.verbose().ifPresent(javac::verbose);
     compiler.lint().ifPresent(javac::lint);
+    compiler.rawArguments().ifPresent(javac::rawArguments);
     modulePath.ifPresent(javac::modulePath);
     compiler.rootModules().ifPresent(javac::rootModules);
     

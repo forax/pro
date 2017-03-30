@@ -15,6 +15,9 @@ import java.util.stream.Stream;
 public interface OptionAction<C> {
   public Optional<UnaryOperator<CmdLine>> apply(C config);
   
+  public static <C> OptionAction<C> rawValues(Function<? super C, ? extends Optional<? extends Collection<?>>> mapper) {
+    return config -> mapper.apply(config).map(collection -> line -> { collection.forEach(value -> line.add(value)); return line; });
+  }
   public static <C> OptionAction<C> exists(String optionName, Predicate<? super C> predicate) {
     return config -> Optional.of(config).filter(predicate).map(__ -> line -> line.add(optionName));
   }

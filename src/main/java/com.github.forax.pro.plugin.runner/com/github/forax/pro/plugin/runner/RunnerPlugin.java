@@ -2,6 +2,7 @@ package com.github.forax.pro.plugin.runner;
 
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
+import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +57,8 @@ public class RunnerPlugin implements Plugin {
   enum RunnerOption {
     MODULE_PATH(action("--module-path", Java::modulePath, File.pathSeparator)),
     ROOT_MODULES(actionMaybe("--add-modules", Java::rootModules, ",")),
-    MODULE(action("--module", Java::module))
+    MODULE(action("--module", Java::module)),
+    RAW_ARGUMENTS(rawValues(Java::rawArguments)),
     ;
     
     final OptionAction<Java> action;

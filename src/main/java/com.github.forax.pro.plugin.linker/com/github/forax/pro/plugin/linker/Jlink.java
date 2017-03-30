@@ -3,6 +3,7 @@ package com.github.forax.pro.plugin.linker;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 class Jlink {
@@ -39,5 +40,8 @@ class Jlink {
   }
   public boolean stripNativeCommands() {
     return linker.stripNativeCommands();
+  }
+  public Optional<List<String>> rawArguments() {
+    return linker.rawArguments();
   }
 }

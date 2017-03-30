@@ -10,6 +10,7 @@ class Java {
   private final List<Path> modulePath;
   private final String module;
   private List<String> rootModules; 
+  private List<String> rawArguments;
   
   public Java(Path javaCommand, List<Path> modulePath, String module) {
     this.javaCommand = Objects.requireNonNull(javaCommand);
@@ -32,5 +33,12 @@ class Java {
   }
   public void rootModules(List<String> rootModules) {
     this.rootModules = Objects.requireNonNull(rootModules);
+  }
+  
+  public Optional<List<String>> rawArguments() {
+    return Optional.ofNullable(rawArguments);
+  }
+  public void rawArguments(List<String> rawArguments) {
+    this.rawArguments = Objects.requireNonNull(rawArguments);
   }
 }

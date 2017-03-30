@@ -20,4 +20,7 @@ public interface PackagerConf {
   
   Optional<List<String>> moduleMetadata();
   void moduleMetadata(List<String> metadata);
+  
+  Optional<List<String>> rawArguments();
+  void rawArguments(List<String> rawArguments);
 }

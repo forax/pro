@@ -3,6 +3,7 @@ package com.github.forax.pro.plugin.linker;
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionLoop;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
+import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,6 +75,7 @@ public class LinkerPlugin implements Plugin {
     COMPRESS(action("--compress", Jlink::compressLevel)),
     STRIP_DEBUG(exists("--strip-debug", Jlink::stripDebug)),
     STRIP_NATIVE_COMMANDS(exists("--strip-native-commands", Jlink::stripNativeCommands)),
+    RAW_ARGUMENTS(rawValues(Jlink::rawArguments)),
     OUPUT(action("--output", Jlink::destination))
     ;
     

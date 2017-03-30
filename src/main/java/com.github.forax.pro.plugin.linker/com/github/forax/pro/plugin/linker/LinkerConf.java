@@ -23,6 +23,9 @@ public interface LinkerConf {
   boolean includeSystemJMODs();
   void includeSystemJMODs(boolean includeSystemJMODs);
   
+  Optional<List<String>> rawArguments();
+  void rawArguments(List<String> rawArguments);
+  
   Optional<List<Path>> modulePath();
   void modulePath(List<Path> modulePath);
   

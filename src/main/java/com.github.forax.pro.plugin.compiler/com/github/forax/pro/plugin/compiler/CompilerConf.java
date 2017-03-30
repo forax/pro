@@ -17,6 +17,9 @@ public interface CompilerConf {
   Optional<String> lint();
   void lint(String lintOptions);
   
+  Optional<List<String>> rawArguments();
+  void rawArguments(List<String> rawArguments);
+  
   List<Path> moduleSourcePath();
   void moduleSourcePath(List<Path> modulePath);
   List<Path> moduleSourceResourcesPath();
