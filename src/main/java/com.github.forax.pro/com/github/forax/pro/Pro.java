@@ -5,6 +5,8 @@ import static java.util.stream.Collectors.toMap;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -122,12 +124,20 @@ public class Pro {
     }
   }
   
+  public static URI uri(String uri) {
+    try {
+      return new URI(uri);
+    } catch(URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+  
   @SafeVarargs
   public static <T> StableList<T> list(T... elements) {
     return StableList.of(elements);
   }
   public static <T> StableList<T> list(Collection<? extends T> collection) {
-    return StableList.<T>of().appendAll(collection);
+    return StableList.from(collection);
   }
   public static <T> StableList<T> list(Stream<? extends T> stream) {
     return list(stream.collect(StableList.toStableList()));
