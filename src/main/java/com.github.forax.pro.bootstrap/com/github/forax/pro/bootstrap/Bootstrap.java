@@ -43,6 +43,7 @@ public class Bootstrap {
     set("modulefixer.additionalRequires", list(
         "maven.aether.provider=commons.lang",
         "maven.aether.provider=com.github.forax.pro.aether.fakeguava",
+        "maven.aether.provider=plexus.utils",
         "maven.builder.support=commons.lang",
         "maven.modelfat=commons.lang",
         "aether.impl=aether.util",
