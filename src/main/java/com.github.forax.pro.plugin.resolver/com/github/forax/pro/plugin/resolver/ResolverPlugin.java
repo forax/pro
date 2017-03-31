@@ -62,9 +62,20 @@ public class ResolverPlugin implements Plugin {
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
     return modulePath
              .or(() -> Optional.of(
-                 new StableList<Path>().appendAll(moduleDependencyPath).appendAll(additionnalPath)))
+                 StableList.from(moduleDependencyPath).appendAll(additionnalPath)))
              .map(FileHelper::pathFromFilesThatExist)
              .filter(list -> !list.isEmpty());
+  }
+  
+  
+  private static boolean resolveModuleDependencies(ModuleFinder moduleFinder, ModuleFinder dependencyFinder, LinkedHashSet<String> unresolvedModules) {
+    List<String> rootSourceNames = moduleFinder.findAll().stream()
+            .map(ref -> ref.descriptor().name())
+            .collect(Collectors.toList());
+    ModuleFinder allFinder = ModuleFinder.compose(moduleFinder, dependencyFinder, ModuleFinder.ofSystem());
+    
+    return ModuleHelper.resolveOnlyRequires(allFinder, rootSourceNames,
+        (moduleName, __) -> unresolvedModules.add(moduleName));
   }
   
   @Override
@@ -74,17 +85,7 @@ public class ResolverPlugin implements Plugin {
     
     ResolverConf resolver = config.getOrThrow(name(), ResolverConf.class);
     
-    ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(resolver.moduleSourcePath());
-    
-    /*
-    List<Path> moduleTestPath = FileHelper.pathFromFilesThatExist(compiler.moduleTestPath());
-    if (moduleTestPath.isEmpty()) {
-      return 0;
-    }
-    
-    ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(compiler.moduleTestPath());
-    */
-    
+    // create finder for dependencies (or module path if specified)
     Optional<List<Path>> modulePath = modulePathOrDependencyPath(resolver.modulePath(),
         resolver.moduleDependencyPath(), List.of());
     
@@ -94,17 +95,24 @@ public class ResolverPlugin implements Plugin {
             .flatMap(List::stream)
             .map(ModuleFinder::of)
             .toArray(ModuleFinder[]::new));
-    List<String> rootSourceNames = moduleSourceFinder.findAll().stream()
-            .map(ref -> ref.descriptor().name())
-            .collect(Collectors.toList());
     
-    ModuleFinder allFinder = ModuleFinder.compose(moduleSourceFinder, dependencyFinder, ModuleFinder.ofSystem());
-    //allFinder.findAll().stream().sorted(Comparator.comparing(ModuleReference::toString)).forEach(System.out::println);
     
+    // find unresolved modules in dependencies (for source and test)
     LinkedHashSet<String> unresolvedModules = new LinkedHashSet<>();
-    boolean resolved = ModuleHelper.resolveOnlyRequires(allFinder, rootSourceNames,
-        (moduleName, dependencyChain) -> unresolvedModules.add(moduleName));
-    if (resolved) {
+    
+    // source module names
+    ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(resolver.moduleSourcePath());
+    boolean sourceResolved = resolveModuleDependencies(moduleSourceFinder, dependencyFinder, unresolvedModules);
+    
+    // test module names
+    List<Path> moduleTestPath = FileHelper.pathFromFilesThatExist(resolver.moduleTestPath());
+    if (!moduleTestPath.isEmpty()) {
+      ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(resolver.moduleTestPath());
+      sourceResolved &= resolveModuleDependencies(moduleTestFinder, dependencyFinder, unresolvedModules);
+    }
+    
+    // everything is resolved, nothing to do
+    if (sourceResolved) {
       return 0;
     }
     
