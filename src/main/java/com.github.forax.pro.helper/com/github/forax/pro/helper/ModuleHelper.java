@@ -396,11 +396,6 @@ public class ModuleHelper {
     
     descriptor.mainClass().ifPresent(mainClass -> mv.visitMainClass(mainClass.replace('.', '/')));
     
-    String osName = descriptor.osName().orElse(null);
-    String osArch = descriptor.osArch().orElse(null);
-    String osVersion = descriptor.osName().orElse(null);
-    mv.visitTarget(osName, osArch, osVersion);
-    
     descriptor.requires().forEach(require -> {
       int modifiers = require.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
       mv.visitRequire(require.name(), modifiers, null);
