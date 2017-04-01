@@ -1,0 +1,22 @@
+sudo: false
+dist: trusty
+
+language: java
+jdk: oraclejdk9
+
+addons:
+  apt:
+    packages:
+      - oracle-java9-installer
+
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+
+install:
+- java -version
+
+script:
+- chmod u+x ./build.sh
+- ./build.sh

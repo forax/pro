@@ -1,5 +1,5 @@
 @echo off
-set "JAVA_HOME=C:\Program Files\Java\jdk-9"
+if "%JAVA_HOME%" == "" set "JAVA_HOME=C:\Program Files\Java\jdk-9"
 set "java=%JAVA_HOME%\bin\java"
 set "javac=%JAVA_HOME%\bin\javac"
 

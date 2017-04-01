@@ -6,3 +6,4 @@ hs_err_pid*
 /target/
 /output-eclipse/
 /bootstrap/
+/.idea/
