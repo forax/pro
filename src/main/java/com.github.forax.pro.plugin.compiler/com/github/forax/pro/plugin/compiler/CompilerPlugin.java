@@ -85,7 +85,7 @@ public class CompilerPlugin implements Plugin {
   
   enum JavacOption {
     RELEASE(action("--release", Javac::release)),
-    VERBOSE(exists("--verbose", Javac::verbose)),
+    VERBOSE(exists("-verbose", Javac::verbose)),
     LINT(javac -> javac.lint().map(lint -> line -> line.add("-Xlint:" + lint))),
     RAW_ARGUMENTS(rawValues(Javac::rawArguments)),
     DESTINATION(action("-d", Javac::destination)),
