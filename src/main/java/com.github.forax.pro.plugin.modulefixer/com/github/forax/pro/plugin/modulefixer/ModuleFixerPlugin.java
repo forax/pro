@@ -272,7 +272,7 @@ public class ModuleFixerPlugin implements Plugin {
               
               @Override
               public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-                MethodVisitor remapperMethodVisitor = super.visitMethod(access, packageName, desc, signature, exceptions);
+                super.visitMethod(access, packageName, desc, signature, exceptions);
                 return new MethodNode(Opcodes.ASM6, access, packageName, desc, signature, exceptions) {
                   final ArrayList<MethodInsnNode> nodes = new ArrayList<>();
                   
@@ -290,9 +290,6 @@ public class ModuleFixerPlugin implements Plugin {
                   @Override
                   public void visitEnd() {
                     super.visitEnd();
-                    
-                    // replay nodes for the remapper
-                    this.accept(remapperMethodVisitor);
                     
                     if (!nodes.isEmpty()) {
                       // do the static analysis to find constant classes
