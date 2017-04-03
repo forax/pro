@@ -3,14 +3,17 @@ package com.github.forax.pro.plugin.modulefixer;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -92,30 +95,22 @@ public class ModuleFixerPlugin implements Plugin {
       final Set<String> requirePackages;
       final Set<String> exports;
       final Set<String> uses;
+      final Map<String, Set<String>> provides;
       final Set<String> requireModules;
       
-      Info(Set<String> requirePackages, Set<String> exports, Set<String> uses, Set<String> requireModules) {
+      Info(Set<String> requirePackages, Set<String> exports, Set<String> uses, Map<String, Set<String>> provides, Set<String> requireModules) {
         this.requirePackages = requirePackages;
         this.exports = exports;
         this.uses = uses;
+        this.provides = provides;
         this.requireModules = requireModules;
       }
     }
     
-    // gather additional requires and uses
+    // gather additional requires, uses and provides
     boolean force = moduleFixer.force();
-    Map<String, HashSet<String>> additionalRequireMap =
-        moduleFixer.additionalRequires()
-                   .orElse(List.of())
-                   .stream()
-                   .map(line -> line.split("="))
-                   .collect(Collectors.groupingBy(tokens -> tokens[0], Collectors.mapping(tokens -> tokens[1], Collectors.toCollection(HashSet::new))));
-    Map<String, HashSet<String>> additionalUses =
-        moduleFixer.additionalUses()
-        .orElse(List.of())
-        .stream()
-        .map(line -> line.split("="))
-        .collect(Collectors.groupingBy(tokens -> tokens[0], Collectors.mapping(tokens -> tokens[1], Collectors.toCollection(HashSet::new))));
+    Map<String, Set<String>> additionalRequireMap = parseAdditionals(moduleFixer.additionalRequires());
+    Map<String, Set<String>> additionalUses = parseAdditionals(moduleFixer.additionalUses());
     
     //System.out.println("additionalRequireMap " + additionalRequireMap);
     //System.out.println("additionalUses " + additionalUses);
@@ -127,19 +122,20 @@ public class ModuleFixerPlugin implements Plugin {
         ModuleFinder.of(moduleDependencyPath.toArray(new Path[0])),
         ModuleFinder.ofSystem());
     for(ModuleReference ref: moduleFinder.findAll()) {
-      HashSet<String> exports;
-      HashSet<String> uses;
+      Set<String> exports;
       ModuleDescriptor descriptor = ref.descriptor();
       String name = descriptor.name();
-      if (descriptor.isAutomatic() || /*descriptor.isSynthetic() ||*/ (force && (additionalRequireMap.containsKey(name) || additionalUses.containsKey(name)))) {
+      if (descriptor.isAutomatic() || /*descriptor.isSynthetic() ||*/
+          (force && (additionalRequireMap.containsKey(name) || additionalUses.containsKey(name)))) {
         HashSet<String> requires = new HashSet<>();
         exports = new HashSet<>();
-        uses = Optional.ofNullable(additionalUses.get(name)).orElseGet(HashSet::new);
-        findRequiresAndExportsAndUses(ref, requires, exports, uses);
+        Set<String> uses = Optional.ofNullable(additionalUses.get(name)).orElseGet(HashSet::new);
+        Map<String, Set<String>> provides = new HashMap<>();
+        findRequiresExportsUsesAndProvides(ref, requires, exports, uses, provides);
         
         Set<String> additionalRequireModules = Optional.ofNullable(additionalRequireMap.get(name)).orElseGet(HashSet::new);
         moduleInfoMap.put(ref,
-            new Info(requires, exports, uses, additionalRequireModules));
+            new Info(requires, exports, uses, provides, additionalRequireModules));
       } else {
         exports = descriptor.exports().stream().map(export -> export.source().replace('.', '/')).collect(Collectors.toCollection(HashSet::new));
       }
@@ -197,7 +193,7 @@ public class ModuleFixerPlugin implements Plugin {
     for(Map.Entry<ModuleReference, Info> entry: moduleInfoMap.entrySet()) {
       ModuleReference ref = entry.getKey();
       Info info = entry.getValue();
-      Path generatedModuleInfoPath = generateModuleInfo(ref, info.requireModules, info.exports, info.uses, moduleDependencyFixerPath);
+      Path generatedModuleInfoPath = generateModuleInfo(ref, info.requireModules, info.exports, info.uses, info.provides, moduleDependencyFixerPath);
       
       if (errorCode == 0) { // stop to patch at the first error, but generate all module-info.class
         errorCode = patchModularJar(jarTool, ref, generatedModuleInfoPath);
@@ -215,12 +211,16 @@ public class ModuleFixerPlugin implements Plugin {
         generatedModuleInfo.getFileName().toString());
   }
   
-  private static Path generateModuleInfo(ModuleReference ref, Set<String> requires, Set<String> exports, Set<String> uses, Path moduleDependencyFixerPath) throws IOException {
+  private static Path generateModuleInfo(ModuleReference ref,
+                                         Set<String> requires, Set<String> exports, Set<String> uses, Map<String, Set<String>> provides,
+                                         Path moduleDependencyFixerPath) throws IOException {
     String moduleName = ref.descriptor().name();
     
     //System.out.println(moduleName);
     //System.out.println("requires: " + requires);
     //System.out.println("exports: " + exports);
+    //System.out.println("uses: " + uses);
+    //System.out.println("provides: " + provides);
     
     Path modulePatchPath = moduleDependencyFixerPath.resolve(moduleName);
     Files.createDirectories(modulePatchPath);
@@ -230,123 +230,167 @@ public class ModuleFixerPlugin implements Plugin {
     requires.forEach(builder::requires);
     exports.forEach(export -> builder.exports(export.replace('/', '.')));
     uses.forEach(use -> builder.uses(use.replace('/', '.')));
+    provides.forEach((service, providers) -> builder.provides(service, providers.stream().collect(Collectors.toList())));
     
     Path generatedModuleInfoPath = modulePatchPath.resolve("module-info.class");
     Files.write(generatedModuleInfoPath, ModuleHelper.moduleDescriptorToBinary(builder.build()));
     return generatedModuleInfoPath;
   }
 
-  private static void findRequiresAndExportsAndUses(ModuleReference ref, HashSet<String> requires, HashSet<String> exports, HashSet<String> uses) throws IOException {
+  private static void findRequiresExportsUsesAndProvides(ModuleReference ref, Set<String> requirePackages,
+                                                         Set<String> exports, Set<String> uses, Map<String, Set<String>> provides) throws IOException {
     try(ModuleReader reader = ref.open()) {
       try(Stream<String> resources = reader.list()) {
         resources.filter(res -> res.endsWith(".class"))
                  .forEach(resource -> {
-          try(InputStream input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource))) {
-            ClassReader classReader = new ClassReader(input);
-            String className = classReader.getClassName();
-            if (className.equals("module-info")) {
-              return;  // skip module-info
+          if (resource.endsWith(".class")) {
+            scanJavaClass(resource, reader, requirePackages, exports, uses);  
+          } else {
+            if (resource.startsWith("META-INF/services/")) {
+              scanServiceFile(resource, reader, provides);
             }
-            String packageName = packageOf(className);
-            exports.add(packageName);
-            classReader.accept(new ClassRemapper(null, new Remapper() {
-              @Override
-              public String map(String typeName) {
-                String packageName = packageOf(typeName);
-                requires.add(packageName);
-                return typeName;
-              }
-            }) {
-              String owner;
-              
-              @Override
-              public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-                owner = name;
-              }
-              
-              // consider that annotations are not real dependencies
-              @Override
-              protected AnnotationVisitor createAnnotationRemapper(AnnotationVisitor av) {
-                return null;
-              }
-              
-              @Override
-              public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-                super.visitMethod(access, packageName, desc, signature, exceptions);
-                return new MethodNode(Opcodes.ASM6, access, packageName, desc, signature, exceptions) {
-                  final ArrayList<MethodInsnNode> nodes = new ArrayList<>();
-                  
-                  @Override
-                  public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                    super.visitMethodInsn(opcode, owner, packageName, desc, itf);
-                    if (opcode == Opcodes.INVOKESTATIC &&
-                        owner.equals("java/util/ServiceLoader") &&
-                        name.startsWith("load")) {
-                      // record ServideLoader.load* instruction
-                      nodes.add((MethodInsnNode)instructions.getLast());
-                    }
-                  }
-                  
-                  @Override
-                  public void visitEnd() {
-                    super.visitEnd();
-                    
-                    if (!nodes.isEmpty()) {
-                      // do the static analysis to find constant classes
-                      Analyzer<ConstValue> analyzer = new Analyzer<>(new ConstInterpreter());
-                      Frame<ConstValue>[] frames;
-                      try {
-                        frames = analyzer.analyze(owner, this);
-                      } catch (AnalyzerException e) {
-                        throw new UncheckedIOException(new IOException("error while analyzing " + owner, e));
-                      }
-                      
-                      for(MethodInsnNode node: nodes) {
-                        // try to recognize
-                        //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>, java.lang.ClassLoader);
-                        //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>);
-                        //   <S> java.util.ServiceLoader<S> loadInstalled(java.lang.Class<S>);
-                        //   <S> java.util.ServiceLoader<S> load(java.lang.reflect.Layer, java.lang.Class<S>);
-
-                        int index = instructions.indexOf(node);
-                        Frame<ConstValue> frame = frames[index];
-                        ConstValue value;
-                        switch(node.desc) {
-                        case "(Ljava/lang/Class;)Ljava/util/ServiceLoader;":
-                        case "(Ljava/lang/reflect/Layer;Ljava/lang/Class;)Ljava/util/ServiceLoader;": //FIXME when Layer will be java.lang.Layer
-                          // extract the top of the stack
-                          value = frame.getStack(frame.getStackSize() - 1);
-                          break;
-
-                        case "(Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/util/ServiceLoader;":
-                          // extract the second item from the top of the stack
-                          value = frame.getStack(frame.getStackSize() - 2);
-                          break;
-
-                        default:
-                          throw new IllegalStateException("unknown signature in java.util.ServiceLoader " + node.name + node.desc);
-                        }
-                        
-                        String constString = value.constString;
-                        if (constString != "") {
-                          uses.add(constString);
-                        }  
-                      }
-                    }
-                  }
-                };
-              }
-            }, 0);
-          } catch (IOException e) {
-            throw new UncheckedIOException(e);
-          }  
+          }
         }); 
       }
     }
-    requires.removeAll(exports);
+    requirePackages.removeAll(exports);
+  }
+
+  // see ServiceLoader javadoc for the full format
+  private static void scanServiceFile(String resource, ModuleReader reader, Map<String, Set<String>> provides) {
+    try(InputStream input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource));
+        InputStreamReader isr = new InputStreamReader(input, StandardCharsets.UTF_8);
+        BufferedReader lineReader = new BufferedReader(isr)) {
+        
+      Set<String> providers = lineReader.lines()
+        .map(ModuleFixerPlugin::parseProviderLine)
+        .collect(Collectors.toSet());
+      provides.put(resource, providers);
+      
+    } catch(IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+  
+  private static String parseProviderLine(String line) {
+    String serviceName = line;
+    int commentIndex = serviceName.indexOf('#');
+    if (commentIndex != -1) {
+      serviceName = line.substring(0, commentIndex);
+    }
+    serviceName = serviceName.trim();
+    return serviceName;
+  }
+  
+  private static void scanJavaClass(String resource, ModuleReader reader, Set<String> requirePackages, Set<String> exports, Set<String> uses) {
+    try(InputStream input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource))) {
+      ClassReader classReader = new ClassReader(input);
+      String className = classReader.getClassName();
+      if (className.equals("module-info")) {
+        return;  // skip module-info
+      }
+      String packageName = packageOf(className);
+      exports.add(packageName);
+      classReader.accept(new ClassRemapper(null, new Remapper() {
+        @Override
+        public String map(String typeName) {
+          String packageName = packageOf(typeName);
+          requirePackages.add(packageName);
+          return typeName;
+        }
+      }) {
+        String owner;
+        
+        @Override
+        public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+          owner = name;
+        }
+        
+        // consider that annotations are not real dependencies
+        @Override
+        protected AnnotationVisitor createAnnotationRemapper(AnnotationVisitor av) {
+          return null;
+        }
+        
+        @Override
+        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+          super.visitMethod(access, packageName, desc, signature, exceptions);
+          return new MethodNode(Opcodes.ASM6, access, packageName, desc, signature, exceptions) {
+            final ArrayList<MethodInsnNode> nodes = new ArrayList<>();
+            
+            @Override
+            public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+              super.visitMethodInsn(opcode, owner, packageName, desc, itf);
+              if (opcode == Opcodes.INVOKESTATIC &&
+                  owner.equals("java/util/ServiceLoader") &&
+                  name.startsWith("load")) {
+                // record ServideLoader.load* instruction
+                nodes.add((MethodInsnNode)instructions.getLast());
+              }
+            }
+            
+            @Override
+            public void visitEnd() {
+              super.visitEnd();
+              
+              if (!nodes.isEmpty()) {
+                // do the static analysis to find constant classes
+                Analyzer<ConstValue> analyzer = new Analyzer<>(new ConstInterpreter());
+                Frame<ConstValue>[] frames;
+                try {
+                  frames = analyzer.analyze(owner, this);
+                } catch (AnalyzerException e) {
+                  throw new UncheckedIOException(new IOException("error while analyzing " + owner, e));
+                }
+                
+                for(MethodInsnNode node: nodes) {
+                  // try to recognize
+                  //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>, java.lang.ClassLoader);
+                  //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>);
+                  //   <S> java.util.ServiceLoader<S> loadInstalled(java.lang.Class<S>);
+                  //   <S> java.util.ServiceLoader<S> load(java.lang.reflect.Layer, java.lang.Class<S>);
+
+                  int index = instructions.indexOf(node);
+                  Frame<ConstValue> frame = frames[index];
+                  ConstValue value;
+                  switch(node.desc) {
+                  case "(Ljava/lang/Class;)Ljava/util/ServiceLoader;":
+                  case "(Ljava/lang/reflect/Layer;Ljava/lang/Class;)Ljava/util/ServiceLoader;": //FIXME when Layer will be java.lang.Layer
+                    // extract the top of the stack
+                    value = frame.getStack(frame.getStackSize() - 1);
+                    break;
+
+                  case "(Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/util/ServiceLoader;":
+                    // extract the second item from the top of the stack
+                    value = frame.getStack(frame.getStackSize() - 2);
+                    break;
+
+                  default:
+                    throw new IllegalStateException("unknown signature in java.util.ServiceLoader " + node.name + node.desc);
+                  }
+                  
+                  String constString = value.constString;
+                  if (constString != "") {
+                    uses.add(constString);
+                  }  
+                }
+              }
+            }
+          };
+        }
+      }, 0);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
   
   
+  private static Map<String, Set<String>> parseAdditionals(Optional<List<String>> additionals) {
+    return additionals.orElse(List.of())
+        .stream()
+        .map(line -> line.split("="))
+        .collect(Collectors.groupingBy(tokens -> tokens[0], Collectors.mapping(tokens -> tokens[1], Collectors.toSet())));
+  }
   
   static String packageOf(String typeName) {
     int index = typeName.lastIndexOf('/');
