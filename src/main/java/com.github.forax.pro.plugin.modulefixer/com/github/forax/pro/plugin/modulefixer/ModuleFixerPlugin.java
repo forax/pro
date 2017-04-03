@@ -27,8 +27,15 @@ import java.util.stream.Stream;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Frame;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
@@ -38,6 +45,8 @@ import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
+
+import com.github.forax.pro.plugin.modulefixer.ConstInterpreter.ConstValue;
 
 public class ModuleFixerPlugin implements Plugin {
   @Override
@@ -82,50 +91,59 @@ public class ModuleFixerPlugin implements Plugin {
     class Info {
       final Set<String> requirePackages;
       final Set<String> exports;
+      final Set<String> uses;
       final Set<String> requireModules;
       
-      Info(Set<String> requirePackages, Set<String> exports, Set<String> requireModules) {
+      Info(Set<String> requirePackages, Set<String> exports, Set<String> uses, Set<String> requireModules) {
         this.requirePackages = requirePackages;
         this.exports = exports;
+        this.uses = uses;
         this.requireModules = requireModules;
       }
     }
     
-    // gather additional requires
+    // gather additional requires and uses
     boolean force = moduleFixer.force();
-    Map<String, Set<String>> additionalRequireMap =
+    Map<String, HashSet<String>> additionalRequireMap =
         moduleFixer.additionalRequires()
                    .orElse(List.of())
                    .stream()
                    .map(line -> line.split("="))
-                   .collect(Collectors.groupingBy(tokens -> tokens[0], Collectors.mapping(tokens -> tokens[1], Collectors.toSet())));
-    //System.out.println("additionalRequireMap " + additionalRequireMap);
+                   .collect(Collectors.groupingBy(tokens -> tokens[0], Collectors.mapping(tokens -> tokens[1], Collectors.toCollection(HashSet::new))));
+    Map<String, HashSet<String>> additionalUses =
+        moduleFixer.additionalUses()
+        .orElse(List.of())
+        .stream()
+        .map(line -> line.split("="))
+        .collect(Collectors.groupingBy(tokens -> tokens[0], Collectors.mapping(tokens -> tokens[1], Collectors.toCollection(HashSet::new))));
     
-    // find dependencies (requires and exports)
+    //System.out.println("additionalRequireMap " + additionalRequireMap);
+    //System.out.println("additionalUses " + additionalUses);
+    
+    // find dependencies (requires, exports and uses)
     HashMap<ModuleReference, Info> moduleInfoMap = new HashMap<>();
     HashMap<String, List<ModuleReference>> exportMap = new HashMap<>();
     ModuleFinder moduleFinder = ModuleFinder.compose(
         ModuleFinder.of(moduleDependencyPath.toArray(new Path[0])),
         ModuleFinder.ofSystem());
     for(ModuleReference ref: moduleFinder.findAll()) {
-      Set<String> exports;
+      HashSet<String> exports;
+      HashSet<String> uses;
       ModuleDescriptor descriptor = ref.descriptor();
       String name = descriptor.name();
-      if (descriptor.isAutomatic() || /*descriptor.isSynthetic() ||*/ (force && additionalRequireMap.containsKey(name))) {
+      if (descriptor.isAutomatic() || /*descriptor.isSynthetic() ||*/ (force && (additionalRequireMap.containsKey(name) || additionalUses.containsKey(name)))) {
         HashSet<String> requires = new HashSet<>();
         exports = new HashSet<>();
-        findRequiresAndExports(ref, requires, exports);
+        uses = Optional.ofNullable(additionalUses.get(name)).orElseGet(HashSet::new);
+        findRequiresAndExportsAndUses(ref, requires, exports, uses);
+        
+        Set<String> additionalRequireModules = Optional.ofNullable(additionalRequireMap.get(name)).orElseGet(HashSet::new);
         moduleInfoMap.put(ref,
-            new Info(requires, exports,
-                Optional.ofNullable(additionalRequireMap.get(name)).orElseGet(HashSet::new)));
+            new Info(requires, exports, uses, additionalRequireModules));
       } else {
-        exports = descriptor.exports().stream().map(export -> export.source().replace('.', '/')).collect(Collectors.toSet());
+        exports = descriptor.exports().stream().map(export -> export.source().replace('.', '/')).collect(Collectors.toCollection(HashSet::new));
       }
       exports.forEach(packageName -> exportMap.computeIfAbsent(packageName, __ -> new ArrayList<>()).add(ref));
-    }
-    
-    if (exportMap.isEmpty()) {
-      return 0; // nothing todo
     }
     
     // verify split packages
@@ -179,7 +197,7 @@ public class ModuleFixerPlugin implements Plugin {
     for(Map.Entry<ModuleReference, Info> entry: moduleInfoMap.entrySet()) {
       ModuleReference ref = entry.getKey();
       Info info = entry.getValue();
-      Path generatedModuleInfoPath = generateModuleInfo(ref, info.requireModules, info.exports, moduleDependencyFixerPath);
+      Path generatedModuleInfoPath = generateModuleInfo(ref, info.requireModules, info.exports, info.uses, moduleDependencyFixerPath);
       
       if (errorCode == 0) { // stop to patch at the first error, but generate all module-info.class
         errorCode = patchModularJar(jarTool, ref, generatedModuleInfoPath);
@@ -197,7 +215,7 @@ public class ModuleFixerPlugin implements Plugin {
         generatedModuleInfo.getFileName().toString());
   }
   
-  private static Path generateModuleInfo(ModuleReference ref, Set<String> requires, Set<String> exports, Path moduleDependencyFixerPath) throws IOException {
+  private static Path generateModuleInfo(ModuleReference ref, Set<String> requires, Set<String> exports, Set<String> uses, Path moduleDependencyFixerPath) throws IOException {
     String moduleName = ref.descriptor().name();
     
     //System.out.println(moduleName);
@@ -211,13 +229,14 @@ public class ModuleFixerPlugin implements Plugin {
     ref.descriptor().version().ifPresent(version -> builder.version(version.toString()));
     requires.forEach(builder::requires);
     exports.forEach(export -> builder.exports(export.replace('/', '.')));
+    uses.forEach(use -> builder.uses(use.replace('/', '.')));
     
     Path generatedModuleInfoPath = modulePatchPath.resolve("module-info.class");
     Files.write(generatedModuleInfoPath, ModuleHelper.moduleDescriptorToBinary(builder.build()));
     return generatedModuleInfoPath;
   }
 
-  private static void findRequiresAndExports(ModuleReference ref, HashSet<String> requires, Set<String> exports) throws IOException {
+  private static void findRequiresAndExportsAndUses(ModuleReference ref, HashSet<String> requires, HashSet<String> exports, HashSet<String> uses) throws IOException {
     try(ModuleReader reader = ref.open()) {
       try(Stream<String> resources = reader.list()) {
         resources.filter(res -> res.endsWith(".class"))
@@ -238,10 +257,87 @@ public class ModuleFixerPlugin implements Plugin {
                 return typeName;
               }
             }) {
+              String owner;
+              
+              @Override
+              public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                owner = name;
+              }
+              
               // consider that annotations are not real dependencies
               @Override
               protected AnnotationVisitor createAnnotationRemapper(AnnotationVisitor av) {
                 return null;
+              }
+              
+              @Override
+              public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+                MethodVisitor remapperMethodVisitor = super.visitMethod(access, packageName, desc, signature, exceptions);
+                return new MethodNode(Opcodes.ASM6, access, packageName, desc, signature, exceptions) {
+                  final ArrayList<MethodInsnNode> nodes = new ArrayList<>();
+                  
+                  @Override
+                  public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                    super.visitMethodInsn(opcode, owner, packageName, desc, itf);
+                    if (opcode == Opcodes.INVOKESTATIC &&
+                        owner.equals("java/util/ServiceLoader") &&
+                        name.startsWith("load")) {
+                      // record ServideLoader.load* instruction
+                      nodes.add((MethodInsnNode)instructions.getLast());
+                    }
+                  }
+                  
+                  @Override
+                  public void visitEnd() {
+                    super.visitEnd();
+                    
+                    // replay nodes for the remapper
+                    this.accept(remapperMethodVisitor);
+                    
+                    if (!nodes.isEmpty()) {
+                      // do the static analysis to find constant classes
+                      Analyzer<ConstValue> analyzer = new Analyzer<>(new ConstInterpreter());
+                      Frame<ConstValue>[] frames;
+                      try {
+                        frames = analyzer.analyze(owner, this);
+                      } catch (AnalyzerException e) {
+                        throw new UncheckedIOException(new IOException("error while analyzing " + owner, e));
+                      }
+                      
+                      for(MethodInsnNode node: nodes) {
+                        // try to recognize
+                        //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>, java.lang.ClassLoader);
+                        //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>);
+                        //   <S> java.util.ServiceLoader<S> loadInstalled(java.lang.Class<S>);
+                        //   <S> java.util.ServiceLoader<S> load(java.lang.reflect.Layer, java.lang.Class<S>);
+
+                        int index = instructions.indexOf(node);
+                        Frame<ConstValue> frame = frames[index];
+                        ConstValue value;
+                        switch(node.desc) {
+                        case "(Ljava/lang/Class;)Ljava/util/ServiceLoader;":
+                        case "(Ljava/lang/reflect/Layer;Ljava/lang/Class;)Ljava/util/ServiceLoader;": //FIXME when Layer will be java.lang.Layer
+                          // extract the top of the stack
+                          value = frame.getStack(frame.getStackSize() - 1);
+                          break;
+
+                        case "(Ljava/lang/Class;Ljava/lang/ClassLoader;)Ljava/util/ServiceLoader;":
+                          // extract the second item from the top of the stack
+                          value = frame.getStack(frame.getStackSize() - 2);
+                          break;
+
+                        default:
+                          throw new IllegalStateException("unknown signature in java.util.ServiceLoader " + node.name + node.desc);
+                        }
+                        
+                        String constString = value.constString;
+                        if (constString != "") {
+                          uses.add(constString);
+                        }  
+                      }
+                    }
+                  }
+                };
               }
             }, 0);
           } catch (IOException e) {
@@ -252,6 +348,8 @@ public class ModuleFixerPlugin implements Plugin {
     }
     requires.removeAll(exports);
   }
+  
+  
   
   static String packageOf(String typeName) {
     int index = typeName.lastIndexOf('/');
