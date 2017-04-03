@@ -408,7 +408,7 @@ public class ModuleHelper {
       int modifiers = open.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
       mv.visitExport(open.source().replace('.', '/'), modifiers, open.targets().toArray(new String[0]));
     });
-    descriptor.uses().forEach(service -> mv.visitUse(service));
+    descriptor.uses().forEach(service -> mv.visitUse(service.replace('.', '/')));
     descriptor.provides().forEach(provide -> {
       mv.visitProvide(provide.service().replace('.', '/'), provide.providers().stream().map(name -> name.replace('.', '/')).toArray(String[]::new));
     });
