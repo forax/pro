@@ -230,7 +230,7 @@ public class ModuleFixerPlugin implements Plugin {
     requires.forEach(builder::requires);
     exports.forEach(export -> builder.exports(export.replace('/', '.')));
     uses.forEach(use -> builder.uses(use.replace('/', '.')));
-    provides.forEach((service, providers) -> builder.provides(service, providers.stream().collect(Collectors.toList())));
+    provides.forEach((service, providers) -> builder.provides(service, new ArrayList<>(providers)));
     
     Path generatedModuleInfoPath = modulePatchPath.resolve("module-info.class");
     Files.write(generatedModuleInfoPath, ModuleHelper.moduleDescriptorToBinary(builder.build()));
@@ -241,8 +241,7 @@ public class ModuleFixerPlugin implements Plugin {
                                                          Set<String> exports, Set<String> uses, Map<String, Set<String>> provides) throws IOException {
     try(ModuleReader reader = ref.open()) {
       try(Stream<String> resources = reader.list()) {
-        resources.filter(res -> res.endsWith(".class"))
-                 .forEach(resource -> {
+        resources.forEach(resource -> {
           if (resource.endsWith(".class")) {
             scanJavaClass(resource, reader, requirePackages, exports, uses);  
           } else {
@@ -261,12 +260,13 @@ public class ModuleFixerPlugin implements Plugin {
     try(InputStream input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource));
         InputStreamReader isr = new InputStreamReader(input, StandardCharsets.UTF_8);
         BufferedReader lineReader = new BufferedReader(isr)) {
-        
+
+      String service = resource.substring("META-INF/services/".length());
       Set<String> providers = lineReader.lines()
         .map(ModuleFixerPlugin::parseProviderLine)
         .collect(Collectors.toSet());
-      provides.put(resource, providers);
-      
+      provides.put(service, providers);
+
     } catch(IOException e) {
       throw new UncheckedIOException(e);
     }
