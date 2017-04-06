@@ -23,7 +23,7 @@ The build model of Maven is not well suited to describe this new world.
   
 
 # demo
-There is a small demo in the github projet [pro-demo](https://github.com/forax/pro-demo/).
+There is a small demo in the github project [pro-demo](https://github.com/forax/pro-demo/).
 
 # build instructions
 To compile and build pro, run 
