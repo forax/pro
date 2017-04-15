@@ -119,8 +119,10 @@ public class RunnerPlugin implements Plugin {
     }
     
     Process process = new ProcessBuilder(StableList.of(javaCommand.toString()).appendAll(arguments))
-      .inheritIO()
+      .redirectErrorStream(true)
       .start();
+    
+    process.getInputStream().transferTo(System.out);
     
     try {
       return process.waitFor();
