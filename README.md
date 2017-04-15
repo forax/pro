@@ -1,6 +1,8 @@
 # pro
 a Java 9 compatible build tool
 
+![pro build status](https://api.travis-ci.org/forax/pro.svg?branch=master)
+
 > No need to be a maven to be able to use a build tool 
 
 
