@@ -45,7 +45,14 @@ public class RunnerPlugin implements Plugin {
     runner.modulePath(StableList.of(convention.javaModuleArtifactSourcePath())
         .appendAll(convention.javaModuleDependencyPath())
         .appendAll(convention.javaModuleExplodedSourcePath()));
-    runner.javaCommand(convention.javaHome().resolve("bin/java"));   //FIXME may be java.bat ??
+    runner.javaCommand(convention.javaHome().resolve(javaExecutableName()));
+  }
+
+  private String javaExecutableName() {
+    if (System.getProperty("os.name").toLowerCase().contains("win")) {
+      return "bin\\java.exe";
+    }
+    return "bin/java";
   }
   
   @Override
