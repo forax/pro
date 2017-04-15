@@ -23,6 +23,7 @@ import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.Log;
+import com.github.forax.pro.helper.Platform;
 import com.github.forax.pro.helper.util.StableList;
 
 public class RunnerPlugin implements Plugin {
@@ -45,14 +46,7 @@ public class RunnerPlugin implements Plugin {
     runner.modulePath(StableList.of(convention.javaModuleArtifactSourcePath())
         .appendAll(convention.javaModuleDependencyPath())
         .appendAll(convention.javaModuleExplodedSourcePath()));
-    runner.javaCommand(convention.javaHome().resolve(javaExecutableName()));
-  }
-
-  private String javaExecutableName() {
-    if (System.getProperty("os.name").toLowerCase().contains("win")) {
-      return "bin\\java.exe";
-    }
-    return "bin/java";
+    runner.javaCommand(convention.javaHome().resolve("bin").resolve(Platform.current().javaExecutableName()));
   }
   
   @Override
