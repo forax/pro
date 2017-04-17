@@ -17,7 +17,7 @@ import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
-import java.lang.reflect.Layer;
+import java.lang.ModuleLayer;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -126,9 +126,9 @@ public class Main {
       }
     };
     
-    Layer parent = Layer.boot();
+    ModuleLayer parent = ModuleLayer.boot();
     Configuration cf = parent.configuration().resolveAndBind(patchedFinder, ModuleFinder.of(), List.of("com.github.forax.pro.uberbooter", mainModule));
-    Layer layer = Layer.defineModulesWithOneLoader(cf, List.of(parent), ClassLoader.getSystemClassLoader()).layer();
+    ModuleLayer layer = ModuleLayer.defineModulesWithOneLoader(cf, List.of(parent), ClassLoader.getSystemClassLoader()).layer();
     
     ClassLoader loader = layer.findLoader("com.github.forax.pro.uberbooter");
     Class<?> booterClass = loader.loadClass("com.github.forax.pro.uberbooter.Booter");
