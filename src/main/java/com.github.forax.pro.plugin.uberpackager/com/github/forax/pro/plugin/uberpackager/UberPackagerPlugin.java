@@ -6,7 +6,6 @@ import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.spi.ToolProvider;
 import java.util.stream.Stream;
@@ -59,6 +58,8 @@ public class UberPackagerPlugin implements Plugin {
     Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
+    log.info(null, __ -> "WARNING: this feature is highly experimental !");
+    
     ToolProvider jarTool = ToolProvider.findFirst("jar")
         .orElseThrow(() -> new IllegalStateException("can not find the command jar"));
     UberPackagerConf packager = config.getOrThrow(name(), UberPackagerConf.class);
@@ -70,19 +71,16 @@ public class UberPackagerPlugin implements Plugin {
     Class<Main> mainClass = com.github.forax.pro.ubermain.Main.class;
     Module uberjarModule = mainClass.getModule();
     ModuleReference uberJarRef = uberjarModule.getLayer().configuration().findModule(uberjarModule.getName()).get().reference();
-    Path uberJarModulePath;
     try(ModuleReader moduleReader = uberJarRef.open()) {
       String mainClassName = mainClass.getName().replace('.', '/');
-      for(String filename: List.of(mainClassName + ".class", mainClassName + "$1.class")) {
+      for(String filename: List.of(mainClassName + ".class", mainClassName + "$1.class", mainClassName + "$1$1.class")) {
         Path path = uberExplodedPath.resolve(filename);
         Files.createDirectories(path.getParent());
         Files.copy(moduleReader.open(filename).get(), path);
       }
-      
-      Path uberJarPath = Paths.get(uberJarRef.location().get());
-      uberJarModulePath = uberJarPath.getFileName();
-      Files.copy(uberJarPath, uberExplodedPath.resolve(uberJarModulePath));
     }
+    
+    //FIXME add the class of module uberbooter
     
     List<Path> modulePaths = new StableList<Path>()
         .append(packager.moduleArtifactSourcePath())
@@ -91,8 +89,8 @@ public class UberPackagerPlugin implements Plugin {
     try(BufferedWriter writer = Files.newBufferedWriter(uberExplodedPath.resolve("modules.txt"))) {
       writer.write("com.github.forax.pro.main/com.github.forax.pro.main.Main");
       writer.newLine();
-      writer.write(uberJarModulePath.toString());
-      writer.newLine();
+      //writer.write(uberbooterModule);
+      //writer.newLine();
       for(Path modulePath: modulePaths) {
         try(Stream<Path> modularJars = Files.list(modulePath)) {
           for(Path modularJar: (Iterable<Path>)modularJars::iterator){

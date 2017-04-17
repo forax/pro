@@ -32,7 +32,7 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.linker@0.9",
         "com.github.forax.pro.plugin.runner@0.9",
         "com.github.forax.pro.plugin.uberpackager@0.9", 
-        "com.github.forax.pro.plugin.bootstrap@0.9",
+        "com.github.forax.pro.plugin.bootstrap@0.9/com.github.forax.pro.bootstrap.Bootstrap",
         "com.github.forax.pro.ubermain@0.9",
         "com.github.forax.pro.uberbooter@0.9",
         "com.github.forax.pro.daemon@0.9",
