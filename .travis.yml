@@ -9,6 +9,8 @@ install:
 - ./pro/bin/pro version
 
 script:
-- ./pro/bin/pro
+- chmod u+x ./build.sh
+- ./build.sh
+
 
 
