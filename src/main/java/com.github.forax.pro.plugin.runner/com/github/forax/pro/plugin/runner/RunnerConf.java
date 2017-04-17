@@ -19,4 +19,10 @@ public interface RunnerConf {
   
   Optional<List<String>> rootModules();
   void rootModules(List<String> rootModules);
+  
+  Optional<List<String>> rawArguments();
+  void rawArguments(List<String> rawArguments);
+  
+  Optional<List<String>> mainArguments();
+  void mainArguments(List<String> mainArguments);
 }

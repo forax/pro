@@ -59,8 +59,9 @@ public class RunnerPlugin implements Plugin {
   enum RunnerOption {
     MODULE_PATH(action("--module-path", Java::modulePath, File.pathSeparator)),
     ROOT_MODULES(actionMaybe("--add-modules", Java::rootModules, ",")),
-    MODULE(action("--module", Java::module)),
     RAW_ARGUMENTS(rawValues(Java::rawArguments)),
+    MODULE_NAME(action("--module", Java::moduleName)),
+    MAIN_ARGUMENTS(rawValues(Java::mainArguments)),
     ;
     
     final OptionAction<Java> action;
@@ -109,6 +110,8 @@ public class RunnerPlugin implements Plugin {
     
     Java java = new Java(runner.javaCommand(), runner.modulePath(), moduleName.get());
     runner.rootModules().ifPresent(java::rootModules);
+    runner.rawArguments().ifPresent(java::rawArguments);
+    runner.mainArguments().ifPresent(java::mainArguments);
     
     String[] arguments = OptionAction.gatherAll(RunnerOption.class, option -> option.action).apply(java, new CmdLine()).toArguments();
     log.verbose(java, _java -> OptionAction.toPrettyString(RunnerOption.class, option -> option.action).apply(_java, "java"));

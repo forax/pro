@@ -8,14 +8,16 @@ import java.util.Optional;
 class Java {
   private final Path javaCommand;
   private final List<Path> modulePath;
-  private final String module;
+  private final String moduleName;
+  
   private List<String> rootModules; 
   private List<String> rawArguments;
+  private List<String> mainArguments;
   
-  public Java(Path javaCommand, List<Path> modulePath, String module) {
+  public Java(Path javaCommand, List<Path> modulePath, String moduleName) {
     this.javaCommand = Objects.requireNonNull(javaCommand);
     this.modulePath = Objects.requireNonNull(modulePath);
-    this.module = Objects.requireNonNull(module);
+    this.moduleName = Objects.requireNonNull(moduleName);
   }
   
   public Path getJavaCommand() {
@@ -24,8 +26,8 @@ class Java {
   public List<Path> modulePath() {
     return modulePath;
   }
-  public String module() {
-    return module;
+  public String moduleName() {
+    return moduleName;
   }
   
   public Optional<List<String>> rootModules() {
@@ -40,5 +42,12 @@ class Java {
   }
   public void rawArguments(List<String> rawArguments) {
     this.rawArguments = Objects.requireNonNull(rawArguments);
+  }
+  
+  public Optional<List<String>> mainArguments() {
+    return Optional.ofNullable(mainArguments);
+  }
+  public void mainArguments(List<String> mainArguments) {
+    this.mainArguments = Objects.requireNonNull(mainArguments);
   }
 }
