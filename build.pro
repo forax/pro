@@ -12,6 +12,7 @@ set("compiler.lint", "all,-varargs,-overloads");
 set("compiler.moduleExplodedSourcePath", location("bootstrap/modules"));
 
 set("runner.modulePath", path("bootstrap/modules", "deps"));
+set("runner.upgradeModulePath", path("bootstrap/modules"));
 set("runner.module", "com.github.forax.pro.bootstrap/com.github.forax.pro.bootstrap.Bootstrap");
 
 run("compiler", "runner");

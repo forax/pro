@@ -33,4 +33,5 @@ $javac --module-source-path src/main/java \
        $(find src/main/java/ -name "*.java")
 
 $java --module-path bootstrap/modules:deps \
+      --upgrade-module-path bootstrap/modules \
       --module com.github.forax.pro.bootstrap/com.github.forax.pro.bootstrap.Bootstrap

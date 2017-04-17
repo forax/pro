@@ -58,6 +58,7 @@ public class RunnerPlugin implements Plugin {
   
   enum RunnerOption {
     MODULE_PATH(action("--module-path", Java::modulePath, File.pathSeparator)),
+    UPGRADE_MODULE_PATH(actionMaybe("--upgrade-module-path", Java::upgradeModulePath, File.pathSeparator)),
     ROOT_MODULES(actionMaybe("--add-modules", Java::rootModules, ",")),
     RAW_ARGUMENTS(rawValues(Java::rawArguments)),
     MODULE_NAME(action("--module", Java::moduleName)),
@@ -109,6 +110,7 @@ public class RunnerPlugin implements Plugin {
     }
     
     Java java = new Java(runner.javaCommand(), runner.modulePath(), moduleName.get());
+    runner.upgradeModulePath().ifPresent(java::upgradeModulePath);
     runner.rootModules().ifPresent(java::rootModules);
     runner.rawArguments().ifPresent(java::rawArguments);
     runner.mainArguments().ifPresent(java::mainArguments);

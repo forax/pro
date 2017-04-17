@@ -14,6 +14,9 @@ public interface RunnerConf {
   List<Path> modulePath();
   void modulePath(List<Path> modulePath);
   
+  Optional<List<Path>> upgradeModulePath();
+  void upgradeModulePath(List<Path> upgradeModulePath);
+  
   Optional<String> module();
   void module(String moduleName);
   

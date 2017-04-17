@@ -10,6 +10,7 @@ class Java {
   private final List<Path> modulePath;
   private final String moduleName;
   
+  private List<Path> upgradeModulePath;
   private List<String> rootModules; 
   private List<String> rawArguments;
   private List<String> mainArguments;
@@ -28,6 +29,13 @@ class Java {
   }
   public String moduleName() {
     return moduleName;
+  }
+  
+  public Optional<List<Path>> upgradeModulePath() {
+    return Optional.ofNullable(upgradeModulePath);
+  }
+  public void upgradeModulePath(List<Path> upgradeModulePath) {
+    this.upgradeModulePath = Objects.requireNonNull(upgradeModulePath);
   }
   
   public Optional<List<String>> rootModules() {
