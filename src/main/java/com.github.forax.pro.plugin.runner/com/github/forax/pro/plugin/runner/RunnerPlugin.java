@@ -3,6 +3,7 @@ package com.github.forax.pro.plugin.runner;
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
+import static java.util.stream.Collectors.joining;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,7 +90,7 @@ public class RunnerPlugin implements Plugin {
       }
     }
     
-    log.error(null, __ -> "no main class found");
+    log.error(modulePath, _modulePath -> "no main class found in " + modulePath.stream().map(Path::toString).collect(joining(":")));
     return Optional.empty();
   }
   
