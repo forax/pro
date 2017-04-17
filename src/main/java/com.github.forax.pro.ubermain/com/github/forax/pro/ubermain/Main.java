@@ -17,7 +17,6 @@ import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
-import java.lang.ModuleLayer;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
 import java.net.URISyntaxException;

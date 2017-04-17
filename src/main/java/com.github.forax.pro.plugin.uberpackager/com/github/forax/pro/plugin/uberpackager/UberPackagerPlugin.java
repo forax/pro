@@ -4,7 +4,6 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
-import java.lang.Module;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
