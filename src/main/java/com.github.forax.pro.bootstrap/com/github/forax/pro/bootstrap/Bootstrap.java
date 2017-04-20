@@ -102,8 +102,6 @@ public class Bootstrap {
           location("target/main/artifact"),
           stream -> stream.filter(p -> p.toString().endsWith(".jar")),
           Files::copy);
-      
-      run("packager");
     });
     
     
