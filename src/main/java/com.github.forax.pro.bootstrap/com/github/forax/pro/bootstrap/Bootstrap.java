@@ -86,7 +86,7 @@ public class Bootstrap {
     // compile and package plugins
     local(() -> {
       set("modulefixer.moduleDependencyPath", path("plugins/runner/deps"));
-      set("modulefixer.moduleDependencyFixerPath", path("plugins/runner/target/deps/module-fixer"));
+      set("modulefixer.moduleDependencyFixerPath", location("plugins/runner/target/deps/module-fixer"));
       
       set("compiler.moduleSourcePath", path("plugins/runner/src/main/java"));
       set("compiler.moduleExplodedSourcePath", location("plugins/runner/target/main/exploded"));
