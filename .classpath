@@ -12,7 +12,6 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.compiler" path="src/main/java/com.github.forax.pro.plugin.compiler"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.packager" path="src/main/java/com.github.forax.pro.plugin.packager"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.linker" path="src/main/java/com.github.forax.pro.plugin.linker"/>
-	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.runner" path="src/main/java/com.github.forax.pro.plugin.runner"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.uberpackager" path="src/main/java/com.github.forax.pro.plugin.uberpackager"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.bootstrap" path="src/main/java/com.github.forax.pro.bootstrap"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.ubermain" path="src/main/java/com.github.forax.pro.ubermain"/>
@@ -20,9 +19,7 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.daemon" path="src/main/java/com.github.forax.pro.daemon"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.daemon.imp" path="src/main/java/com.github.forax.pro.daemon.imp"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="test/main/java/com.github.forax.pro.helper"/>
-	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/samples/com.foo.acme.amodule" path="samples/simple/src/main/java/com.foo.acme.amodule"/>
-	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/samples/com.foo.acme.anothermodule" path="samples/simple/src/main/java/com.foo.acme.anothermodule"/>
-	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/samples/com.foo.getstarted" path="samples/getstarted/src/main/java/com.foo.getstarted"/>
+	<classpathentry excluding="module-info.java" kind="src" path="plugins/runner/src/main/java/com.github.forax.pro.plugin.runner"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-9"/>
 	<classpathentry kind="lib" path="deps/aether.api-1.0.1.jar"/>
 	<classpathentry kind="lib" path="deps/aether.connector.basic-1.0.1.jar"/>
