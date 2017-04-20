@@ -94,14 +94,16 @@ public class Bootstrap {
 
       set("packager.moduleExplodedSourcePath", path("plugins/runner/target/main/exploded"));
       set("packager.moduleArtifactSourcePath", location("plugins/runner/target/main/artifact"));
-      
+
+      run("modulefixer", "compiler", "packager");
+
       FileHelper.walkAndFindCounterpart(
           location("plugins/runner/target/main/artifact"),
           location("target/main/artifact"),
           stream -> stream.filter(p -> p.toString().endsWith(".jar")),
           Files::copy);
       
-      run("modulefixer", "compiler", "packager");
+      run("packager");
     });
     
     
