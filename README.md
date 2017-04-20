@@ -1,4 +1,4 @@
-![pro build status](https://api.travis-ci.org/forax/pro.svg?branch=master)
+[![pro build status](https://api.travis-ci.org/forax/pro.svg?branch=master)](https://travis-ci.org/forax/pro)
 # pro
 a Java 9 compatible build tool
 
