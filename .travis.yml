@@ -4,12 +4,13 @@ language: java
 
 install:
 - wget --no-check-certificate https://github.com/forax/pro/releases/download/v0.9.165/pro-9-b165-linux.tar.gz
-- tar -xzf pro-9-b165-linux.tar.gz
+- tar -xzf pro-9-b165.1-linux.tar.gz
 - export JAVA_HOME=./pro
 - ./pro/bin/pro version
 
 script:
-- ./pro/bin/pro
+- chmod u+x ./build.sh
+- ./build.sh
 
 
 
