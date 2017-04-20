@@ -99,9 +99,8 @@ public class RunnerPlugin implements Plugin {
   @Override
   public int execute(Config config) throws IOException {
     Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
-    log.debug(config, conf -> "config " + config);
-    
     RunnerConf runner = config.getOrThrow(name(), RunnerConf.class);
+    log.debug(config, conf -> "config " + runner);
     
     Optional<String> moduleName = runner.module()
         .or(() -> findMainModule(runner.modulePath(), log));

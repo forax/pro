@@ -1,7 +1,7 @@
 module com.github.forax.pro.plugin.runner {
   requires com.github.forax.pro.api;
   requires com.github.forax.pro.helper;
-  requires org.objectweb.asm.all.debug;
+  //requires org.objectweb.asm.all.debug;
   
   opens com.github.forax.pro.plugin.runner;
   

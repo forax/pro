@@ -52,10 +52,6 @@ public class Pro {
       proConf.exitOnError(false);
       return config;
     }
-    @Override
-    public void set(DefaultConfig value) {
-      throw new UnsupportedOperationException();
-    }
   };
   private static final Map<String, Plugin> PLUGINS;
   static {
@@ -214,6 +210,17 @@ public class Pro {
       plugins.add(plugin);
     }
     return exitCode;
+  }
+  
+  public static void local(Runnable action) {
+    DefaultConfig oldConfig = CONFIG.get();
+    try {
+      DefaultConfig newConfig = oldConfig.duplicate();
+      CONFIG.set(newConfig);
+      action.run();
+    } finally {
+      CONFIG.set(oldConfig);
+    }
   }
   
   public static void run(String... pluginNames) {

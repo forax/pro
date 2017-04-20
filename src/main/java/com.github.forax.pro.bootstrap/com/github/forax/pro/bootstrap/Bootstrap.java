@@ -6,8 +6,13 @@ import static com.github.forax.pro.Pro.set;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.github.forax.pro.helper.FileHelper;
 
 public class Bootstrap {
   public static void main(String[] args) throws IOException {
@@ -76,7 +81,31 @@ public class Bootstrap {
     //set("linker.serviceNames", list("java.util.spi.ToolProvider"));
     
     
-    run("modulefixer", "compiler", "packager", "linker", "uberpackager");
+    run("modulefixer", "compiler", "packager");
+    
+    // compile and package plugins
+    local(() -> {
+      set("modulefixer.moduleDependencyPath", path("plugins/runner/deps"));
+      set("modulefixer.moduleDependencyFixerPath", path("plugins/runner/target/deps/module-fixer"));
+      
+      set("compiler.moduleSourcePath", path("plugins/runner/src/main/java"));
+      set("compiler.moduleExplodedSourcePath", location("plugins/runner/target/main/exploded"));
+      set("compiler.moduleDependencyPath", path("plugins/runner/deps", "target/main/artifact/", "deps"));
+
+      set("packager.moduleExplodedSourcePath", path("plugins/runner/target/main/exploded"));
+      set("packager.moduleArtifactSourcePath", location("plugins/runner/target/main/artifact"));
+      
+      FileHelper.walkAndFindCounterpart(
+          location("plugins/runner/target/main/artifact"),
+          location("target/main/artifact"),
+          stream -> stream.filter(p -> p.toString().endsWith(".jar")),
+          Files::copy);
+      
+      run("modulefixer", "compiler", "packager");
+    });
+    
+    
+    run("linker", "uberpackager");
     
     Vanity.postOperations();
   }

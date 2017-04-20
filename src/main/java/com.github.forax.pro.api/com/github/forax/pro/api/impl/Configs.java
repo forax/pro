@@ -232,7 +232,7 @@ public class Configs {
             }
             case "_set_": {
               if (proxyReadOnly) {
-                throw new UnsupportedOperationException("configuration is read only");
+                throw new UnsupportedOperationException("configuration is read only for type " + proxyClass.getSimpleName());
               }
               String key = (String)args[0];
               Object value = args[1];
