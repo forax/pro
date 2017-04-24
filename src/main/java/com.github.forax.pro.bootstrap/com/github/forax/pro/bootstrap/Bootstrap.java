@@ -91,7 +91,7 @@ public class Bootstrap {
     
       set("compiler.moduleSourcePath", path("plugins/runner/src/main/java"));
       set("compiler.moduleExplodedSourcePath", location("plugins/runner/target/main/exploded"));
-      set("compiler.moduleDependencyPath", path("deps", "plugins/runner/../../target/main/artifact/", "plugins/runner/../../deps"));
+      set("compiler.moduleDependencyPath", path("plugins/runner/deps", "plugins/runner/../../target/main/artifact/", "plugins/runner/../../deps"));
 
       set("packager.moduleExplodedSourcePath", path("plugins/runner/target/main/exploded"));
       set("packager.moduleArtifactSourcePath", location("plugins/runner/target/main/artifact"));
