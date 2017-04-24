@@ -1,15 +1,15 @@
 package com.github.forax.pro.bootstrap;
 
-import static com.github.forax.pro.Pro.*;
+import static com.github.forax.pro.Pro.list;
+import static com.github.forax.pro.Pro.local;
+import static com.github.forax.pro.Pro.location;
+import static com.github.forax.pro.Pro.path;
 import static com.github.forax.pro.Pro.run;
 import static com.github.forax.pro.Pro.set;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.github.forax.pro.helper.FileHelper;
@@ -85,33 +85,47 @@ public class Bootstrap {
     
     // compile and package plugins
     // FIXME, remove plugins/runner/ in front of the path
-    local(location("plugins/runner"), () -> {
-      set("modulefixer.moduleDependencyPath", path("plugins/runner/deps"));
-      set("modulefixer.moduleDependencyFixerPath", location("plugins/runner/target/deps/module-fixer"));
-    
-      set("compiler.moduleSourcePath", path("plugins/runner/src/main/java"));
-      set("compiler.moduleExplodedSourcePath", location("plugins/runner/target/main/exploded"));
-      set("compiler.moduleDependencyPath", path("plugins/runner/deps", "plugins/runner/../../target/main/artifact/", "plugins/runner/../../deps"));
-
-      set("packager.moduleExplodedSourcePath", path("plugins/runner/target/main/exploded"));
-      set("packager.moduleArtifactSourcePath", location("plugins/runner/target/main/artifact"));
-
-      run("modulefixer", "compiler", "packager");
-    });
+    compileAndPackagePlugin("runner");
     
     run("linker", "uberpackager");
-    
-    Files.createDirectories(location("target/image/plugins/runner"));
-    
-    path("plugins/runner/target/main/artifact", "plugins/runner/deps")
-      .filter(Files::exists)
-      .forEach(srcPath ->
-        FileHelper.walkAndFindCounterpart(
-            srcPath,
-            location("target/image/plugins/runner"),
-            stream -> stream.filter(p -> p.toString().endsWith(".jar")),
-            Files::copy));
-    
+
+    copyPackagedPluginToTargetImage("runner");
+
     Vanity.postOperations();
+  }
+
+  static void compileAndPackagePlugin(String name) throws IOException {
+    compileAndPackagePlugin(name, () -> {});
+  }
+
+  static void compileAndPackagePlugin(String name, Runnable extras) throws IOException {
+    local(location("plugins/" + name), () -> {
+
+      set("modulefixer.moduleDependencyPath", path("plugins/" + name + "/deps"));
+      set("modulefixer.moduleDependencyFixerPath", location("plugins/" + name + "/target/deps/module-fixer"));
+
+      set("compiler.moduleSourcePath", path("plugins/" + name + "/src/main/java"));
+      set("compiler.moduleExplodedSourcePath", location("plugins/" + name + "/target/main/exploded"));
+      set("compiler.moduleDependencyPath", path("plugins/" + name + "/deps", "plugins/" + name + "/../../target/main/artifact/", "plugins/" + name + "/../../deps"));
+
+      set("packager.moduleExplodedSourcePath", path("plugins/" + name + "/target/main/exploded"));
+      set("packager.moduleArtifactSourcePath", location("plugins/" + name + "/target/main/artifact"));
+
+      extras.run();
+
+      run("resolver", "modulefixer", "compiler", "packager");
+    });
+  }
+
+  static void copyPackagedPluginToTargetImage(String name) throws IOException {
+    Files.createDirectories(location("target/image/plugins/" + name));
+    path("plugins/" + name + "/target/main/artifact", "plugins/" + name + "/deps")
+        .filter(Files::exists)
+        .forEach(srcPath ->
+            FileHelper.walkAndFindCounterpart(
+                srcPath,
+                location("target/image/plugins/" + name),
+                stream -> stream.filter(p -> p.toString().endsWith(".jar")),
+                Files::copy));
   }
 }
