@@ -5,13 +5,20 @@ import static java.util.stream.Collectors.toMap;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.lang.reflect.Field;
+import java.lang.reflect.InaccessibleObjectException;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,8 +27,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
@@ -29,6 +38,7 @@ import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.impl.Configs;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
+import com.github.forax.pro.api.impl.file.DefaultFileSystemProvider;
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.util.StableList;
@@ -54,17 +64,43 @@ public class Pro {
     }
   };
   private static final Map<String, Plugin> PLUGINS;
+  //private static int dummy;
   static {
-    DefaultConfig config = CONFIG.get();
+    /* FIXME, wait until the JDK is updated to support to change the default file system
+    try {
+      FileSystemProvider provider = FileSystems.getDefault().provider();
+      DefaultFileSystemProvider proxyProvider = new DefaultFileSystemProvider(provider);
+      @SuppressWarnings("resource")
+      FileSystem fileSystem = proxyProvider.getFileSystem(new URI("file:///"));
+
+      Class<?> holderClass = Class.forName("java.nio.file.FileSystems$DefaultFileSystemHolder");
+      Field defaultFileSystemField = holderClass.getDeclaredField("defaultFileSystem");
+      defaultFileSystemField.setAccessible(true);
+
+      // the static final field is not final anymore, so it can be changed
+      Field modifiersField = Field.class.getDeclaredField("modifiers");
+      modifiersField.setAccessible(true);
+      modifiersField.setInt(defaultFileSystemField, defaultFileSystemField.getModifiers() & ~Modifier.FINAL);
+
+      defaultFileSystemField.set(null, fileSystem);
+
+    } catch (URISyntaxException | ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+      throw new AssertionError(e);
+    } catch(InaccessibleObjectException e) {
+      // ok, local() will throw an UOE if called later
+    }*/
     
+    // initialization
+    DefaultConfig config = CONFIG.get();
+
     List<Plugin> plugins = Plugins.getAllPlugins();
     Log log = Log.create("pro", config.getOrThrow("pro", ProConf.class).loglevel());
     log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
-    
+
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
     plugins.forEach(plugin -> plugin.configure(config.asChecked(plugin.name())));
-    
-    PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity()));
+
+    PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity()));    
   }
   
   @SuppressWarnings("unchecked")  // emulate dynamic behavior here
@@ -206,20 +242,35 @@ public class Pro {
         Log log = Log.create("pro", config.get("loglevel", String.class).orElse("debug"));
         log.error(pluginName, name -> "unknown plugin " + name);
         exitCode = 1;  // FIXME
+        continue;
       }
       plugins.add(plugin);
     }
     return exitCode;
   }
   
-  public static void local(Runnable action) {
+  public static void local(Path localPath, Runnable action) { 
+    /*FileSystemProvider provider = FileSystems.getDefault().provider();
+    if (!(provider instanceof DefaultFileSystemProvider)) {
+      throw new UnsupportedOperationException(
+          "local() is not supported because the proxy file system provider is not installed\n" +
+              "try to add\n" +
+              "  System.setProperty(\"java.nio.file.spi.DefaultFileSystemProvider\", \"com.github.forax.api.impl.DefaultFileSystemProvider\");\n" +
+              "at the start of your program");
+    }
+    DefaultFileSystemProvider defaultProvider = (DefaultFileSystemProvider)provider;
+    */
     DefaultConfig oldConfig = CONFIG.get();
+    //Supplier<Path> oldPrefixSupplier = defaultProvider.getPrefixSupplier();
     try {
       DefaultConfig newConfig = oldConfig.duplicate();
       CONFIG.set(newConfig);
+      //Path prefix = defaultProvider.getPrefixSupplier().get().resolve(localPath);
+      //defaultProvider.setPrefixSupplier(() -> prefix); 
       action.run();
     } finally {
       CONFIG.set(oldConfig);
+      //defaultProvider.setPrefixSupplier(oldPrefixSupplier);
     }
   }
   

@@ -13,7 +13,6 @@ case "`uname`" in
 esac
 
 
-#export JAVA_HOME=/usr/jdk/jdk-9-jigsaw-b146
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 [ -z "$JAVA_HOME" ] && export JAVA_HOME=/usr/jdk/jdk-9
 
@@ -32,6 +31,8 @@ $javac --module-source-path src/main/java \
        --module-path deps \
        $(find src/main/java/ -name "*.java")
 
-$java --module-path bootstrap/modules:deps \
+$java --add-opens java.base/java.lang.reflect=com.github.forax.pro \
+      --add-opens java.base/java.nio.file=com.github.forax.pro \
+      --module-path bootstrap/modules:deps \
       --upgrade-module-path bootstrap/modules \
       --module com.github.forax.pro.bootstrap/com.github.forax.pro.bootstrap.Bootstrap

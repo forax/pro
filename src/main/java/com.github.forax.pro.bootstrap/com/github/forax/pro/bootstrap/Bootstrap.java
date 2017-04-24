@@ -68,7 +68,6 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.compiler",
         "com.github.forax.pro.plugin.packager",
         "com.github.forax.pro.plugin.linker",
-        "com.github.forax.pro.plugin.runner",
         "com.github.forax.pro.plugin.uberpackager",
         "com.github.forax.pro.uberbooter",            // needed by ubermain
         "com.github.forax.pro.daemon.imp"
@@ -84,28 +83,33 @@ public class Bootstrap {
     run("modulefixer", "compiler", "packager");
     
     // compile and package plugins
-    local(() -> {
+    // FIXME, remove plugins/runner/ in front of the path
+    local(location("plugins/runner"), () -> {
       set("modulefixer.moduleDependencyPath", path("plugins/runner/deps"));
       set("modulefixer.moduleDependencyFixerPath", location("plugins/runner/target/deps/module-fixer"));
-      
+    
       set("compiler.moduleSourcePath", path("plugins/runner/src/main/java"));
       set("compiler.moduleExplodedSourcePath", location("plugins/runner/target/main/exploded"));
-      set("compiler.moduleDependencyPath", path("plugins/runner/deps", "target/main/artifact/", "deps"));
+      set("compiler.moduleDependencyPath", path("deps", "plugins/runner/../../target/main/artifact/", "plugins/runner/../../deps"));
 
       set("packager.moduleExplodedSourcePath", path("plugins/runner/target/main/exploded"));
       set("packager.moduleArtifactSourcePath", location("plugins/runner/target/main/artifact"));
 
       run("modulefixer", "compiler", "packager");
-
-      FileHelper.walkAndFindCounterpart(
-          location("plugins/runner/target/main/artifact"),
-          location("target/main/artifact"),
-          stream -> stream.filter(p -> p.toString().endsWith(".jar")),
-          Files::copy);
     });
     
-    
     run("linker", "uberpackager");
+    
+    Files.createDirectories(location("target/image/plugins/runner"));
+    
+    path("plugins/runner/target/main/artifact", "plugins/runner/deps")
+      .filter(Files::exists)
+      .forEach(srcPath ->
+        FileHelper.walkAndFindCounterpart(
+            srcPath,
+            location("target/image/plugins/runner"),
+            stream -> stream.filter(p -> p.toString().endsWith(".jar")),
+            Files::copy));
     
     Vanity.postOperations();
   }

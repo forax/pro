@@ -22,7 +22,7 @@ public class Configs {
     throw new AssertionError();
   }
   
-  /*package private*/ interface Query {
+  /*package private*/ public interface Query {
     public void _set_(String key, Object value);
     public <T> Optional<T> _get_(String key, Class<T> type, boolean readOnly);
     public Map<String, Object> _map_();
