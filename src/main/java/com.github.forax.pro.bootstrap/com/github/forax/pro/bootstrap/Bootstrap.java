@@ -74,6 +74,7 @@ public class Bootstrap {
         )                                             // then add all system modules
         .appendAll(ModuleFinder.ofSystem().findAll().stream()
                   .map(ref -> ref.descriptor().name())
+                  .filter(name -> !name.startsWith("com.github.forax.pro"))
                   .collect(Collectors.toSet())));
     
     //set("linker.stripNativeCommands", true);
