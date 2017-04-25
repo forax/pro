@@ -35,17 +35,17 @@ public class TesterPlugin implements Plugin {
     ByteArrayOutputStream err = new ByteArrayOutputStream();
 
     Thread.currentThread().setContextClassLoader(TestEngine.class.getClassLoader());
-    ConsoleLauncher.execute(
+    int exitCode = ConsoleLauncher.execute(
         new PrintStream(out, true, "UTF-8"),
         new PrintStream(err, true, "UTF-8"),
         "--scan-classpath",
         "--include-engine", "junit-jupiter",
         "--classpath", "target/test/exploded/com.github.forax.pro.plugin.tester"
-    );
+    ).getExitCode();
 
     System.out.println(out);
     System.err.println(err);
 
-    return 0;
+    return exitCode;
   }
 }

@@ -1,8 +1,3 @@
-import static com.github.forax.pro.Pro.*;
-
-set("pro.loglevel", "debug");
-set("pro.exitOnError", true);
-
-run("tester");
+com.github.forax.pro.Pro.run("tester");
 
 /exit
