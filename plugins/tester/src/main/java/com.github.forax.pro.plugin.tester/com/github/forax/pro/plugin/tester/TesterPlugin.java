@@ -34,10 +34,14 @@ public class TesterPlugin implements Plugin {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-    System.out.println("Calling " + ConsoleLauncher.class + "...");
     Thread.currentThread().setContextClassLoader(TestEngine.class.getClassLoader());
-    ConsoleLauncher.execute(new PrintStream(out, true, "UTF-8"), new PrintStream(err, true, "UTF-8"), "--scan-classpath");
-    System.out.println("Call to " + ConsoleLauncher.class + " finished.");
+    ConsoleLauncher.execute(
+        new PrintStream(out, true, "UTF-8"),
+        new PrintStream(err, true, "UTF-8"),
+        "--scan-classpath",
+        "--include-engine", "junit-jupiter",
+        "--classpath", "target/test/exploded/com.github.forax.pro.plugin.tester"
+    );
 
     System.out.println(out);
     System.err.println(err);

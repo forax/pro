@@ -112,6 +112,7 @@ public class Bootstrap {
       set("modulefixer.moduleDependencyFixerPath", location("plugins/" + name + "/target/deps/module-fixer"));
 
       set("compiler.moduleSourcePath", path("plugins/" + name + "/src/main/java"));
+      set("compiler.moduleTestPath", path("plugins/" + name + "/src/test/java"));
       set("compiler.moduleExplodedSourcePath", location("plugins/" + name + "/target/main/exploded"));
       set("compiler.moduleDependencyPath", path("plugins/" + name + "/deps", "plugins/" + name + "/../../target/main/artifact/", "plugins/" + name + "/../../deps"));
 
