@@ -78,6 +78,8 @@ public class TesterPlugin implements Plugin {
   }
 
   String[] buildDefaultConsoleLauncherOptions(Config config) {
+    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+
     List<String> options = new ArrayList<>();
     // scan available exploded test directories
     options.add("--scan-classpath");
@@ -85,10 +87,9 @@ public class TesterPlugin implements Plugin {
       options.add("--classpath");
       options.add(path.toString());
     };
-    // TODO    javaModuleExplodedTestPaths = config.get("???.javaModuleExplodedTestPath", List.class).get();
-    List<Path> javaModuleExplodedTestPaths = List.of(Paths.get("target/test/exploded"));
+    List<Path> javaModuleExplodedTestPaths = convention.javaModuleExplodedTestPath();
     javaModuleExplodedTestPaths.forEach(path -> findDirectoriesAt(path).forEach(addClassPath));
-    // internal pro-convention
+    // internal pro-convention: plugins are in "plugins" folder and obey default target convention paths
     findDirectoriesAt(Paths.get("plugins"))
         .forEach(plugin -> findDirectoriesAt(plugin.resolve("target/test/exploded"))
             .forEach(addClassPath));
