@@ -28,6 +28,7 @@ public class TesterPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
+    config.getOrUpdate(name(), TesterConf.class);
   }
   
   @Override
@@ -40,20 +41,22 @@ public class TesterPlugin implements Plugin {
 
   @Override
   public int execute(Config config) throws IOException {
-    String[] options = buildDefaultConsoleLauncherOptions(config);
-    Arrays.stream(options).forEach(System.out::println);
+    TesterConf tester = config.getOrThrow(name(), TesterConf.class);
+
+    List<String> options = tester.rawArguments().orElse(buildDefaultConsoleLauncherOptions(config));
+    options.forEach(System.out::println);
 
     Thread currentThread = Thread.currentThread();
     ClassLoader oldContext = currentThread.getContextClassLoader();
     try {
       currentThread.setContextClassLoader(TestEngine.class.getClassLoader());
-      return executeConsoleLauncher(options);
+      return executeConsoleLauncher(options.toArray(new String[options.size()]));
     } finally {
       currentThread.setContextClassLoader(oldContext); // restore the context
     }
   }
 
-  int executeConsoleLauncher(String[] options) throws IOException {
+  int executeConsoleLauncher(String... options) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     ByteArrayOutputStream err = new ByteArrayOutputStream();
     int exitCode = ConsoleLauncher.execute(
@@ -77,7 +80,7 @@ public class TesterPlugin implements Plugin {
     return Optional.of(string);
   }
 
-  String[] buildDefaultConsoleLauncherOptions(Config config) {
+  List<String> buildDefaultConsoleLauncherOptions(Config config) {
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
 
     List<String> options = new ArrayList<>();
@@ -93,7 +96,7 @@ public class TesterPlugin implements Plugin {
     findDirectoriesAt(Paths.get("plugins"))
         .forEach(plugin -> findDirectoriesAt(plugin.resolve("target/test/exploded"))
             .forEach(addClassPath));
-    return options.toArray(new String[options.size()]);
+    return options;
   }
 
   List<Path> findDirectoriesAt(Path base) {
