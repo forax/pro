@@ -3,14 +3,15 @@ package com.github.forax.pro.helper;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import com.github.forax.pro.helper.FileHelper;
+class FileHelperTests {
 
-public class FileHelperTest {
-
-  public static void main(String[] args) {
+  @Test
+  void pathFilenameEndsWith() {
     Predicate<Path> predicate = FileHelper.pathFilenameEndsWith("foo");
-    predicate.test(Paths.get("bar.foo"));
+    Assertions.assertTrue(predicate.test(Paths.get("bar.foo")));
   }
 
 }
