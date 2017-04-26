@@ -45,12 +45,19 @@ public class TesterPlugin implements Plugin {
     String[] options = buildDefaultConsoleLauncherOptions();
     Arrays.stream(options).forEach(System.out::println);
 
-    Thread.currentThread().setContextClassLoader(TestEngine.class.getClassLoader());
-    int exitCode = ConsoleLauncher.execute(
-        new PrintStream(out, true, "UTF-8"),
-        new PrintStream(err, true, "UTF-8"),
-        options
-    ).getExitCode();
+    int exitCode = -1;
+    Thread currentThread = Thread.currentThread();
+    ClassLoader oldContext = currentThread.getContextClassLoader();
+    try {
+      currentThread.setContextClassLoader(TestEngine.class.getClassLoader());
+      exitCode = ConsoleLauncher.execute(
+          new PrintStream(out, true, "UTF-8"),
+          new PrintStream(err, true, "UTF-8"),
+          options
+      ).getExitCode();
+    } finally {
+      currentThread.setContextClassLoader(oldContext); // restore the context
+    }
 
     System.out.println(out);
     System.err.println(err);
