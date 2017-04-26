@@ -38,9 +38,10 @@ public class TesterPlugin implements Plugin {
     int exitCode = ConsoleLauncher.execute(
         new PrintStream(out, true, "UTF-8"),
         new PrintStream(err, true, "UTF-8"),
-        "--scan-classpath",
         "--include-engine", "junit-jupiter",
-        "--classpath", "target/test/exploded/com.github.forax.pro.plugin.tester"
+        "--scan-classpath",
+        "--classpath", "target/test/exploded/com.github.forax.pro.helper",
+        "--classpath", "plugins/tester/target/test/exploded/com.github.forax.pro.plugin.tester"
     ).getExitCode();
 
     System.out.println(out);
