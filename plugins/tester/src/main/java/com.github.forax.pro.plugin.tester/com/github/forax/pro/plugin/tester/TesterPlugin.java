@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import org.junit.platform.console.ConsoleLauncher;
 import org.junit.platform.engine.TestEngine;
@@ -39,30 +40,41 @@ public class TesterPlugin implements Plugin {
 
   @Override
   public int execute(Config config) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ByteArrayOutputStream err = new ByteArrayOutputStream();
-
     String[] options = buildDefaultConsoleLauncherOptions();
     Arrays.stream(options).forEach(System.out::println);
 
-    int exitCode = -1;
     Thread currentThread = Thread.currentThread();
     ClassLoader oldContext = currentThread.getContextClassLoader();
     try {
       currentThread.setContextClassLoader(TestEngine.class.getClassLoader());
-      exitCode = ConsoleLauncher.execute(
-          new PrintStream(out, true, "UTF-8"),
-          new PrintStream(err, true, "UTF-8"),
-          options
-      ).getExitCode();
+      return executeConsoleLauncher(options);
     } finally {
       currentThread.setContextClassLoader(oldContext); // restore the context
     }
+  }
 
-    System.out.println(out);
-    System.err.println(err);
-
+  int executeConsoleLauncher(String[] options) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ByteArrayOutputStream err = new ByteArrayOutputStream();
+    int exitCode = ConsoleLauncher.execute(
+        new PrintStream(out, true, "UTF-8"),
+        new PrintStream(err, true, "UTF-8"),
+        options
+    ).getExitCode();
+    toOptionalString(out).ifPresent(System.out::print);
+    toOptionalString(err).ifPresent(System.err::print);
     return exitCode;
+  }
+
+  Optional<String> toOptionalString(Object object) {
+    if (object == null) {
+      return Optional.of("null");
+    }
+    String string = object.toString();
+    if (string == null || string.trim().isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(string);
   }
 
   String[] buildDefaultConsoleLauncherOptions() {
