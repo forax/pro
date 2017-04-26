@@ -40,7 +40,7 @@ public class TesterPlugin implements Plugin {
 
   @Override
   public int execute(Config config) throws IOException {
-    String[] options = buildDefaultConsoleLauncherOptions();
+    String[] options = buildDefaultConsoleLauncherOptions(config);
     Arrays.stream(options).forEach(System.out::println);
 
     Thread currentThread = Thread.currentThread();
@@ -77,28 +77,30 @@ public class TesterPlugin implements Plugin {
     return Optional.of(string);
   }
 
-  String[] buildDefaultConsoleLauncherOptions() {
+  String[] buildDefaultConsoleLauncherOptions(Config config) {
     List<String> options = new ArrayList<>();
     // scan available exploded test directories
     options.add("--scan-classpath");
-    Consumer<String> addClassPath = path -> {
+    Consumer<Path> addClassPath = path -> {
       options.add("--classpath");
-      options.add(path);
+      options.add(path.toString());
     };
-    findDirectoriesAt("target/test/exploded").forEach(addClassPath);
-    findDirectoriesAt("plugins")
-        .forEach(plugin -> findDirectoriesAt(plugin + "/target/test/exploded")
+    // TODO    javaModuleExplodedTestPaths = config.get("???.javaModuleExplodedTestPath", List.class).get();
+    List<Path> javaModuleExplodedTestPaths = List.of(Paths.get("target/test/exploded"));
+    javaModuleExplodedTestPaths.forEach(path -> findDirectoriesAt(path).forEach(addClassPath));
+    // internal pro-convention
+    findDirectoriesAt(Paths.get("plugins"))
+        .forEach(plugin -> findDirectoriesAt(plugin.resolve("target/test/exploded"))
             .forEach(addClassPath));
     return options.toArray(new String[options.size()]);
   }
 
-  List<String> findDirectoriesAt(String base) {
-    List<String> directories = new ArrayList<>();
-    Path parent = Paths.get(base);
+  List<Path> findDirectoriesAt(Path base) {
+    List<Path> directories = new ArrayList<>();
     DirectoryStream.Filter<Path> filter = path -> path.toFile().isDirectory();
-    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(parent, filter)) {
+    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(base, filter)) {
       for (Path path : directoryStream) {
-        directories.add(path.toString());
+        directories.add(path);
       }
     } catch (IOException ex) {
       // ignore
