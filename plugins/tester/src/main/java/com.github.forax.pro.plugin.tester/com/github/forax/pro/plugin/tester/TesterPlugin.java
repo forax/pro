@@ -1,24 +1,30 @@
 package com.github.forax.pro.plugin.tester;
 
+import static com.github.forax.pro.api.helper.OptionAction.actionLoop;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.module.ModuleFinder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import org.junit.platform.console.ConsoleLauncher;
+import org.junit.platform.engine.TestEngine;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Consumer;
-import org.junit.platform.console.ConsoleLauncher;
-import org.junit.platform.engine.TestEngine;
+import com.github.forax.pro.api.helper.CmdLine;
+import com.github.forax.pro.api.helper.OptionAction;
+import com.github.forax.pro.api.helper.ProConf;
+import com.github.forax.pro.helper.Log;
 
 public class TesterPlugin implements Plugin {
   @Override
@@ -33,82 +39,76 @@ public class TesterPlugin implements Plugin {
   
   @Override
   public void configure(MutableConfig config) {
+    TesterConf testerConf = config.getOrUpdate(name(), TesterConf.class);
+    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+    testerConf.moduleExplodedTestPath(convention.javaModuleExplodedTestPath());
   }
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
+    TesterConf testerConf = config.getOrThrow(name(), TesterConf.class);
+    testerConf.moduleExplodedTestPath().forEach(registry::watch);
   }
 
+  static List<Path> directories(TesterConf tester) {
+    return ModuleFinder.of(tester.moduleExplodedTestPath().toArray(new Path[0]))
+      .findAll()
+      .stream()
+      .flatMap(ref -> ref.location().stream())
+      .map(Paths::get)
+      .collect(Collectors.toList());
+  }
+  
+  enum ConsoleLauncherOption {
+    SCAN_CLASSPATH(config -> Optional.of(line -> line.add("--scan-classpath"))),
+    CLASSPATH(actionLoop("--classpath", TesterPlugin::directories))
+    ;
+    
+    final OptionAction<TesterConf> action;
+    
+    private ConsoleLauncherOption(OptionAction<TesterConf> action) {
+      this.action = action;
+    }
+  }
+  
   @Override
   public int execute(Config config) throws IOException {
+    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     TesterConf tester = config.getOrThrow(name(), TesterConf.class);
-
-    List<String> options = tester.rawArguments().orElse(buildDefaultConsoleLauncherOptions(config));
-    options.forEach(System.out::println);
+    log.debug(tester, _tester -> "config " + _tester);
+    
+    String[] arguments = OptionAction.gatherAll(ConsoleLauncherOption.class, option -> option.action).apply(tester, new CmdLine()).toArguments();
+    log.verbose(null, __ -> OptionAction.toPrettyString(ConsoleLauncherOption.class, option -> option.action).apply(tester, "tester"));
 
     Thread currentThread = Thread.currentThread();
     ClassLoader oldContext = currentThread.getContextClassLoader();
     try {
       currentThread.setContextClassLoader(TestEngine.class.getClassLoader());
-      return executeConsoleLauncher(options.toArray(new String[options.size()]));
+      return executeConsoleLauncher(arguments);
     } finally {
       currentThread.setContextClassLoader(oldContext); // restore the context
     }
   }
 
-  int executeConsoleLauncher(String... options) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ByteArrayOutputStream err = new ByteArrayOutputStream();
+  private static void dump(ByteArrayOutputStream data, Consumer<String> consumer) throws UnsupportedEncodingException {
+    Optional.of(data.toString("UTF-8"))
+      .filter(text -> !text.trim().isEmpty())
+      .ifPresent(consumer);
+  }
+  
+  private static int executeConsoleLauncher(String[] arguments) throws IOException {
+    ByteArrayOutputStream dataOut = new ByteArrayOutputStream();
+    ByteArrayOutputStream dataErr = new ByteArrayOutputStream();
+    
     int exitCode = ConsoleLauncher.execute(
-        new PrintStream(out, true, "UTF-8"),
-        new PrintStream(err, true, "UTF-8"),
-        options
-    ).getExitCode();
-    toOptionalString(out).ifPresent(System.out::print);
-    toOptionalString(err).ifPresent(System.err::print);
+        new PrintStream(dataOut, true, "UTF-8"),
+        new PrintStream(dataErr, true, "UTF-8"),
+        arguments
+        ).getExitCode();
+    
+    dump(dataOut, System.out::print);
+    dump(dataErr, System.err::print);
+    
     return exitCode;
-  }
-
-  Optional<String> toOptionalString(Object object) {
-    if (object == null) {
-      return Optional.of("null");
-    }
-    String string = object.toString();
-    if (string == null || string.trim().isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(string);
-  }
-
-  List<String> buildDefaultConsoleLauncherOptions(Config config) {
-    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
-
-    List<String> options = new ArrayList<>();
-    // scan available exploded test directories
-    options.add("--scan-classpath");
-    Consumer<Path> addClassPath = path -> {
-      options.add("--classpath");
-      options.add(path.toString());
-    };
-    List<Path> javaModuleExplodedTestPaths = convention.javaModuleExplodedTestPath();
-    javaModuleExplodedTestPaths.forEach(path -> findDirectoriesAt(path).forEach(addClassPath));
-    // internal pro-convention: plugins are in "plugins" folder and obey default target convention paths
-    findDirectoriesAt(Paths.get("plugins"))
-        .forEach(plugin -> findDirectoriesAt(plugin.resolve("target/test/exploded"))
-            .forEach(addClassPath));
-    return options;
-  }
-
-  List<Path> findDirectoriesAt(Path base) {
-    List<Path> directories = new ArrayList<>();
-    DirectoryStream.Filter<Path> filter = path -> path.toFile().isDirectory();
-    try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(base, filter)) {
-      for (Path path : directoryStream) {
-        directories.add(path);
-      }
-    } catch (IOException ex) {
-      // ignore
-    }
-    return directories;
   }
 }
