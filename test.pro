@@ -1,6 +1,8 @@
 import static com.github.forax.pro.Pro.*
 
-// set("tester.rawArguments", list("--help"))
+set("pro.loglevel", "verbose");
+
+// set("tester.overrideArguments", list("--help"))
 
 run("tester")
 

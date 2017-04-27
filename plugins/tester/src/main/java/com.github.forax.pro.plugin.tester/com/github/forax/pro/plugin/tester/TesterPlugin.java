@@ -60,7 +60,8 @@ public class TesterPlugin implements Plugin {
   }
   
   enum ConsoleLauncherOption {
-    SCAN_CLASSPATH(config -> Optional.of(line -> line.add("--scan-classpath"))),
+    // DISABLE_ANSI_COLORS(config -> Optional.of(line -> line.add("--disable-ansi-colors"))),
+    SCAN_CLASSPATH(actionLoop("--scan-classpath", TesterPlugin::directories)),
     CLASSPATH(actionLoop("--classpath", TesterPlugin::directories))
     ;
     
@@ -76,9 +77,17 @@ public class TesterPlugin implements Plugin {
     Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     TesterConf tester = config.getOrThrow(name(), TesterConf.class);
     log.debug(tester, _tester -> "config " + _tester);
-    
-    String[] arguments = OptionAction.gatherAll(ConsoleLauncherOption.class, option -> option.action).apply(tester, new CmdLine()).toArguments();
-    log.verbose(null, __ -> OptionAction.toPrettyString(ConsoleLauncherOption.class, option -> option.action).apply(tester, "tester"));
+
+    String[] arguments;
+    if (tester.overrideArguments().isPresent()) {
+      List<String> overrideArguments = tester.overrideArguments().get();
+      arguments = overrideArguments.toArray(new String[0]);
+      log.verbose(arguments, __ -> "tester.overrideArguments=" + overrideArguments);
+    } else {
+      arguments = OptionAction.gatherAll(ConsoleLauncherOption.class, option -> option.action).apply(tester, new CmdLine()).toArguments();
+      log.verbose(null, __ -> OptionAction.toPrettyString(ConsoleLauncherOption.class, option -> option.action).apply(tester, "tester"));
+    }
+
 
     Thread currentThread = Thread.currentThread();
     ClassLoader oldContext = currentThread.getContextClassLoader();
