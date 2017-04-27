@@ -78,16 +78,15 @@ public class TesterPlugin implements Plugin {
     TesterConf tester = config.getOrThrow(name(), TesterConf.class);
     log.debug(tester, _tester -> "config " + _tester);
 
-    String[] arguments;
-    if (tester.overrideArguments().isPresent()) {
-      List<String> overrideArguments = tester.overrideArguments().get();
-      arguments = overrideArguments.toArray(new String[0]);
-      log.verbose(arguments, __ -> "tester.overrideArguments=" + overrideArguments);
-    } else {
-      arguments = OptionAction.gatherAll(ConsoleLauncherOption.class, option -> option.action).apply(tester, new CmdLine()).toArguments();
-      log.verbose(null, __ -> OptionAction.toPrettyString(ConsoleLauncherOption.class, option -> option.action).apply(tester, "tester"));
-    }
-
+    String[] arguments = tester.overrideArguments()
+      .map(overrideArguments -> {
+        log.verbose(overrideArguments, _arguments -> String.join("\n", _arguments));
+        return overrideArguments.toArray(new String[0]);
+      })
+      .orElseGet(() -> {
+        log.verbose(null, __ -> OptionAction.toPrettyString(ConsoleLauncherOption.class, option -> option.action).apply(tester, "tester"));
+        return OptionAction.gatherAll(ConsoleLauncherOption.class, option -> option.action).apply(tester, new CmdLine()).toArguments();
+      });
 
     Thread currentThread = Thread.currentThread();
     ClassLoader oldContext = currentThread.getContextClassLoader();
