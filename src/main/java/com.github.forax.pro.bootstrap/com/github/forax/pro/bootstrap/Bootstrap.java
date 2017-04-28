@@ -5,9 +5,16 @@ import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
 import static java.nio.file.Files.createDirectories;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
 public class Bootstrap {
@@ -31,6 +38,7 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.compiler@0.9",
         "com.github.forax.pro.plugin.packager@0.9",
         "com.github.forax.pro.plugin.linker@0.9",
+        "com.github.forax.pro.plugin.formatter@0.9",
         "com.github.forax.pro.plugin.runner@0.9",
         "com.github.forax.pro.plugin.tester@0.9",
         "com.github.forax.pro.plugin.uberpackager@0.9",
@@ -81,6 +89,7 @@ public class Bootstrap {
       set("resolver.remoteRepositories", list(
         uri("https://oss.sonatype.org/content/repositories/snapshots")
       ));
+      // <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>
       set("resolver.dependencies", list(
           // "API"
           "org.opentest4j=org.opentest4j:opentest4j:1.0.0-M2",
@@ -92,18 +101,30 @@ public class Bootstrap {
           "org.junit.jupiter.engine=org.junit.jupiter:junit-jupiter-engine:5.0.0-M4"
       ));
     });
+    compileAndPackagePlugin("formatter", //
+      () -> {
+        String version = "1.3";
+        String base = "https://github.com/google/google-java-format/releases/download/google-java-format";
+        download(base + "-" + version+ "/google-java-format-"+version+"-all-deps.jar", "plugins/formatter/libs");
+      },
+      "compiler", "packager");
 
     run("linker", "uberpackager");
 
     copyPackagedPluginToTargetImage("runner");
     copyPackagedPluginToTargetImage("tester");
+    copyPackagedPluginToTargetImage("formatter");
 
     Vanity.postOperations();
   }
 
   private static void compileAndPackagePlugin(String name, Runnable extras) throws IOException {
+    compileAndPackagePlugin(name, extras, "resolver", "modulefixer", "compiler", "packager");
+  }
+
+  private static void compileAndPackagePlugin(String name, Runnable extras, String... plugins) throws IOException {
     deleteAllFiles(location("plugins/" + name + "/target"), false);
-    
+
     local("plugins/" + name, () -> {
       set("resolver.moduleDependencyPath",
           path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
@@ -111,10 +132,10 @@ public class Bootstrap {
           path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
       set("compiler.upgradeModulePath",
           path("target/main/artifact/", "deps"));
-      
+
       extras.run();
 
-      run("resolver", "modulefixer", "compiler", "packager");
+      run(plugins);
     });
   }
 
@@ -128,5 +149,33 @@ public class Bootstrap {
             location("target/image/plugins/" + name),
             stream -> stream.filter(p -> p.toString().endsWith(".jar")),
             Files::copy));
+    if (Files.exists(Paths.get("plugins/" + name + "/libs"))) {
+      createDirectories(location("target/image/plugins/" + name + "/libs"));
+      path("plugins/" + name + "/libs")
+          .filter(Files::exists)
+          .forEach(srcPath ->
+              walkAndFindCounterpart(
+                  srcPath,
+                  location("target/image/plugins/" + name + "/libs"),
+                  stream -> stream.filter(p -> p.toString().endsWith(".jar")),
+                  Files::copy));    }
+  }
+
+  private static void download(String urlSpec, String folder) {
+    try {
+      URL url = new URL(urlSpec);
+      String fileName = new File(url.toURI().getPath()).getName();
+      Path targetDirectory = Paths.get(folder);
+      Files.createDirectories(targetDirectory);
+      File targetFile = targetDirectory.resolve(fileName).toFile();
+      if (targetFile.exists()) {
+        return;
+      }
+      ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+      FileOutputStream fos = new FileOutputStream(targetFile);
+      fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+    } catch (Exception exception) {
+      throw new RuntimeException("download failed: url=" + urlSpec + " folder="+folder, exception);
+    }
   }
 }
