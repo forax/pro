@@ -37,33 +37,35 @@ public class Pro {
     throw new AssertionError();
   }
   
-  private static final ThreadLocal<DefaultConfig> CONFIG = new ThreadLocal<>() {
-    @Override
-    protected DefaultConfig initialValue() {
-      DefaultConfig config = new DefaultConfig();
-      ProConf proConf = config.getOrUpdate("pro", ProConf.class);
-      proConf.currentDir(Paths.get("."));
-      Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
-        .map(Log.Level::of)
-        .orElse(Log.Level.INFO);
-      proConf.loglevel(logLevel.name().toLowerCase());
-      proConf.exitOnError(false);
-      return config;
-    }
-  };
+  private static final ThreadLocal<DefaultConfig> CONFIG = ThreadLocal.withInitial(() -> {
+    DefaultConfig config = new DefaultConfig();
+    ProConf proConf = config.getOrUpdate("pro", ProConf.class);
+    proConf.currentDir(Paths.get("."));
+    Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
+      .map(Log.Level::of)
+      .orElse(Log.Level.INFO);
+    proConf.loglevel(logLevel.name().toLowerCase());
+    proConf.exitOnError(false);
+    return config;
+  });
   private static final Map<String, Plugin> PLUGINS;
   static {
     // initialization
     DefaultConfig config = CONFIG.get();
+    try {
+      List<Plugin> plugins = Plugins.getAllPlugins();
+      Log log = Log.create("pro", config.getOrThrow("pro", ProConf.class).loglevel());
+      log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
 
-    List<Plugin> plugins = Plugins.getAllPlugins();
-    Log log = Log.create("pro", config.getOrThrow("pro", ProConf.class).loglevel());
-    log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
 
-    plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
-    plugins.forEach(plugin -> plugin.configure(config.asChecked(plugin.name())));
+      plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
+      plugins.forEach(plugin -> plugin.configure(config.asChecked(plugin.name())));
 
-    PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity()));    
+      PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity()));
+    } catch (Throwable throwable) {
+      throwable.printStackTrace();
+      throw new AssertionError("Pro failed to initialize", throwable);
+    }
   }
   
   @SuppressWarnings("unchecked")  // emulate dynamic behavior here
