@@ -5,10 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-class StableListTests {
+@SuppressWarnings("static-method")
+public class StableListTests {
 
   @Test
-  void append() {
+  public void append() {
     StableList<String> list1 = new StableList<>();
     StableList<String> list2 = list1.append("foo").append("bar");
     StableList<String> list3 = list2.append("baz");

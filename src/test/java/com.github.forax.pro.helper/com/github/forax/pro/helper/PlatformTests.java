@@ -10,15 +10,15 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
-class PlatformTests {
-
+@SuppressWarnings("static-method")
+public class PlatformTests {
   @Test
-  void currentPlatformIsNotNull() {
+  public void currentPlatformIsNotNull() {
     Assertions.assertNotNull(Platform.current());
   }
 
   @TestFactory
-  Stream<DynamicTest> javaExecutableNamesAreNotBlank() {
+  public Stream<DynamicTest> javaExecutableNamesAreNotBlank() {
     return DynamicTest.stream(
         Arrays.asList(Platform.values()).iterator(),
         Object::toString,
@@ -30,7 +30,7 @@ class PlatformTests {
   }
 
   @Test
-  void javaExecutableNamePointsToExecutableFile() {
+  public void javaExecutableNamePointsToExecutableFile() {
     String name = Platform.current().javaExecutableName();
     Path path = Paths.get(System.getProperty("java.home")).resolve("bin").resolve(name);
     Assertions.assertTrue(Files.isExecutable(path), "executable? " + path);

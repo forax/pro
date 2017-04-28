@@ -6,12 +6,11 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class FileHelperTests {
-
+@SuppressWarnings("static-method")
+public class FileHelperTests {
   @Test
-  void pathFilenameEndsWith() {
+  public void pathFilenameEndsWith() {
     Predicate<Path> predicate = FileHelper.pathFilenameEndsWith("foo");
     Assertions.assertTrue(predicate.test(Paths.get("bar.foo")));
   }
-
 }

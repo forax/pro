@@ -4,28 +4,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-class CmdLineTests {
-
+@SuppressWarnings("static-method")
+public class CmdLineTests {
   @Test
-  void toStringWithoutArguments() {
+  public void toStringWithoutArguments() {
     CmdLine cmdLine = new CmdLine();
     assertEquals("", cmdLine.toString());
   }
 
   @Test
-  void toStringWithSingleArgument() {
+  public void toStringWithSingleArgument() {
     CmdLine cmdLine = new CmdLine();
     cmdLine.add("one");
     assertEquals("one", cmdLine.toString());
   }
 
   @Test
-  void toStringWithMultipleArguments() {
+  public void toStringWithMultipleArguments() {
     CmdLine cmdLine = new CmdLine();
     cmdLine.add("one");
     cmdLine.add("two");
     cmdLine.add("three");
     assertEquals("one two three", cmdLine.toString());
   }
-
 }
