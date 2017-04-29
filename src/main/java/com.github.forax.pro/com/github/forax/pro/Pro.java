@@ -202,7 +202,8 @@ public class Pro {
     for(String pluginName: pluginNames) {  
       Plugin plugin = allPlugins.get(pluginName);
       if (plugin == null) {
-        Log log = Log.create("pro", config.get("loglevel", String.class).orElse("debug"));
+        ProConf proConf = config.getOrThrow("pro", ProConf.class);
+        Log log = Log.create("pro", proConf.loglevel());
         log.error(pluginName, name -> "unknown plugin " + name);
         exitCode = 1;  // FIXME
         continue;
