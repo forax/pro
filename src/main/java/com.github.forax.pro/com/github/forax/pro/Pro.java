@@ -5,20 +5,13 @@ import static java.util.stream.Collectors.toMap;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
-import java.lang.reflect.Field;
-import java.lang.reflect.InaccessibleObjectException;
-import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,18 +20,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.helper.ProConf;
-import com.github.forax.pro.api.impl.Configs;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
-import com.github.forax.pro.api.impl.file.DefaultFileSystemProvider;
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.util.StableList;
@@ -53,7 +42,7 @@ public class Pro {
     protected DefaultConfig initialValue() {
       DefaultConfig config = new DefaultConfig();
       ProConf proConf = config.getOrUpdate("pro", ProConf.class);
-      
+      proConf.currentDir(Paths.get("."));
       Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
         .map(Log.Level::of)
         .orElse(Log.Level.INFO);
@@ -63,32 +52,7 @@ public class Pro {
     }
   };
   private static final Map<String, Plugin> PLUGINS;
-  //private static int dummy;
   static {
-    /* FIXME, wait until the JDK is updated to support to change the default file system
-    try {
-      FileSystemProvider provider = FileSystems.getDefault().provider();
-      DefaultFileSystemProvider proxyProvider = new DefaultFileSystemProvider(provider);
-      @SuppressWarnings("resource")
-      FileSystem fileSystem = proxyProvider.getFileSystem(new URI("file:///"));
-
-      Class<?> holderClass = Class.forName("java.nio.file.FileSystems$DefaultFileSystemHolder");
-      Field defaultFileSystemField = holderClass.getDeclaredField("defaultFileSystem");
-      defaultFileSystemField.setAccessible(true);
-
-      // the static final field is not final anymore, so it can be changed
-      Field modifiersField = Field.class.getDeclaredField("modifiers");
-      modifiersField.setAccessible(true);
-      modifiersField.setInt(defaultFileSystemField, defaultFileSystemField.getModifiers() & ~Modifier.FINAL);
-
-      defaultFileSystemField.set(null, fileSystem);
-
-    } catch (URISyntaxException | ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-      throw new AssertionError(e);
-    } catch(InaccessibleObjectException e) {
-      // ok, local() will throw an UOE if called later
-    }*/
-    
     // initialization
     DefaultConfig config = CONFIG.get();
 
@@ -248,28 +212,16 @@ public class Pro {
     return exitCode;
   }
   
-  public static void local(Path localPath, Runnable action) { 
-    /*FileSystemProvider provider = FileSystems.getDefault().provider();
-    if (!(provider instanceof DefaultFileSystemProvider)) {
-      throw new UnsupportedOperationException(
-          "local() is not supported because the proxy file system provider is not installed\n" +
-              "try to add\n" +
-              "  System.setProperty(\"java.nio.file.spi.DefaultFileSystemProvider\", \"com.github.forax.api.impl.DefaultFileSystemProvider\");\n" +
-              "at the start of your program");
-    }
-    DefaultFileSystemProvider defaultProvider = (DefaultFileSystemProvider)provider;
-    */
+  public static void local(String localDir, Runnable action) { 
     DefaultConfig oldConfig = CONFIG.get();
-    //Supplier<Path> oldPrefixSupplier = defaultProvider.getPrefixSupplier();
+    Path currentDir = oldConfig.getOrThrow("pro", ProConf.class).currentDir();
     try {
       DefaultConfig newConfig = oldConfig.duplicate();
+      newConfig.getOrUpdate("pro", ProConf.class).currentDir(currentDir.resolve(localDir));
       CONFIG.set(newConfig);
-      //Path prefix = defaultProvider.getPrefixSupplier().get().resolve(localPath);
-      //defaultProvider.setPrefixSupplier(() -> prefix); 
       action.run();
     } finally {
       CONFIG.set(oldConfig);
-      //defaultProvider.setPrefixSupplier(oldPrefixSupplier);
     }
   }
   

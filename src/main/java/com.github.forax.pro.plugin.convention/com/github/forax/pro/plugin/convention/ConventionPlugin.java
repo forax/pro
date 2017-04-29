@@ -9,6 +9,7 @@ import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
+import com.github.forax.pro.api.helper.ProConf;
 
 public class ConventionPlugin implements Plugin {
   @Override
@@ -19,39 +20,39 @@ public class ConventionPlugin implements Plugin {
   @Override
   public void init(MutableConfig config) {
     ConventionConf convention = config.getOrUpdate(name(), ConventionConf.class);
-    convention.currentDir(Paths.get("."));
+    ProConf pro = config.getOrThrow("pro", ProConf.class);
     convention.javaHome(Paths.get(System.getProperty("java.home")));
     
     derive(convention, ConventionConf::javaModuleSourcePath,
-           convention, c -> List.of(c.currentDir().resolve("src/main/java")));
+           pro, c -> List.of(c.currentDir().resolve("src/main/java")));
     derive(convention, ConventionConf::javaModuleSourceResourcesPath,
-           convention, c -> List.of(c.currentDir().resolve("src/main/resources")));
+           pro, c -> List.of(c.currentDir().resolve("src/main/resources")));
     derive(convention, ConventionConf::javaModuleExplodedSourcePath,
-           convention, c -> List.of(c.currentDir().resolve("target/main/exploded")));
+           pro, c -> List.of(c.currentDir().resolve("target/main/exploded")));
     derive(convention, ConventionConf::javaModuleArtifactSourcePath,
-           convention, c -> c.currentDir().resolve("target/main/artifact"));
+           pro, c -> c.currentDir().resolve("target/main/artifact"));
     
     derive(convention, ConventionConf::javaModuleTestPath,
-        convention, c -> List.of(c.currentDir().resolve("src/test/java")));
+        pro, c -> List.of(c.currentDir().resolve("src/test/java")));
     derive(convention, ConventionConf::javaModuleTestResourcesPath,
-        convention, c -> List.of(c.currentDir().resolve("src/test/resources")));
+        pro, c -> List.of(c.currentDir().resolve("src/test/resources")));
     derive(convention, ConventionConf::javaModuleMergedTestPath,
-        convention, c -> List.of(c.currentDir().resolve("target/test/merged")));
+        pro, c -> List.of(c.currentDir().resolve("target/test/merged")));
     derive(convention, ConventionConf::javaModuleExplodedTestPath,
-        convention, c -> List.of(c.currentDir().resolve("target/test/exploded")));
+        pro, c -> List.of(c.currentDir().resolve("target/test/exploded")));
     derive(convention, ConventionConf::javaModuleArtifactTestPath,
-        convention, c -> c.currentDir().resolve("target/test/artifact"));
+        pro, c -> c.currentDir().resolve("target/test/artifact"));
     
     derive(convention, ConventionConf::javaModuleDependencyPath,
-        convention, c -> List.of(c.currentDir().resolve("deps")));
+        pro, c -> List.of(c.currentDir().resolve("deps")));
     derive(convention, ConventionConf::javaMavenLocalRepositoryPath,
-        convention, c -> c.currentDir().resolve("target/deps/maven-local"));
+        pro, c -> c.currentDir().resolve("target/deps/maven-local"));
     derive(convention, ConventionConf::javaModuleUberPath,
-        convention, c -> c.currentDir().resolve("target/uber"));
+        pro, c -> c.currentDir().resolve("target/uber"));
     derive(convention, ConventionConf::javaModuleUberExplodedPath,
-        convention, c -> c.currentDir().resolve("target/uber/exploded"));
+        pro, c -> c.currentDir().resolve("target/uber/exploded"));
     derive(convention, ConventionConf::javaLinkerImagePath,
-        convention, c -> c.currentDir().resolve("target/image"));
+        pro, c -> c.currentDir().resolve("target/image"));
   }
   
   @Override

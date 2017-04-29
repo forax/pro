@@ -1,12 +1,17 @@
 package com.github.forax.pro.api.helper;
 
+import java.nio.file.Path;
+
 import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
 public interface ProConf {
-  public String loglevel();
-  public void loglevel(String loglevel);
+  Path currentDir();
+  void currentDir(Path path);
   
-  public boolean exitOnError();
-  public void exitOnError(boolean exitOnError);
+  String loglevel();
+  void loglevel(String loglevel);
+  
+  boolean exitOnError();
+  void exitOnError(boolean exitOnError);
 }

@@ -79,7 +79,7 @@ public class Bootstrap {
 
     run("modulefixer", "compiler", "packager");
     
-    compileAndPackagePlugin("runner");
+    compileAndPackagePlugin("runner", () -> { /* empty */});
     compileAndPackagePlugin("tester", () -> {
       set("resolver.remoteRepositories", list(
         uri("https://oss.sonatype.org/content/repositories/snapshots")
@@ -97,32 +97,12 @@ public class Bootstrap {
     Vanity.postOperations();
   }
 
-  static void compileAndPackagePlugin(String name) throws IOException {
-    compileAndPackagePlugin(name, () -> {});
-  }
-
-  static void compileAndPackagePlugin(String name, Runnable extras) throws IOException {
-    local(location("plugins/" + name), () -> {
-
-      set("resolver.moduleSourcePath", path("plugins/" + name + "/src/main/java"));
-      set("resolver.moduleTestPath", path("plugins/" + name + "/src/test/java"));
-      set("resolver.moduleDependencyPath", path("plugins/" + name + "/deps", "plugins/" + name + "/../../target/main/artifact/", "plugins/" + name + "/../../deps"));
-
-      set("modulefixer.moduleDependencyPath", path("plugins/" + name + "/deps"));
-      set("modulefixer.moduleDependencyFixerPath", location("plugins/" + name + "/target/deps/module-fixer"));
-
-      set("compiler.moduleSourcePath", path("plugins/" + name + "/src/main/java"));
-      set("compiler.moduleSourceResourcesPath", path("plugins/" + name + "/src/main/resources"));
-      set("compiler.moduleExplodedSourcePath", location("plugins/" + name + "/target/main/exploded"));
-      set("compiler.moduleTestPath", path("plugins/" + name + "/src/test/java"));
-      set("compiler.moduleTestResourcesPath", path("plugins/" + name + "/src/test/resources"));
-      set("compiler.moduleMergedTestPath", location("plugins/" + name + "/target/test/merged"));
-      set("compiler.moduleExplodedTestPath", location("plugins/" + name + "/target/test/exploded"));
-
-      set("compiler.moduleDependencyPath", path("plugins/" + name + "/deps", "plugins/" + name + "/../../target/main/artifact/", "plugins/" + name + "/../../deps"));
-
-      set("packager.moduleExplodedSourcePath", path("plugins/" + name + "/target/main/exploded"));
-      set("packager.moduleArtifactSourcePath", location("plugins/" + name + "/target/main/artifact"));
+  private static void compileAndPackagePlugin(String name, Runnable extras) {
+    local("plugins/" + name, () -> {
+      set("resolver.moduleDependencyPath",
+          path("plugins/" + name + "/deps", "plugins/" + name + "/../../target/main/artifact/", "plugins/" + name + "/../../deps"));
+      set("compiler.moduleDependencyPath",
+          path("plugins/" + name + "/deps", "plugins/" + name + "/../../target/main/artifact/", "plugins/" + name + "/../../deps"));
 
       extras.run();
 
@@ -130,7 +110,7 @@ public class Bootstrap {
     });
   }
 
-  static void copyPackagedPluginToTargetImage(String name) throws IOException {
+  private static void copyPackagedPluginToTargetImage(String name) throws IOException {
     Files.createDirectories(location("target/image/plugins/" + name));
     path("plugins/" + name + "/target/main/artifact", "plugins/" + name + "/deps")
       .filter(Files::exists)
