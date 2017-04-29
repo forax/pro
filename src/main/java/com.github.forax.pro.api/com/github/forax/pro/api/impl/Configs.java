@@ -28,6 +28,7 @@ public class Configs {
     public <T> Optional<T> _get_(String key, Class<T> type, boolean readOnly);
     public void _addListener_(String key, Consumer<? super String> consumer);
     public Map<String, Object> _map_();
+    public String _id_();
     public Object _duplicate_();
   }
   
@@ -110,7 +111,7 @@ public class Configs {
     return asQuery(proxy)._duplicate_();
   }
   
-  private static Object getFromMap(Map<String, Object> map, Class<?> type, boolean readOnly, String key) {
+  private static Object getFromMap(String id, Map<String, Object> map, Class<?> type, boolean readOnly, String key) {
     if (type == Optional.class) {
       return Optional.ofNullable(map.get(key));
     }
@@ -118,7 +119,7 @@ public class Configs {
       if (readOnly || !type.isAnnotationPresent(TypeCheckedConfig.class)) {
         throw new IllegalStateException("no value for key " + key);
       }
-      return proxy(type, new HashMap<>(), false);
+      return proxy(type, id.isEmpty()? key: id + '.' + key, new HashMap<>(), false);
     });
     
     if (type.isPrimitive()) {  //FIXME, use a wrapper type instead 
@@ -130,8 +131,7 @@ public class Configs {
     // auto-wrapping, or wrap if readOnly
     if (value instanceof Query && type.isAnnotationPresent(TypeCheckedConfig.class)) {
       Query query = (Query)value;
-      Map<String, Object> backingMap = query._map_();
-      return proxy(type, backingMap, readOnly);
+      return proxy(type, query._id_(), query._map_(), readOnly);
     }
     return type.cast(value);
   }
@@ -151,7 +151,7 @@ public class Configs {
   static {
     Lookup lookup = MethodHandles.lookup();
     try {
-      GET_HASH = lookup.findStatic(Configs.class, "getFromMap", methodType(Object.class, Map.class, Class.class, boolean.class, String.class));
+      GET_HASH = lookup.findStatic(Configs.class, "getFromMap", methodType(Object.class, String.class, Map.class, Class.class, boolean.class, String.class));
       SET_HASH = lookup.findStatic(Configs.class, "setFromMap", methodType(void.class, Map.class, Object.class, String.class, Class.class));
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw new AssertionError(e);
@@ -174,7 +174,7 @@ public class Configs {
             String name = method.getName();
             switch(method.getParameterCount()) {
             case 0: {
-              MethodHandle mh = MethodHandles.insertArguments(GET_HASH, 3, name);
+              MethodHandle mh = MethodHandles.insertArguments(GET_HASH, 4, name);
               getterMap.put(name, mh);
               continue;
             }
@@ -201,10 +201,10 @@ public class Configs {
   
   
   public static Object newRoot() {
-    return proxy(Group.class, new HashMap<>(), false);
+    return proxy(Group.class, "", new HashMap<>(), false);
   }
   
-  private static <T> T proxy(Class<T> proxyClass, Map<String, Object> map, boolean proxyReadOnly) {
+  private static <T> T proxy(Class<T> proxyClass, String id, Map<String, Object> map, boolean proxyReadOnly) {
     if (!proxyClass.isAnnotationPresent(TypeCheckedConfig.class)) {
       throw new IllegalArgumentException("can only proxy interface (" + proxyClass.getSimpleName() + ") tagged with @TypeCheckedConfig");
     }
@@ -229,9 +229,9 @@ public class Configs {
               MethodHandle mh = getterMap.get(key);
               Object result;
               if (mh == null) {
-                result = getFromMap(map, type, proxyReadOnly | readOnly, key);
+                result = getFromMap(id, map, type, proxyReadOnly | readOnly, key);
               } else {
-                result = mh.invokeExact(map, type, proxyReadOnly | readOnly);
+                result = mh.invokeExact(id, map, type, proxyReadOnly | readOnly);
               }
               if (!(result instanceof Optional<?>)) {
                 return Optional.of(result);
@@ -267,13 +267,15 @@ public class Configs {
             }
             case "_map_":
               return map;
+            case "_id_":
+              return id;
             case "_duplicate_": {
               HashMap<String, Object> newMap = new HashMap<>();
               map.forEach((key, value) -> {
                 Object newValue = (value instanceof Query)?((Query)value)._duplicate_(): value;
                 newMap.put(key, newValue);
               });
-              return proxy(proxyClass, newMap, proxyReadOnly);
+              return proxy(proxyClass, id, newMap, proxyReadOnly);
             }
               
             default:
@@ -292,7 +294,7 @@ public class Configs {
             } else {
               int parameterCount = method.getParameterCount();
               if (parameterCount == 0) {
-                return getterMap.get(name).invokeExact(map, method.getReturnType(), proxyReadOnly);
+                return getterMap.get(name).invokeExact(id, map, method.getReturnType(), proxyReadOnly);
               }
               if (parameterCount == 1) {
                 if (proxyReadOnly) {
