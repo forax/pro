@@ -44,12 +44,12 @@ public class PackagerPlugin implements Plugin {
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class); 
     
     // inputs
-    packager.moduleArtifactSourcePath(convention.javaModuleArtifactSourcePath());
-    packager.moduleArtifactTestPath(convention.javaModuleArtifactTestPath());
+    MutableConfig.derive(packager, PackagerConf::moduleArtifactSourcePath, convention, ConventionFacade::javaModuleArtifactSourcePath);
+    MutableConfig.derive(packager, PackagerConf::moduleArtifactTestPath, convention, ConventionFacade::javaModuleArtifactTestPath);
     
     // outputs
-    packager.moduleExplodedSourcePath(convention.javaModuleExplodedSourcePath());
-    packager.moduleExplodedTestPath(convention.javaModuleExplodedTestPath());
+    MutableConfig.derive(packager, PackagerConf::moduleExplodedSourcePath, convention, ConventionFacade::javaModuleExplodedSourcePath);
+    MutableConfig.derive(packager, PackagerConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
   }
   
   @Override
