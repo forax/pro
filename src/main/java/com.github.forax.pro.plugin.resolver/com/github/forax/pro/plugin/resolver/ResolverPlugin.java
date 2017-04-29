@@ -169,7 +169,7 @@ public class ResolverPlugin implements Plugin {
     
     ArrayList<ArtifactDescriptor> undeclaredArtifactIds = new ArrayList<>();
     for(ArtifactDescriptor resolvedArtifact: resolvedArtifacts) {
-      String moduleName = artifactKeyToModuleMap.get(resolvedArtifact.getArtifactKey());
+      String moduleName = artifactKeyToModuleMap.get(resolvedArtifact.getArtifactKey().toString());
       if (moduleName == null) {
         undeclaredArtifactIds.add(resolvedArtifact);
       } else {
