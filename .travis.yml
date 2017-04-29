@@ -3,8 +3,8 @@ dist: trusty
 language: java
 
 install:
-- wget --no-check-certificate https://github.com/forax/pro/releases/download/v0.9.167/pro-9-b167-linux.tar.gz
-- tar -xzf pro-9-b167-linux.tar.gz
+- wget --no-check-certificate https://github.com/forax/pro/releases/download/v0.9.165.1/pro-9-b165.1-linux.tar.gz
+- tar -xzf pro-9-b165.1-linux.tar.gz
 - export JAVA_HOME=./pro
 - ./pro/bin/pro version
 
