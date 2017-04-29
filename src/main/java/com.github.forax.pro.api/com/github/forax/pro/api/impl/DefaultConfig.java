@@ -2,7 +2,6 @@ package com.github.forax.pro.api.impl;
 
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
@@ -42,11 +41,6 @@ public class DefaultConfig implements MutableConfig, EvalContext {
   @Override
   public void forEach(String key, BiConsumer<? super String, Object> consumer) {
      Configs.forEach(root, key, consumer); 
-  }
-  
-  @Override
-  public void addListener(String key, Consumer<? super String> consumer) {
-    Configs.addListener(root, key, consumer); 
   }
   
   public DefaultConfig duplicate() {
@@ -94,11 +88,6 @@ public class DefaultConfig implements MutableConfig, EvalContext {
       }
       
       @Override
-      public void addListener(String key, Consumer<? super String> consumer) {
-        DefaultConfig.this.addListener(key, consumer);
-      }
-      
-      @Override
       public String toString() {
         return DefaultConfig.this.toString();
       }
@@ -115,11 +104,6 @@ public class DefaultConfig implements MutableConfig, EvalContext {
       @Override
       public void forEach(String key, BiConsumer<? super String, Object> consumer) {
         DefaultConfig.this.forEach(key, consumer);
-      }
-      
-      @Override
-      public void addListener(String key, Consumer<? super String> consumer) {
-        DefaultConfig.this.addListener(key, consumer);
       }
       
       @Override

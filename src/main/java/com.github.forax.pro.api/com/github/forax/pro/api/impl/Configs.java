@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,7 +27,6 @@ public class Configs {
     public void _set_(String key, Object value);
     public void _derive_(String key, Eval eval);
     public <T> Optional<T> _get_(String key, Class<T> type, boolean readOnly);
-    public void _addListener_(String key, Consumer<? super String> consumer);
     public Map<String, Object> _map_();
     public String _id_();
     public Class<?> _type_();
@@ -52,10 +50,6 @@ public class Configs {
   
   private static void forEachProperty(Object proxy, BiConsumer<? super String, Object> consumer) {
     asQuery(proxy)._map_().forEach(consumer);
-  }
-  
-  private static void addPropertyListener(Object proxy, String key, Consumer<? super String> consumer) {
-    asQuery(proxy)._addListener_(key, consumer);
   }
   
   @SuppressWarnings("unchecked")
@@ -103,12 +97,6 @@ public class Configs {
     String[] properties = splitAsProperties(key);
     Object result = traverse(proxy, properties, properties.length, key);
     forEachProperty(result, consumer);
-  }
-  
-  static void addListener(Object proxy, String key, Consumer<? super String> consumer) {
-    String[] properties = splitAsProperties(key);
-    Object result = traverse(proxy, properties, properties.length - 1, key);
-    addPropertyListener(result, properties[properties.length - 1], consumer);
   }
 
   static Stream<String> toStringStream(String prefix, Object value) {
@@ -251,8 +239,6 @@ public class Configs {
     }
     Configs.class.getModule().addReads(proxyClass.getModule());
     
-    HashMap<String, Consumer<String>> listenerMap = new HashMap<>();
-    
     HashMap<String, MethodHandle>[] accessors = ACCESSORS.get(proxyClass);
     HashMap<String, MethodHandle> getterMap = accessors[GETTER];
     HashMap<String, MethodHandle> setterMap = accessors[SETTER];
@@ -291,9 +277,6 @@ public class Configs {
               } else {
                 mh.invokeExact(map, value);
               }
-              
-              // notify all listeners
-              listenerMap.getOrDefault(key, __ -> { /* empty */ }).accept(key);
               return null;
             }
             case "_derive_": {
@@ -303,19 +286,6 @@ public class Configs {
               String key = (String)args[0];
               Eval eval = (Eval)args[1];
               setFromMap(map, eval, key,  Object.class);
-              
-              // notify all listeners
-              listenerMap.getOrDefault(key, __ -> { /* empty */ }).accept(key);
-              return null;
-            }
-            case "_addListener_": {
-              if (proxyReadOnly) {
-                throw new UnsupportedOperationException("configuration is read only for type " + proxyClass.getSimpleName());
-              }
-              String key = (String)args[0];
-              @SuppressWarnings("unchecked")
-              Consumer<String> consumer = (Consumer<String>)args[1];
-              listenerMap.put(key, consumer);
               return null;
             }
             case "_map_":
