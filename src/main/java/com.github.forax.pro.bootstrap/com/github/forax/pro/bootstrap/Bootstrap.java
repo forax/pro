@@ -1,13 +1,14 @@
 package com.github.forax.pro.bootstrap;
 
 import static com.github.forax.pro.Pro.*;
+import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
+import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
+import static java.nio.file.Files.createDirectories;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.util.stream.Collectors;
-
-import com.github.forax.pro.helper.FileHelper;
 
 public class Bootstrap {
   public static void main(String[] args) throws IOException {
@@ -97,7 +98,9 @@ public class Bootstrap {
     Vanity.postOperations();
   }
 
-  private static void compileAndPackagePlugin(String name, Runnable extras) {
+  private static void compileAndPackagePlugin(String name, Runnable extras) throws IOException {
+    deleteAllFiles(location("plugins/" + name + "/target"), false);
+    
     local("plugins/" + name, () -> {
       set("resolver.moduleDependencyPath",
           path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
@@ -113,11 +116,11 @@ public class Bootstrap {
   }
 
   private static void copyPackagedPluginToTargetImage(String name) throws IOException {
-    Files.createDirectories(location("target/image/plugins/" + name));
+    createDirectories(location("target/image/plugins/" + name));
     path("plugins/" + name + "/target/main/artifact", "plugins/" + name + "/deps")
       .filter(Files::exists)
       .forEach(srcPath ->
-        FileHelper.walkAndFindCounterpart(
+        walkAndFindCounterpart(
             srcPath,
             location("target/image/plugins/" + name),
             stream -> stream.filter(p -> p.toString().endsWith(".jar")),
