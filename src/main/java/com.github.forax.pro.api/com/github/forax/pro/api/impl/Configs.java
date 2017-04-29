@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,13 +24,15 @@ public class Configs {
     throw new AssertionError();
   }
   
-  /*package private*/ public interface Query {
+  public interface Query {
     public void _set_(String key, Object value);
+    public void _derive_(String key, Eval eval);
     public <T> Optional<T> _get_(String key, Class<T> type, boolean readOnly);
     public void _addListener_(String key, Consumer<? super String> consumer);
     public Map<String, Object> _map_();
     public String _id_();
-    public Object _duplicate_();
+    public Class<?> _type_();
+    public Object _duplicate_(EvalContext context);
   }
   
   private static Query asQuery(Object proxy) {
@@ -55,6 +58,17 @@ public class Configs {
     asQuery(proxy)._addListener_(key, consumer);
   }
   
+  @SuppressWarnings("unchecked")
+  public static <T, U, V> void derive(T to, BiConsumer<? super T, ? super V> setter, U from, Function<? super U, ? extends V> eval) {
+    Query fromQuery = asQuery(from);
+    String fromId = fromQuery._id_();
+    Class<U> fromType = (Class<U>)fromQuery._type_();
+    Eval value = Eval.of(context -> eval.apply(context.get(fromId, fromType).get()));
+    Query toQuery = asQuery(to);
+    String key = findKeyOf((Class<T>)toQuery._type_(), setter);
+    toQuery._derive_(key, value);
+  }
+
   private static Object traverse(Object proxy, String[] properties, int count, String key) {
     Object result = proxy;
     for(int i = 0; i < count; i++) {
@@ -107,31 +121,44 @@ public class Configs {
        .flatMap(entry -> toStringStream(prefix.isEmpty()? entry.getKey(): prefix + "." + entry.getKey(), entry.getValue()));
   }
   
-  static Object duplicate(Object proxy) {
-    return asQuery(proxy)._duplicate_();
+  static Object duplicate(Object proxy, EvalContext context) {
+    return asQuery(proxy)._duplicate_(context);
   }
   
-  private static Object getFromMap(String id, Map<String, Object> map, Class<?> type, boolean readOnly, String key) {
+  private static Object getFromMap(EvalContext context, String id, Map<String, Object> map, Class<?> type, boolean readOnly, String key) {
+    Object value;
     if (type == Optional.class) {
-      return Optional.ofNullable(map.get(key));
-    }
-    Object value = map.computeIfAbsent(key, __ -> { // auto-vivification if possible 
-      if (readOnly || !type.isAnnotationPresent(TypeCheckedConfig.class)) {
-        throw new IllegalStateException("no value for key " + key);
+      value = map.get(key);
+      if (value == null) {
+        return Optional.empty();
       }
-      return proxy(type, id.isEmpty()? key: id + '.' + key, new HashMap<>(), false);
-    });
+    } else {
+      value = map.computeIfAbsent(key, __ -> { // auto-vivification if possible 
+        if (readOnly || !type.isAnnotationPresent(TypeCheckedConfig.class)) {
+          throw new IllegalStateException("no value for key " + key);
+        }
+        return proxy(type, context, id.isEmpty()? key: id + '.' + key, new HashMap<>(), false);
+      });
+    }
+    
+    if (value instanceof Eval) { // need to evaluate
+      value = ((Eval)value).eval(context);
+    }
     
     if (type.isPrimitive()) {  //FIXME, use a wrapper type instead 
       return value;
     }
+    if (type == Optional.class) {
+      return Optional.of(value);
+    }
+    
     if (!readOnly && type.isInstance(value)) {  // avoid to create a proxy if not necessary
       return value;
     }
     // auto-wrapping, or wrap if readOnly
     if (value instanceof Query && type.isAnnotationPresent(TypeCheckedConfig.class)) {
       Query query = (Query)value;
-      return proxy(type, query._id_(), query._map_(), readOnly);
+      return proxy(type, context, query._id_(), query._map_(), readOnly);
     }
     return type.cast(value);
   }
@@ -151,7 +178,7 @@ public class Configs {
   static {
     Lookup lookup = MethodHandles.lookup();
     try {
-      GET_HASH = lookup.findStatic(Configs.class, "getFromMap", methodType(Object.class, String.class, Map.class, Class.class, boolean.class, String.class));
+      GET_HASH = lookup.findStatic(Configs.class, "getFromMap", methodType(Object.class, EvalContext.class, String.class, Map.class, Class.class, boolean.class, String.class));
       SET_HASH = lookup.findStatic(Configs.class, "setFromMap", methodType(void.class, Map.class, Object.class, String.class, Class.class));
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw new AssertionError(e);
@@ -174,7 +201,7 @@ public class Configs {
             String name = method.getName();
             switch(method.getParameterCount()) {
             case 0: {
-              MethodHandle mh = MethodHandles.insertArguments(GET_HASH, 4, name);
+              MethodHandle mh = MethodHandles.insertArguments(GET_HASH, 5, name);
               getterMap.put(name, mh);
               continue;
             }
@@ -194,17 +221,31 @@ public class Configs {
         }
       };
   
+      
+  public interface EvalContext {
+    <T> Optional<T> get(String key, Class<T> type);
+  }
+  
+  private interface Eval {
+    Object eval(EvalContext context);
+  
+    static Eval of(Eval eval) {
+      return eval;
+    }
+  }
+      
+  
+  
   @TypeCheckedConfig
   private interface Group {
     // empty
   }
   
-  
-  public static Object newRoot() {
-    return proxy(Group.class, "", new HashMap<>(), false);
+  static Object newRoot(EvalContext context) {
+    return proxy(Group.class, context, "", new HashMap<>(), false);
   }
   
-  private static <T> T proxy(Class<T> proxyClass, String id, Map<String, Object> map, boolean proxyReadOnly) {
+  private static <T> T proxy(Class<T> proxyClass, EvalContext context, String id, Map<String, Object> map, boolean proxyReadOnly) {
     if (!proxyClass.isAnnotationPresent(TypeCheckedConfig.class)) {
       throw new IllegalArgumentException("can only proxy interface (" + proxyClass.getSimpleName() + ") tagged with @TypeCheckedConfig");
     }
@@ -229,9 +270,9 @@ public class Configs {
               MethodHandle mh = getterMap.get(key);
               Object result;
               if (mh == null) {
-                result = getFromMap(id, map, type, proxyReadOnly | readOnly, key);
+                result = getFromMap(context, id, map, type, proxyReadOnly | readOnly, key);
               } else {
-                result = mh.invokeExact(id, map, type, proxyReadOnly | readOnly);
+                result = mh.invokeExact(context, id, map, type, proxyReadOnly | readOnly);
               }
               if (!(result instanceof Optional<?>)) {
                 return Optional.of(result);
@@ -255,6 +296,18 @@ public class Configs {
               listenerMap.getOrDefault(key, __ -> { /* empty */ }).accept(key);
               return null;
             }
+            case "_derive_": {
+              if (proxyReadOnly) {
+                throw new UnsupportedOperationException("configuration is read only for type " + proxyClass.getSimpleName());
+              }
+              String key = (String)args[0];
+              Eval eval = (Eval)args[1];
+              setFromMap(map, eval, key,  Object.class);
+              
+              // notify all listeners
+              listenerMap.getOrDefault(key, __ -> { /* empty */ }).accept(key);
+              return null;
+            }
             case "_addListener_": {
               if (proxyReadOnly) {
                 throw new UnsupportedOperationException("configuration is read only for type " + proxyClass.getSimpleName());
@@ -269,13 +322,16 @@ public class Configs {
               return map;
             case "_id_":
               return id;
+            case "_type_":
+              return proxyClass;
             case "_duplicate_": {
+              EvalContext ctx = (EvalContext)args[0];
               HashMap<String, Object> newMap = new HashMap<>();
               map.forEach((key, value) -> {
-                Object newValue = (value instanceof Query)?((Query)value)._duplicate_(): value;
+                Object newValue = (value instanceof Query)?((Query)value)._duplicate_(ctx): value;
                 newMap.put(key, newValue);
               });
-              return proxy(proxyClass, id, newMap, proxyReadOnly);
+              return proxy(proxyClass, ctx, id, newMap, proxyReadOnly);
             }
               
             default:
@@ -294,7 +350,7 @@ public class Configs {
             } else {
               int parameterCount = method.getParameterCount();
               if (parameterCount == 0) {
-                return getterMap.get(name).invokeExact(id, map, method.getReturnType(), proxyReadOnly);
+                return getterMap.get(name).invokeExact(context, id, map, method.getReturnType(), proxyReadOnly);
               }
               if (parameterCount == 1) {
                 if (proxyReadOnly) {
@@ -308,5 +364,17 @@ public class Configs {
           }
           throw new IllegalStateException("invalid method " + method + " on " + declaringClass.getName());
         }));
+  }
+  
+  private static <T> String findKeyOf(Class<T> type, BiConsumer<? super T, ?> setter) {
+    StringBuilder builder = new StringBuilder();
+    Configs.class.getModule().addReads(type.getModule());
+    T proxy = type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[] { type },
+        (proxyObject, method, args) -> {
+          builder.append(method.getName());
+          return null;
+        }));
+    setter.accept(proxy, null);   //FIXME, will not work with primitive types :(
+    return builder.toString();
   }
 }

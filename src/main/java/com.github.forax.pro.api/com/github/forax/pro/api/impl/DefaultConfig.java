@@ -1,20 +1,24 @@
 package com.github.forax.pro.api.impl;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
+import com.github.forax.pro.api.impl.Configs.EvalContext;
 
-public class DefaultConfig implements MutableConfig {
+public class DefaultConfig implements MutableConfig, EvalContext {
   private final Object root;
   
-  public DefaultConfig(Object root) {
-    this.root = Objects.requireNonNull(root);
+  public DefaultConfig() {
+    this.root = Configs.newRoot(this);
   }
 
+  private DefaultConfig(Object root) {  // warning duplicate the tree, use with care
+    this.root = Configs.duplicate(root, this);
+  }
+  
   @Override
   public String toString() {
     return root.toString();
@@ -46,7 +50,7 @@ public class DefaultConfig implements MutableConfig {
   }
   
   public DefaultConfig duplicate() {
-    return new DefaultConfig(Configs.duplicate(root));
+    return new DefaultConfig(root);
   }
   
   /*

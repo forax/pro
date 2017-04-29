@@ -1,5 +1,6 @@
 package com.github.forax.pro.plugin.modulefixer;
 
+import static com.github.forax.pro.api.MutableConfig.derive;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -65,11 +66,11 @@ public class ModuleFixerPlugin implements Plugin {
   
   @Override
   public void configure(MutableConfig config) {
-    ModuleFixerConf moduleFxier = config.getOrUpdate(name(), ModuleFixerConf.class);
+    ModuleFixerConf moduleFixer = config.getOrUpdate(name(), ModuleFixerConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
-    moduleFxier.moduleDependencyPath(convention.javaModuleDependencyPath());
+    derive(moduleFixer, ModuleFixerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
     
     // outputs
     //TODO

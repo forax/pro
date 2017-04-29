@@ -1,5 +1,7 @@
 package com.github.forax.pro.plugin.resolver;
 
+import static com.github.forax.pro.api.MutableConfig.derive;
+
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.net.URI;
@@ -44,12 +46,12 @@ public class ResolverPlugin implements Plugin {
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
-    resolver.moduleSourcePath(convention.javaModuleSourcePath());
-    resolver.moduleTestPath(convention.javaModuleTestPath());
+    derive(resolver, ResolverConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
+    derive(resolver, ResolverConf::moduleTestPath, convention, ConventionFacade::javaModuleTestPath);
     
     // outputs
-    resolver.moduleDependencyPath(convention.javaModuleDependencyPath());
-    resolver.mavenLocalRepositoryPath(convention.javaMavenLocalRepositoryPath());
+    derive(resolver, ResolverConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
+    derive(resolver, ResolverConf::mavenLocalRepositoryPath, convention, ConventionFacade::javaMavenLocalRepositoryPath);
   }
   
   @Override

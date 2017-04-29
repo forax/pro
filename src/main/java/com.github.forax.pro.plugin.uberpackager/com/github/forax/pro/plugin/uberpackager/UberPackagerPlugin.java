@@ -1,5 +1,7 @@
 package com.github.forax.pro.plugin.uberpackager;
 
+import static com.github.forax.pro.api.MutableConfig.derive;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.module.ModuleReader;
@@ -38,12 +40,12 @@ public class UberPackagerPlugin implements Plugin {
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class); 
     
     // inputs
-    packager.moduleArtifactSourcePath(convention.javaModuleArtifactSourcePath());
-    packager.moduleDependencyPath(convention.javaModuleDependencyPath());
+    derive(packager, UberPackagerConf::moduleArtifactSourcePath, convention, ConventionFacade::javaModuleArtifactSourcePath);
+    derive(packager, UberPackagerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
     
     // outputs
-    packager.moduleUberPath(convention.javaModuleUberPath());
-    packager.moduleUberExplodedPath(convention.javaModuleUberExplodedPath());
+    derive(packager, UberPackagerConf::moduleUberPath, convention, ConventionFacade::javaModuleUberPath);
+    derive(packager, UberPackagerConf::moduleUberExplodedPath, convention, ConventionFacade::javaModuleUberExplodedPath);
   }
   
   @Override

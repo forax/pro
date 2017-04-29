@@ -1,5 +1,6 @@
 package com.github.forax.pro.plugin.linker;
 
+import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionLoop;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
@@ -51,12 +52,13 @@ public class LinkerPlugin implements Plugin {
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
-    linker.systemModulePath(convention.javaHome().resolve("jmods"));
-    linker.moduleArtifactSourcePath(convention.javaModuleArtifactSourcePath());
-    linker.moduleDependencyPath(convention.javaModuleDependencyPath());
+    derive(linker, LinkerConf::systemModulePath,
+        convention, c -> c.javaHome().resolve("jmods"));
+    derive(linker, LinkerConf::moduleArtifactSourcePath, convention, ConventionFacade::javaModuleArtifactSourcePath);
+    derive(linker, LinkerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
     
     // outputs
-    linker.destination(convention.javaLinkerImagePath());
+    derive(linker, LinkerConf::destination, convention, ConventionFacade::javaLinkerImagePath);
   }
   
   @Override

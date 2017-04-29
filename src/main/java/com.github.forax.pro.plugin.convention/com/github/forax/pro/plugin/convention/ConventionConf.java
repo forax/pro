@@ -7,6 +7,8 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
 public interface ConventionConf {
+  Path currentDir();
+  void currentDir(Path path);
   Path javaHome();
   void javaHome(Path path);
 

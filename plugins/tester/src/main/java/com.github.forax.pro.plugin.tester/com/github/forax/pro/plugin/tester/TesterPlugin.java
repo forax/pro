@@ -1,5 +1,6 @@
 package com.github.forax.pro.plugin.tester;
 
+import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.api.helper.OptionAction.actionLoop;
 
 import java.io.ByteArrayOutputStream;
@@ -39,9 +40,11 @@ public class TesterPlugin implements Plugin {
   
   @Override
   public void configure(MutableConfig config) {
-    TesterConf testerConf = config.getOrUpdate(name(), TesterConf.class);
+    TesterConf tester = config.getOrUpdate(name(), TesterConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
-    testerConf.moduleExplodedTestPath(convention.javaModuleExplodedTestPath());
+    
+    // inputs
+    derive(tester, TesterConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
   }
   
   @Override

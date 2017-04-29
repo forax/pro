@@ -1,5 +1,6 @@
 package com.github.forax.pro.plugin.compiler;
 
+import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.api.helper.OptionAction.*;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
@@ -53,16 +54,16 @@ public class CompilerPlugin implements Plugin {
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
-    compiler.moduleDependencyPath(convention.javaModuleDependencyPath());
-    compiler.moduleSourcePath(convention.javaModuleSourcePath());
-    compiler.moduleSourceResourcesPath(convention.javaModuleSourceResourcesPath());
-    compiler.moduleTestPath(convention.javaModuleTestPath());
-    compiler.moduleTestResourcesPath(convention.javaModuleTestResourcesPath());
+    derive(compiler, CompilerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
+    derive(compiler, CompilerConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
+    derive(compiler, CompilerConf::moduleSourceResourcesPath, convention, ConventionFacade::javaModuleSourceResourcesPath);
+    derive(compiler, CompilerConf::moduleTestPath, convention, ConventionFacade::javaModuleTestPath);
+    derive(compiler, CompilerConf::moduleTestResourcesPath, convention, ConventionFacade::javaModuleTestResourcesPath);
     
     // outputs
-    compiler.moduleExplodedSourcePath(convention.javaModuleExplodedSourcePath().get(0));
-    compiler.moduleMergedTestPath(convention.javaModuleMergedTestPath().get(0));
-    compiler.moduleExplodedTestPath(convention.javaModuleExplodedTestPath().get(0));
+    derive(compiler, CompilerConf::moduleExplodedSourcePath, convention, c -> c.javaModuleExplodedSourcePath().get(0));
+    derive(compiler, CompilerConf::moduleMergedTestPath, convention, c -> c.javaModuleMergedTestPath().get(0));
+    derive(compiler, CompilerConf::moduleExplodedTestPath, convention, c -> c.javaModuleExplodedTestPath().get(0));
   }
   
   @Override

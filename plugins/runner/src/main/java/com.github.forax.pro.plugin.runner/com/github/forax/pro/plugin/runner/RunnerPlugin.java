@@ -1,5 +1,6 @@
 package com.github.forax.pro.plugin.runner;
 
+import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
@@ -44,10 +45,12 @@ public class RunnerPlugin implements Plugin {
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class); 
     
     // inputs
-    runner.modulePath(StableList.of(convention.javaModuleArtifactSourcePath())
-        .appendAll(convention.javaModuleDependencyPath())
-        .appendAll(convention.javaModuleExplodedSourcePath()));
-    runner.javaCommand(convention.javaHome().resolve("bin").resolve(Platform.current().javaExecutableName()));
+    derive(runner, RunnerConf::modulePath, convention,
+        c -> StableList.of(c.javaModuleArtifactSourcePath())
+          .appendAll(c.javaModuleDependencyPath())
+          .appendAll(c.javaModuleExplodedSourcePath()));
+    derive(runner, RunnerConf::javaCommand, convention,
+        c -> c.javaHome().resolve("bin").resolve(Platform.current().javaExecutableName()));
   }
   
   @Override

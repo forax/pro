@@ -51,8 +51,7 @@ public class Pro {
   private static final ThreadLocal<DefaultConfig> CONFIG = new ThreadLocal<>() {
     @Override
     protected DefaultConfig initialValue() {
-      Object root = Configs.newRoot();
-      DefaultConfig config = new DefaultConfig(root);
+      DefaultConfig config = new DefaultConfig();
       ProConf proConf = config.getOrUpdate("pro", ProConf.class);
       
       Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
