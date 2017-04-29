@@ -11,6 +11,7 @@ class Javac {
   private final List<Path> moduleSourcePath;
   
   private List<Path> modulePath;
+  private List<Path> upgradeModulePath;
   private List<String> rootModules;
   private boolean verbose; 
   private String lint;
@@ -51,6 +52,13 @@ class Javac {
   }
   public void rawArguments(List<String> rawArguments) {
     this.rawArguments = Objects.requireNonNull(rawArguments);
+  }
+  
+  public Optional<List<Path>> upgradeModulePath() {
+    return Optional.ofNullable(upgradeModulePath);
+  }
+  public void upgradeModulePath(List<Path> modulePath) {
+    this.upgradeModulePath = Objects.requireNonNull(modulePath);
   }
   
   public Optional<List<Path>> modulePath() {

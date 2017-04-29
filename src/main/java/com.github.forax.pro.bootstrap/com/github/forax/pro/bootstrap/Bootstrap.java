@@ -100,10 +100,12 @@ public class Bootstrap {
   private static void compileAndPackagePlugin(String name, Runnable extras) {
     local("plugins/" + name, () -> {
       set("resolver.moduleDependencyPath",
-          path("plugins/" + name + "/deps", "plugins/" + name + "/../../target/main/artifact/", "plugins/" + name + "/../../deps"));
+          path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
       set("compiler.moduleDependencyPath",
-          path("plugins/" + name + "/deps", "plugins/" + name + "/../../target/main/artifact/", "plugins/" + name + "/../../deps"));
-
+          path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
+      set("compiler.upgradeModulePath",
+          path("target/main/artifact/", "deps"));
+      
       extras.run();
 
       run("resolver", "modulefixer", "compiler", "packager");

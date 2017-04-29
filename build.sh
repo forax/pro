@@ -31,8 +31,6 @@ $javac --module-source-path src/main/java \
        --module-path deps \
        $(find src/main/java/ -name "*.java")
 
-$java --add-opens java.base/java.lang.reflect=com.github.forax.pro \
-      --add-opens java.base/java.nio.file=com.github.forax.pro \
-      --module-path bootstrap/modules:deps \
+$java --module-path bootstrap/modules:deps \
       --upgrade-module-path bootstrap/modules \
       --module com.github.forax.pro.bootstrap/com.github.forax.pro.bootstrap.Bootstrap

@@ -92,6 +92,7 @@ public class CompilerPlugin implements Plugin {
     DESTINATION(action("-d", Javac::destination)),
     MODULE_SOURCE_PATH(action("--module-source-path", Javac::moduleSourcePath, File.pathSeparator)),
     ROOT_MODULES(actionMaybe("--add-modules", Javac::rootModules, ",")),
+    UPGRADE_MODULE_PATH(actionMaybe("--upgrade-module-path", Javac::upgradeModulePath, File.pathSeparator)),
     MODULE_PATH(actionMaybe("--module-path", Javac::modulePath, File.pathSeparator)),
     ;
     
@@ -200,6 +201,7 @@ public class CompilerPlugin implements Plugin {
     compiler.lint().ifPresent(javac::lint);
     compiler.rawArguments().ifPresent(javac::rawArguments);
     modulePath.ifPresent(javac::modulePath);
+    compiler.upgradeModulePath().ifPresent(javac::upgradeModulePath);
     compiler.rootModules().ifPresent(javac::rootModules);
     
     

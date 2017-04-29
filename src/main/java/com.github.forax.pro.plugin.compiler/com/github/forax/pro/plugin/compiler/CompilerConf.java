@@ -2,6 +2,7 @@ package com.github.forax.pro.plugin.compiler;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.github.forax.pro.api.TypeCheckedConfig;
@@ -35,6 +36,9 @@ public interface CompilerConf {
   void moduleMergedTestPath(Path modulePath);
   Path moduleExplodedTestPath();
   void moduleExplodedTestPath(Path destination);
+  
+  public Optional<List<Path>> upgradeModulePath();
+  public void upgradeModulePath(List<Path> modulePath);
   
   Optional<List<Path>> modulePath();
   void modulePath(List<Path> modulePath);
