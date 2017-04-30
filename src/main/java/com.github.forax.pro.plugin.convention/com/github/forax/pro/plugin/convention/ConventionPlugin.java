@@ -47,6 +47,8 @@ public class ConventionPlugin implements Plugin {
         pro, c -> List.of(c.currentDir().resolve("deps")));
     derive(convention, ConventionConf::javaMavenLocalRepositoryPath,
         pro, c -> c.currentDir().resolve("target/deps/maven-local"));
+    derive(convention, ConventionConf::javaModuleDependencyFixerPath,
+        pro, c -> c.currentDir().resolve("target/deps/module-fixer"));
     derive(convention, ConventionConf::javaModuleUberPath,
         pro, c -> c.currentDir().resolve("target/uber"));
     derive(convention, ConventionConf::javaModuleUberExplodedPath,

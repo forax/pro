@@ -11,7 +11,7 @@ public interface ModuleFixerConf {
   List<Path> moduleDependencyPath();
   void moduleDependencyPath(List<Path> path);
   
-  Optional<Path> moduleDependencyFixerPath();
+  Path moduleDependencyFixerPath();
   void moduleDependencyFixerPath(Path path);
   
   boolean force();

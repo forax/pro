@@ -32,6 +32,8 @@ public interface ConventionConf {
 
   Path javaMavenLocalRepositoryPath();
   void javaMavenLocalRepositoryPath(Path path);
+  Path javaModuleDependencyFixerPath();
+  void javaModuleDependencyFixerPath(Path path);
   List<Path> javaModuleDependencyPath();
   void javaModuleDependencyPath(List<Path> path);
 

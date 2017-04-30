@@ -71,6 +71,7 @@ public class ModuleFixerPlugin implements Plugin {
     
     // inputs
     derive(moduleFixer, ModuleFixerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
+    derive(moduleFixer, ModuleFixerConf::moduleDependencyFixerPath, convention, ConventionFacade::javaModuleDependencyFixerPath);
     
     // outputs
     //TODO
@@ -90,7 +91,7 @@ public class ModuleFixerPlugin implements Plugin {
     
     ModuleFixerConf moduleFixer = config.getOrThrow(name(), ModuleFixerConf.class);
     List<Path> moduleDependencyPath = moduleFixer.moduleDependencyPath();
-    Path moduleDependencyFixerPath = moduleFixer.moduleDependencyFixerPath().orElseGet(() -> Paths.get("target/deps/module-fixer"));  //FIXME
+    Path moduleDependencyFixerPath = moduleFixer.moduleDependencyFixerPath();
     
     class Info {
       final Set<String> requirePackages;
