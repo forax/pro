@@ -1,4 +1,4 @@
-package com.github.forax.pro.plugin.modulefixer;
+package com.github.forax.pro.plugin.modulefixer.impl;
 
 import static org.objectweb.asm.Opcodes.ASM6;
 import static org.objectweb.asm.Opcodes.D2L;
@@ -48,8 +48,8 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.analysis.Interpreter;
 import org.objectweb.asm.tree.analysis.Value;
 
-class ConstInterpreter extends Interpreter<ConstInterpreter.ConstValue> {
-  static class ConstValue implements Value {
+public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstValue> {
+  public static final class ConstValue implements Value {
     static final ConstValue ONE_SLOT = new ConstValue("", 1);
     static final ConstValue TWO_SLOT = new ConstValue("", 2);
     
@@ -68,9 +68,13 @@ class ConstInterpreter extends Interpreter<ConstInterpreter.ConstValue> {
     public int getSize() {
       return slot;
     }
+    
+    public String getConstString() {
+      return constString;
+    }
   }
   
-  ConstInterpreter() {
+  public ConstInterpreter() {
     super(ASM6);
   }
 

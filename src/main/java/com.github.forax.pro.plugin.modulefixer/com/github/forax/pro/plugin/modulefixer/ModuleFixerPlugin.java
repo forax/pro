@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -50,8 +49,9 @@ import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
-
-import com.github.forax.pro.plugin.modulefixer.ConstInterpreter.ConstValue;
+import com.github.forax.pro.plugin.modulefixer.impl.ConstInterpreter;
+import com.github.forax.pro.plugin.modulefixer.impl.EmptyClassVisitor;
+import com.github.forax.pro.plugin.modulefixer.impl.ConstInterpreter.ConstValue;
 
 
 public class ModuleFixerPlugin implements Plugin {
@@ -296,7 +296,7 @@ public class ModuleFixerPlugin implements Plugin {
       String packageName = packageOf(className);
       exports.add(packageName);
       
-      classReader.accept(new ClassRemapper(new ClassWriter(0), new Remapper() {
+      classReader.accept(new ClassRemapper(EmptyClassVisitor.getInstance(), new Remapper() {
         @Override
         public String map(String typeName) {
           String packageName = packageOf(typeName);
@@ -381,7 +381,7 @@ public class ModuleFixerPlugin implements Plugin {
                     throw new IllegalStateException("unknown signature in java.util.ServiceLoader " + node.name + node.desc);
                   }
                   
-                  String constString = value.constString;
+                  String constString = value.getConstString();
                   if (constString != "") {
                     uses.add(constString);
                   }  
@@ -395,7 +395,6 @@ public class ModuleFixerPlugin implements Plugin {
       throw new UncheckedIOException(e);
     }
   }
-  
   
   private static Map<String, Set<String>> parseAdditionals(Optional<List<String>> additionals) {
     return additionals.orElse(List.of())
