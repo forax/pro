@@ -31,6 +31,8 @@ import java.util.stream.Stream;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -51,6 +53,7 @@ import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
 
 import com.github.forax.pro.plugin.modulefixer.ConstInterpreter.ConstValue;
+
 
 public class ModuleFixerPlugin implements Plugin {
   @Override
@@ -293,7 +296,8 @@ public class ModuleFixerPlugin implements Plugin {
       }
       String packageName = packageOf(className);
       exports.add(packageName);
-      classReader.accept(new ClassRemapper(null, new Remapper() {
+      
+      classReader.accept(new ClassRemapper(new ClassWriter(0), new Remapper() {
         @Override
         public String map(String typeName) {
           String packageName = packageOf(typeName);
@@ -306,6 +310,7 @@ public class ModuleFixerPlugin implements Plugin {
         @Override
         public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
           owner = name;
+          super.visit(version, access, name, signature, superName, interfaces);
         }
         
         // consider that annotations are not real dependencies
@@ -316,7 +321,10 @@ public class ModuleFixerPlugin implements Plugin {
         
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-          super.visitMethod(access, packageName, desc, signature, exceptions);
+          MethodVisitor delegate = super.visitMethod(access, name, desc, signature, exceptions);
+          if (delegate == null) {
+            return null;
+          }
           return new MethodNode(Opcodes.ASM6, access, packageName, desc, signature, exceptions) {
             final ArrayList<MethodInsnNode> nodes = new ArrayList<>();
             
@@ -334,6 +342,9 @@ public class ModuleFixerPlugin implements Plugin {
             @Override
             public void visitEnd() {
               super.visitEnd();
+              
+              // replay instructions to find dependencies
+              accept(delegate);
               
               if (!nodes.isEmpty()) {
                 // do the static analysis to find constant classes
@@ -380,7 +391,7 @@ public class ModuleFixerPlugin implements Plugin {
             }
           };
         }
-      }, 0);
+      }, ClassReader.SKIP_FRAMES  /* there is maybe a bug in ASM ? */);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
