@@ -8,8 +8,8 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
 public interface TesterConf {
-  Optional<List<String>> overrideArguments();
-  void overrideArguments(List<String> overrideArguments);
+  Path javaHome();
+  void javaHome(Path path);
 
   List<Path> moduleExplodedTestPath();
   void moduleExplodedTestPath(List<Path> moduleExplodedTestPath);

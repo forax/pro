@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings("static-method")
 class FileHelperTests {
   @Test
-  public void pathFilenameEndsWith() {
+  void pathFilenameEndsWith() {
     Predicate<Path> predicate = FileHelper.pathFilenameEndsWith("foo");
     Assertions.assertTrue(predicate.test(Paths.get("bar.foo")));
   }
