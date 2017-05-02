@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("static-method")
-public class CmdLineTests {
+class CmdLineTests {
   @Test
   public void toStringWithoutArguments() {
     CmdLine cmdLine = new CmdLine();

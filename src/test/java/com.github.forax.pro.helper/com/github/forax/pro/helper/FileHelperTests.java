@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("static-method")
-public class FileHelperTests {
+class FileHelperTests {
   @Test
   public void pathFilenameEndsWith() {
     Predicate<Path> predicate = FileHelper.pathFilenameEndsWith("foo");

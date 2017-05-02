@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 @SuppressWarnings("static-method")
-public class PlatformTests {
+class PlatformTests {
   @Test
   public void currentPlatformIsNotNull() {
     Assertions.assertNotNull(Platform.current());
