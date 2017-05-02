@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -123,7 +124,7 @@ public class Configs {
     } else {
       value = map.computeIfAbsent(key, __ -> { // auto-vivification if possible 
         if (readOnly || !type.isAnnotationPresent(TypeCheckedConfig.class)) {
-          throw new IllegalStateException("no value for key " + key);
+          throw new NoSuchElementException("no value for key " + key);
         }
         return proxy(type, context, id.isEmpty()? key: id + '.' + key, new HashMap<>(), false);
       });

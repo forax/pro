@@ -7,6 +7,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * An annotation used to mark interface that can represent
+ * a type-checked configuration node inside the configuration tree.
+ */
 @Documented
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
