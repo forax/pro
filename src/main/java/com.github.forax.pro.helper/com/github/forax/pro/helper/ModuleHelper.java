@@ -274,8 +274,6 @@ public class ModuleHelper {
   public static ModuleDescriptor mergeModuleDescriptor(ModuleDescriptor sourceModule, ModuleDescriptor testModule) {
     boolean open = sourceModule.isOpen() || testModule.isOpen();
     
-    System.out.println("merge " + sourceModule + " " + testModule + " " + sourceModule.isOpen() + " " + testModule.isOpen());
-    
     Set<Modifier> moduleModifiers = open? Set.of(Modifier.OPEN): Set.of();
     Builder builder = ModuleDescriptor.newModule(testModule.name(), moduleModifiers);
     
