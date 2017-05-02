@@ -261,11 +261,15 @@ public class ModuleFixerPlugin implements Plugin {
 
   // see ServiceLoader javadoc for the full format
   private static void scanServiceFile(String resource, ModuleReader reader, Map<String, Set<String>> provides) {
+    String service = resource.substring("META-INF/services/".length());
+    // ignore "META-INF/services/" directory resource entry
+    if (service.isEmpty()) {
+      return;
+    }
     try(InputStream input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource));
         InputStreamReader isr = new InputStreamReader(input, StandardCharsets.UTF_8);
         BufferedReader lineReader = new BufferedReader(isr)) {
 
-      String service = resource.substring("META-INF/services/".length());
       Set<String> providers = lineReader.lines()
         .map(ModuleFixerPlugin::parseProviderLine)
         .collect(Collectors.toSet());
