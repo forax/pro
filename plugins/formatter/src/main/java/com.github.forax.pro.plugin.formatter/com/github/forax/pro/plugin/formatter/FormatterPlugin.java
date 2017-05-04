@@ -5,6 +5,7 @@ import static com.github.forax.pro.helper.FileHelper.pathFilenameEquals;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 
 import com.github.forax.pro.api.helper.CmdLine;
+import com.github.forax.pro.helper.Platform;
 import java.io.IOException;
 
 import com.github.forax.pro.api.Config;
@@ -59,15 +60,13 @@ public class FormatterPlugin implements Plugin {
     log.debug(formatter, _formatter -> "config " + _formatter);
 
     CmdLine cmdLine = new CmdLine();
-    // TODO pro-internal java provides a "fake-guava" module which collides with the one bundled in google-java-format-<VERSION>-all-deps.jar
-    // cmdLine.add(convention.javaHome().resolve("bin").resolve(Platform.current().javaExecutableName()));
-    cmdLine.add("java");
-    cmdLine.add("-classpath");
-    cmdLine.add(convention.javaHome().resolve("plugins").resolve(name()).resolve("libs").toString() + "/*");
-    cmdLine.add("com.google.googlejavaformat.java.Main");
+    cmdLine.add(convention.javaHome().resolve("bin").resolve(Platform.current().javaExecutableName()));
+    cmdLine.add("--module-path");
+    cmdLine.add(convention.javaHome().resolve("plugins").resolve(name()).resolve("libs"));
+    cmdLine.add("--module");
+    cmdLine.add("google.java.format");
     // TODO add more options, see details at https://github.com/google/google-java-format/blob/master/core/src/main/java/com/google/googlejavaformat/java/UsageException.java#L30
     // cmdLine.add("--replace");
-    cmdLine.add("--version");
     // TODO make javaFiles() configurable
     listAllJavaFiles(convention).forEach(cmdLine::add);
 
