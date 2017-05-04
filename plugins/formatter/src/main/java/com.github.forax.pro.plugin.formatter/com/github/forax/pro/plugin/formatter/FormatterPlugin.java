@@ -5,6 +5,7 @@ import static com.github.forax.pro.helper.FileHelper.pathFilenameEquals;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 
 import com.github.forax.pro.api.helper.CmdLine;
+import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.Platform;
 import java.io.IOException;
 
@@ -17,7 +18,9 @@ import com.github.forax.pro.helper.Log;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class FormatterPlugin implements Plugin {
   @Override
@@ -32,8 +35,9 @@ public class FormatterPlugin implements Plugin {
   
   @Override
   public void configure(MutableConfig config) {
-    FormatterConf formatter = config.getOrUpdate(name(), FormatterConf.class);
-    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+    // TODO derive inputs
+    //FormatterConf formatter = config.getOrUpdate(name(), FormatterConf.class);
+    //ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
   }
 
   private List<Path> listAllJavaFiles(ConventionFacade convention) {
@@ -49,7 +53,20 @@ public class FormatterPlugin implements Plugin {
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    FormatterConf formatter = config.getOrThrow(name(), FormatterConf.class);
+    // TODO add watchers to inputs
+    // FormatterConf formatter = config.getOrThrow(name(), FormatterConf.class);
+  }
+
+  // https://github.com/google/google-java-format/blob/master/core/src/main/java/com/google/googlejavaformat/java/UsageException.java#L30
+  enum FormatOption {
+    REPLACE(config -> Optional.of(line -> line.add("--replace")))
+    ;
+
+    final OptionAction<FormatterConf> action;
+
+    FormatOption(OptionAction<FormatterConf> action) {
+      this.action = action;
+    }
   }
 
   @Override
@@ -65,10 +82,13 @@ public class FormatterPlugin implements Plugin {
     cmdLine.add(convention.javaHome().resolve("plugins").resolve(name()).resolve("libs"));
     cmdLine.add("--module");
     cmdLine.add("google.java.format");
-    // TODO add more options, see details at https://github.com/google/google-java-format/blob/master/core/src/main/java/com/google/googlejavaformat/java/UsageException.java#L30
-    // cmdLine.add("--replace");
-    // TODO make javaFiles() configurable
-    listAllJavaFiles(convention).forEach(cmdLine::add);
+    // format options
+    log.verbose(null, __ -> OptionAction.toPrettyString(FormatOption.class, option -> option.action).apply(formatter, "formatter"));
+    OptionAction.gatherAll(FormatOption.class, option -> option.action).apply(formatter, cmdLine);
+    // files
+    List<Path> files = formatter.files().orElseGet(() -> listAllJavaFiles(convention));
+    log.verbose(files, fs -> "files\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
+    files.forEach(cmdLine::add);
 
     Process process = new ProcessBuilder(cmdLine.toArguments()).redirectErrorStream(true).start();
     process.getInputStream().transferTo(System.out);

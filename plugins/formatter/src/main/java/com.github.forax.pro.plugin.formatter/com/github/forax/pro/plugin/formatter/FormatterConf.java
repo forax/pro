@@ -4,9 +4,10 @@ import java.nio.file.Path;
 import java.util.List;
 
 import com.github.forax.pro.api.TypeCheckedConfig;
+import java.util.Optional;
 
 @TypeCheckedConfig
 public interface FormatterConf {
-  List<Path> javaFiles();
-  void javaFiles(List<Path> javaFilesToFormat);
+  Optional<List<Path>> files();
+  void files(List<Path> files);
 }
