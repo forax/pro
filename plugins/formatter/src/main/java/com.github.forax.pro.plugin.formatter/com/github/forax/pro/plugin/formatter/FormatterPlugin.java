@@ -1,24 +1,27 @@
 package com.github.forax.pro.plugin.formatter;
 
+import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEquals;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
-
-import com.github.forax.pro.api.helper.CmdLine;
-import com.github.forax.pro.api.helper.OptionAction;
-import com.github.forax.pro.helper.Platform;
-import java.io.IOException;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
+import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.Log;
+import com.github.forax.pro.helper.Platform;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -35,38 +38,29 @@ public class FormatterPlugin implements Plugin {
   
   @Override
   public void configure(MutableConfig config) {
-    // TODO derive inputs
-    //FormatterConf formatter = config.getOrUpdate(name(), FormatterConf.class);
-    //ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+    FormatterConf formatter = config.getOrUpdate(name(), FormatterConf.class);
+    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+
+    derive(formatter, FormatterConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
+    derive(formatter, FormatterConf::moduleTestPath, convention, ConventionFacade::javaModuleTestPath);
   }
 
-  private List<Path> listAllJavaFiles(ConventionFacade convention) {
+  private List<Path> listAllJavaFiles(FormatterConf formatter) {
     Predicate<Path> filter = pathFilenameEndsWith(".java");
     // TODO include "module-info.java" files, blocked by https://github.com/google/google-java-format/issues/75
     filter = filter.and(pathFilenameEquals("module-info.java").negate());
 
     List<Path> pathList = new ArrayList<>();
-    pathList.addAll(convention.javaModuleSourcePath());
-    pathList.addAll(convention.javaModuleTestPath());
+    pathList.addAll(formatter.moduleSourcePath());
+    pathList.addAll(formatter.moduleTestPath());
     return walkIfNecessary(pathList, filter);
   }
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    // TODO add watchers to inputs
-    // FormatterConf formatter = config.getOrThrow(name(), FormatterConf.class);
-  }
-
-  // https://github.com/google/google-java-format/blob/master/core/src/main/java/com/google/googlejavaformat/java/UsageException.java#L30
-  enum FormatOption {
-    REPLACE(config -> Optional.of(line -> line.add("--replace")))
-    ;
-
-    final OptionAction<FormatterConf> action;
-
-    FormatOption(OptionAction<FormatterConf> action) {
-      this.action = action;
-    }
+    FormatterConf formatter = config.getOrThrow(name(), FormatterConf.class);
+    formatter.moduleSourcePath().forEach(registry::watch);
+    formatter.moduleTestPath().forEach(registry::watch);
   }
 
   @Override
@@ -82,21 +76,29 @@ public class FormatterPlugin implements Plugin {
     cmdLine.add(convention.javaHome().resolve("plugins").resolve(name()).resolve("libs"));
     cmdLine.add("--module");
     cmdLine.add("google.java.format");
-    // format options
-    log.verbose(null, __ -> OptionAction.toPrettyString(FormatOption.class, option -> option.action).apply(formatter, "formatter"));
-    OptionAction.gatherAll(FormatOption.class, option -> option.action).apply(formatter, cmdLine);
+    // no (raw) arguments will trigger default "format files to stdout" mode
+    formatter.rawArguments().ifPresent(args -> args.forEach(cmdLine::add));
+    log.verbose(cmdLine, CmdLine::toString);
     // files
-    List<Path> files = formatter.files().orElseGet(() -> listAllJavaFiles(convention));
+    List<Path> files = formatter.files().orElseGet(() -> listAllJavaFiles(formatter));
     log.verbose(files, fs -> "files\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
     files.forEach(cmdLine::add);
 
     Process process = new ProcessBuilder(cmdLine.toArguments()).redirectErrorStream(true).start();
-    process.getInputStream().transferTo(System.out);
+    ByteArrayOutputStream captured = new ByteArrayOutputStream();
+    process.getInputStream().transferTo(new PrintStream(captured, true, "UTF-8"));
     try {
-      return process.waitFor();
+      int errorCode = process.waitFor();
+      dump(captured, System.out::print);
+      return errorCode + captured.size();
     } catch (InterruptedException e) {
       return 1; // FIXME
     }
   }
 
+  private static void dump(ByteArrayOutputStream data, Consumer<String> consumer) throws UnsupportedEncodingException {
+    Optional.of(data.toString("UTF-8"))
+            .filter(text -> !text.trim().isEmpty())
+            .ifPresent(consumer);
+  }
 }
