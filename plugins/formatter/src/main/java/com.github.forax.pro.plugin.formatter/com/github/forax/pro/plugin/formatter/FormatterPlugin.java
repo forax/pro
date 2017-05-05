@@ -17,6 +17,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.zip.CRC32;
 
 public class FormatterPlugin implements Plugin {
   @Override
@@ -81,7 +84,9 @@ public class FormatterPlugin implements Plugin {
     log.verbose(cmdLine, CmdLine::toString);
     // files
     List<Path> files = formatter.files().orElseGet(() -> listAllJavaFiles(formatter));
-    log.verbose(files, fs -> "files\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
+    long initialChecksum = crc(files);
+    log.verbose(files, fs -> fs.size() + " files (0x" + Long.toHexString(initialChecksum) + ")...");
+    log.debug(files, fs -> "files:\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
     files.forEach(cmdLine::add);
 
     Process process = new ProcessBuilder(cmdLine.toArguments()).redirectErrorStream(true).start();
@@ -89,16 +94,46 @@ public class FormatterPlugin implements Plugin {
     process.getInputStream().transferTo(new PrintStream(captured, true, "UTF-8"));
     try {
       int errorCode = process.waitFor();
-      dump(captured, System.out::print);
-      return errorCode + captured.size();
+      long capturedChecksum = crc(captured.toString("UTF-8"));
+      if (errorCode != 0) {
+        dump(captured, System.out::print);
+      }
+      if (capturedChecksum == 0L) {
+        return errorCode;
+      }
+      if (initialChecksum - capturedChecksum == 0L) {
+        return errorCode;
+      }
     } catch (InterruptedException e) {
-      return 1; // FIXME
+      // fall-through
     }
+    return 1; // FIXME
   }
 
   private static void dump(ByteArrayOutputStream data, Consumer<String> consumer) throws UnsupportedEncodingException {
     Optional.of(data.toString("UTF-8"))
             .filter(text -> !text.trim().isEmpty())
             .ifPresent(consumer);
+  }
+
+  private static long crc(String string) {
+    CRC32 crc32 = new CRC32();
+    crc32.update(string.getBytes(StandardCharsets.UTF_8));
+    return crc32.getValue();
+  }
+
+  private static long crc(List<Path> files) {
+    return crc(new CRC32(), files);
+  }
+
+  private static long crc(CRC32 crc32, List<Path> files) {
+    try {
+      for (Path path : files) {
+        crc32.update(Files.readAllBytes(path));
+      }
+    } catch (Exception e) {
+      throw new AssertionError(e);
+    }
+    return crc32.getValue();
   }
 }
