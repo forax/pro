@@ -5,10 +5,10 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
@@ -48,12 +48,12 @@ public class TesterRunner implements IntSupplier {
 
   private static int launch(Launcher launcher, List<Class<?>> testClasses) {
     LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
-    for (Class<?> testClass : testClasses) {
-      builder.selectors(selectClass(testClass));
-    }
+    testClasses.forEach(testClass -> builder.selectors(selectClass(testClass)));
+    
     LauncherDiscoveryRequest launcherDiscoveryRequest = builder.build();
     SummaryGeneratingListener summaryGeneratingListener = new SummaryGeneratingListener();
     launcher.execute(launcherDiscoveryRequest, summaryGeneratingListener);
+    
     TestExecutionSummary summary = summaryGeneratingListener.getSummary();
     int failures = (int) summary.getTestsFailedCount();
     if (failures == 0) {
@@ -68,28 +68,25 @@ public class TesterRunner implements IntSupplier {
   }
 
   private List<Class<?>> findTestClasses(ModuleReference moduleReference) {
-    List<String> entries;
     try (ModuleReader moduleReader = moduleReference.open()) {
-      entries = moduleReader.list()
+      return moduleReader.list()
           .filter(name -> name.endsWith("Tests.class")) // TODO Make test class filter configurable
+          .map(this::loadTestClass)
           .collect(Collectors.toList());
+    } catch(IOException e) {
+      throw new UncheckedIOException(e);
     }
-    catch (IOException exception) {
-      throw new AssertionError("module reader failure", exception);
-    }
-    List<Class<?>> testClasses = new ArrayList<>();
-    for (String entry : entries) {
-      String name = entry.substring(0, entry.length() - ".class".length());
-      name = name.replace('/','.');
-      try {
-        Class<?> testClass = getClass().getClassLoader().loadClass(name);
-        testClasses.add(testClass);
-      } catch (Exception exception) {
-        exception.printStackTrace();
-        throw new AssertionError("Loading failed for name: " + name + " (entry=" + entry + ")", exception);
-      }
-    }
-    return testClasses;
   }
 
+  private Class<?> loadTestClass(String fileName) {
+    String className = fileName.substring(0, fileName.length() - ".class".length());
+    className = className.replace('/','.');
+    ClassLoader classLoader = getClass().getClassLoader();
+    try {
+      return classLoader.loadClass(className);
+    } catch (ClassNotFoundException e) {
+      throw new UncheckedIOException(
+          new IOException("Loading failed for name: " + className + " (" + fileName + ')', e));
+    }
+  }
 }
