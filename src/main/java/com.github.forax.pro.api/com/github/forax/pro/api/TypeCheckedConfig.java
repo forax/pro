@@ -8,8 +8,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation used to mark interface that can represent
- * a type-checked configuration node inside the configuration tree.
+ * An annotation used to mark interface that can represent a type-checked configuration node inside
+ * the configuration tree.
  */
 @Documented
 @Inherited

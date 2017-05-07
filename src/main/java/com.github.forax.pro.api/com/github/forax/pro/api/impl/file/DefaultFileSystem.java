@@ -15,7 +15,7 @@ public class DefaultFileSystem extends FileSystem {
   private final FileSystem delegate;
   private final DefaultFileSystemProvider fileSystemProvider;
 
-  DefaultFileSystem(DefaultFileSystemProvider fileSystemProvider,FileSystem delegate) {
+  DefaultFileSystem(DefaultFileSystemProvider fileSystemProvider, FileSystem delegate) {
     this.fileSystemProvider = Objects.requireNonNull(fileSystemProvider);
     this.delegate = Objects.requireNonNull(delegate);
   }
@@ -24,12 +24,12 @@ public class DefaultFileSystem extends FileSystem {
   public FileSystemProvider provider() {
     return fileSystemProvider;
   }
-  
+
   @Override
   public Path getPath(String first, String... more) {
     return fileSystemProvider.getPath(delegate, first, more);
   }
-  
+
   @Override
   public void close() throws IOException {
     delegate.close();

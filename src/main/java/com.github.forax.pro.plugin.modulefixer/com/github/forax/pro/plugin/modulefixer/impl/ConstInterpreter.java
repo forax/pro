@@ -38,7 +38,6 @@ import static org.objectweb.asm.Opcodes.LXOR;
 import static org.objectweb.asm.Opcodes.MULTIANEWARRAY;
 
 import java.util.List;
-
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -52,10 +51,15 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
   public static final class ConstValue implements Value {
     static final ConstValue ONE_SLOT = new ConstValue("", 1);
     static final ConstValue TWO_SLOT = new ConstValue("", 2);
-    
-    static ConstValue slot(int size) { return size == 1? ONE_SLOT: TWO_SLOT; }
-    static ConstValue string(String constString) { return new ConstValue(constString, 1); }
-    
+
+    static ConstValue slot(int size) {
+      return size == 1 ? ONE_SLOT : TWO_SLOT;
+    }
+
+    static ConstValue string(String constString) {
+      return new ConstValue(constString, 1);
+    }
+
     final String constString;
     final int slot;
 
@@ -63,17 +67,17 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
       this.constString = constString;
       this.slot = slot;
     }
-    
+
     @Override
     public int getSize() {
       return slot;
     }
-    
+
     public String getConstString() {
       return constString;
     }
   }
-  
+
   public ConstInterpreter() {
     super(ASM6);
   }
@@ -83,27 +87,29 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
     if (type == Type.VOID_TYPE) {
       return null;
     }
-    return type == null? ConstValue.ONE_SLOT:  ConstValue.slot(type.getSize());
+    return type == null ? ConstValue.ONE_SLOT : ConstValue.slot(type.getSize());
   }
 
   @Override
   public ConstValue newOperation(AbstractInsnNode insn) {
     switch (insn.getOpcode()) {
-    case LCONST_0:
-    case LCONST_1:
-    case DCONST_0:
-    case DCONST_1:
-      return ConstValue.TWO_SLOT;
-    case LDC:
-      Object cst = ((LdcInsnNode) insn).cst;
-      if (cst instanceof Type) {  // constant class
-        return ConstValue.string(((Type)cst).getInternalName());
-      }
-      return cst instanceof Long || cst instanceof Double ? ConstValue.TWO_SLOT: ConstValue.ONE_SLOT;
-    case GETSTATIC:
-      return ConstValue.slot(Type.getType(((FieldInsnNode) insn).desc).getSize());
-    default:
-      return ConstValue.ONE_SLOT;
+      case LCONST_0:
+      case LCONST_1:
+      case DCONST_0:
+      case DCONST_1:
+        return ConstValue.TWO_SLOT;
+      case LDC:
+        Object cst = ((LdcInsnNode) insn).cst;
+        if (cst instanceof Type) { // constant class
+          return ConstValue.string(((Type) cst).getInternalName());
+        }
+        return cst instanceof Long || cst instanceof Double
+            ? ConstValue.TWO_SLOT
+            : ConstValue.ONE_SLOT;
+      case GETSTATIC:
+        return ConstValue.slot(Type.getType(((FieldInsnNode) insn).desc).getSize());
+      default:
+        return ConstValue.ONE_SLOT;
     }
   }
 
@@ -115,51 +121,52 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
   @Override
   public ConstValue unaryOperation(AbstractInsnNode insn, ConstValue value) {
     switch (insn.getOpcode()) {
-    case LNEG:
-    case DNEG:
-    case I2L:
-    case I2D:
-    case L2D:
-    case F2L:
-    case F2D:
-    case D2L:
-      return ConstValue.TWO_SLOT;
-    case GETFIELD:
-      return ConstValue.slot(Type.getType(((FieldInsnNode) insn).desc).getSize());
-    default:
-      return ConstValue.ONE_SLOT;
+      case LNEG:
+      case DNEG:
+      case I2L:
+      case I2D:
+      case L2D:
+      case F2L:
+      case F2D:
+      case D2L:
+        return ConstValue.TWO_SLOT;
+      case GETFIELD:
+        return ConstValue.slot(Type.getType(((FieldInsnNode) insn).desc).getSize());
+      default:
+        return ConstValue.ONE_SLOT;
     }
   }
 
   @Override
   public ConstValue binaryOperation(AbstractInsnNode insn, ConstValue value1, ConstValue value2) {
     switch (insn.getOpcode()) {
-    case LALOAD:
-    case DALOAD:
-    case LADD:
-    case DADD:
-    case LSUB:
-    case DSUB:
-    case LMUL:
-    case DMUL:
-    case LDIV:
-    case DDIV:
-    case LREM:
-    case DREM:
-    case LSHL:
-    case LSHR:
-    case LUSHR:
-    case LAND:
-    case LOR:
-    case LXOR:
-      return ConstValue.TWO_SLOT;
-    default:
-      return ConstValue.ONE_SLOT;
+      case LALOAD:
+      case DALOAD:
+      case LADD:
+      case DADD:
+      case LSUB:
+      case DSUB:
+      case LMUL:
+      case DMUL:
+      case LDIV:
+      case DDIV:
+      case LREM:
+      case DREM:
+      case LSHL:
+      case LSHR:
+      case LUSHR:
+      case LAND:
+      case LOR:
+      case LXOR:
+        return ConstValue.TWO_SLOT;
+      default:
+        return ConstValue.ONE_SLOT;
     }
   }
 
   @Override
-  public ConstValue ternaryOperation(AbstractInsnNode insn, ConstValue value1, ConstValue value2, ConstValue value3) {
+  public ConstValue ternaryOperation(
+      AbstractInsnNode insn, ConstValue value1, ConstValue value2, ConstValue value3) {
     return ConstValue.ONE_SLOT;
   }
 
@@ -169,8 +176,10 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
     if (opcode == MULTIANEWARRAY) {
       return ConstValue.ONE_SLOT;
     } else {
-      String desc = (opcode == INVOKEDYNAMIC) ? ((InvokeDynamicInsnNode) insn).desc
-          : ((MethodInsnNode) insn).desc;
+      String desc =
+          (opcode == INVOKEDYNAMIC)
+              ? ((InvokeDynamicInsnNode) insn).desc
+              : ((MethodInsnNode) insn).desc;
       return ConstValue.slot(Type.getReturnType(desc).getSize());
     }
   }
