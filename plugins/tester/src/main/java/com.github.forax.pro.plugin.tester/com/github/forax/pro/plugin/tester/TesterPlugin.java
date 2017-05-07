@@ -37,7 +37,6 @@ public class TesterPlugin implements Plugin {
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
 
     // inputs
-    derive(tester, TesterConf::javaHome, convention, ConventionFacade::javaHome);
     derive(tester, TesterConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
   }
 
@@ -58,23 +57,26 @@ public class TesterPlugin implements Plugin {
 
   @Override
   public int execute(Config config) {
-    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
+    ProConf proConf = config.getOrThrow("pro", ProConf.class);
+    Log log = Log.create(name(), proConf.loglevel());
     TesterConf tester = config.getOrThrow(name(), TesterConf.class);
     log.debug(tester, _tester -> "config " + _tester);
+    
+    Path pluginDir = proConf.pluginDir();
 
     int exitCodeSum = 0;
     for (Path path : directories(tester.moduleExplodedTestPath())) {
-      exitCodeSum += execute(tester, path.toAbsolutePath().normalize());
+      exitCodeSum += execute(pluginDir, path.toAbsolutePath().normalize());
     }
     return exitCodeSum;
   }
 
-  private int execute(TesterConf tester, Path testPath) {
+  private int execute(Path pluginDir, Path testPath) {
     ExecutorService executor = Executors.newSingleThreadExecutor();
 
     ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
     String moduleName = moduleReference.descriptor().name();
-    ClassLoader testClassLoader = createTestClassLoader(tester, testPath, moduleName);
+    ClassLoader testClassLoader = createTestClassLoader(pluginDir, testPath, moduleName);
     try {
       Class<?> runnerClass = testClassLoader.loadClass(TesterRunner.class.getName());
       IntSupplier runner = (IntSupplier) runnerClass.getConstructor(Path.class).newInstance(testPath);
@@ -86,10 +88,11 @@ public class TesterPlugin implements Plugin {
     }
   }
 
-  private ClassLoader createTestClassLoader(TesterConf tester, Path testPath, String moduleName) {
+  private ClassLoader createTestClassLoader(Path pluginDir, Path testPath, String moduleName) {
     String pluginModuleName = getClass().getModule().getName(); // "com.github.forax.pro.plugin.tester"
     List<String> roots = List.of(pluginModuleName, moduleName);
-    Path pluginPath = tester.javaHome().resolve("plugins").resolve(name()); // "[pro]/plugins/tester"
+    
+    Path pluginPath = pluginDir.resolve(name()); // "[pro]/plugins/tester"
     ModuleFinder finder = ModuleFinder.of(testPath, pluginPath);
     ModuleLayer bootModuleLayer = ModuleLayer.boot();
     Configuration configuration = bootModuleLayer.configuration().resolve(finder, ModuleFinder.of(), roots);
@@ -97,5 +100,4 @@ public class TesterPlugin implements Plugin {
     ModuleLayer configuredLayer = bootModuleLayer.defineModulesWithOneLoader(configuration, parentLoader);
     return configuredLayer.findLoader(pluginModuleName);
   }
-
 }
