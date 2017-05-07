@@ -2,9 +2,12 @@ package com.github.forax.pro.plugin.tester;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
 
+import java.io.IOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -56,7 +59,7 @@ public class TesterPlugin implements Plugin {
   }
 
   @Override
-  public int execute(Config config) {
+  public int execute(Config config) throws IOException {
     ProConf proConf = config.getOrThrow("pro", ProConf.class);
     Log log = Log.create(name(), proConf.loglevel());
     TesterConf tester = config.getOrThrow(name(), TesterConf.class);
@@ -71,25 +74,33 @@ public class TesterPlugin implements Plugin {
     return exitCodeSum;
   }
 
-  private int execute(Path pluginDir, Path testPath) {
+  private int execute(Path pluginDir, Path testPath) throws IOException {
     ExecutorService executor = Executors.newSingleThreadExecutor();
 
     ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
     String moduleName = moduleReference.descriptor().name();
     ClassLoader testClassLoader = createTestClassLoader(pluginDir, testPath, moduleName);
+
+    IntSupplier runner;
     try {
       Class<?> runnerClass = testClassLoader.loadClass(TesterRunner.class.getName());
-      IntSupplier runner = (IntSupplier) runnerClass.getConstructor(Path.class).newInstance(testPath);
+      runner = (IntSupplier) runnerClass.getConstructor(Path.class).newInstance(testPath);
+      
       Future<Integer> future = executor.submit(runner::getAsInt);
       return future.get(2, TimeUnit.MINUTES); // TODO Make timeout configurable.
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new AssertionError("Loading and invoking TestRunner failed", e);
+      
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InterruptedException e) {
+      throw new IOException("Loading, creating or invoking the TesterRunner failed", e);
+    } catch(InvocationTargetException | ExecutionException e) {
+      throw rethrow(e.getCause());
+    } catch(TimeoutException e) {
+      e.printStackTrace(); // FIXME
+      return 1;  
     }
   }
 
   private ClassLoader createTestClassLoader(Path pluginDir, Path testPath, String moduleName) {
-    String pluginModuleName = getClass().getModule().getName(); // "com.github.forax.pro.plugin.tester"
+    String pluginModuleName = TesterPlugin.class.getModule().getName(); // "com.github.forax.pro.plugin.tester"
     List<String> roots = List.of(pluginModuleName, moduleName);
     
     Path pluginPath = pluginDir.resolve(name()); // "[pro]/plugins/tester"
@@ -99,5 +110,15 @@ public class TesterPlugin implements Plugin {
     ClassLoader parentLoader = ClassLoader.getSystemClassLoader();
     ModuleLayer configuredLayer = bootModuleLayer.defineModulesWithOneLoader(configuration, parentLoader);
     return configuredLayer.findLoader(pluginModuleName);
+  }
+  
+  private static UndeclaredThrowableException rethrow(Throwable cause) {
+    if (cause instanceof RuntimeException) {
+      throw (RuntimeException)cause;
+    }
+    if (cause instanceof Error) {
+      throw (Error)cause;
+    }
+    return new UndeclaredThrowableException(cause);
   }
 }
