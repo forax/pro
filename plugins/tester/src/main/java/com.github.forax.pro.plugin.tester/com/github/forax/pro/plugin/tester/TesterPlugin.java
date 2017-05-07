@@ -17,6 +17,7 @@ import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.Log;
+import com.github.forax.pro.helper.ModuleHelper;
 
 public class TesterPlugin implements Plugin {
   @Override
@@ -60,32 +61,25 @@ public class TesterPlugin implements Plugin {
     TesterConf tester = config.getOrThrow(name(), TesterConf.class);
     log.debug(tester, _tester -> "config " + _tester);
 
-    Thread currentThread = Thread.currentThread();
-    ClassLoader oldContext = currentThread.getContextClassLoader();
-    try {
-      int exitCodeSum = 0;
-      for (Path path : directories(tester.moduleExplodedTestPath())) {
-        exitCodeSum += execute(tester, path.toAbsolutePath().normalize());
-      }
-      return exitCodeSum;
-    } finally {
-      currentThread.setContextClassLoader(oldContext); // restore the context
+    int exitCodeSum = 0;
+    for (Path path : directories(tester.moduleExplodedTestPath())) {
+      exitCodeSum += execute(tester, path.toAbsolutePath().normalize());
     }
+    return exitCodeSum;
   }
 
   private int execute(TesterConf tester, Path testPath) {
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    
-    ModuleReference moduleReference = ModuleFinder.of(testPath).findAll().iterator().next();
+
+    ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
     String moduleName = moduleReference.descriptor().name();
     ClassLoader testClassLoader = createTestClassLoader(tester, testPath, moduleName);
-    Thread.currentThread().setContextClassLoader(testClassLoader);
     try {
       Class<?> runnerClass = testClassLoader.loadClass(TesterRunner.class.getName());
       @SuppressWarnings("unchecked")
       Callable<Integer> runner = (Callable<Integer>) runnerClass.getConstructor(Path.class).newInstance(testPath);
       Future<Integer> future = executor.submit(runner);
-      return future.get(1, TimeUnit.MINUTES);
+      return future.get(2, TimeUnit.MINUTES); // TODO Make timeout configurable.
     } catch (Exception e) {
       e.printStackTrace();
       throw new AssertionError("Loading and invoking TestRunner failed", e);
@@ -93,18 +87,15 @@ public class TesterPlugin implements Plugin {
   }
 
   private ClassLoader createTestClassLoader(TesterConf tester, Path testPath, String moduleName) {
-    String pluginModuleName = getClass().getModule().getName(); // com.github.forax.pro.plugin.tester
-    Path pluginRoot = tester.javaHome().resolve("plugins").resolve(name());
-    Path mainDependenciesPath = Paths.get("deps").toAbsolutePath().normalize();
-    Path mainArtifactPath = Paths.get("target/main/artifact").toAbsolutePath().normalize();
-    List<Path> paths = List.of(testPath, pluginRoot, mainDependenciesPath, mainArtifactPath);
-    // System.out.println("Using ModuleFinder root path entries: " + paths);
-    ModuleFinder finder = ModuleFinder.of(paths.toArray(new Path[0]));
-    ModuleLayer boot = ModuleLayer.boot();
-    Configuration cf = boot.configuration().resolve(finder, ModuleFinder.of(), List.of(pluginModuleName, moduleName));
+    String pluginModuleName = getClass().getModule().getName(); // "com.github.forax.pro.plugin.tester"
+    List<String> roots = List.of(pluginModuleName, moduleName);
+    Path pluginPath = tester.javaHome().resolve("plugins").resolve(name()); // "[pro]/plugins/tester"
+    ModuleFinder finder = ModuleFinder.of(testPath, pluginPath);
+    ModuleLayer bootModuleLayer = ModuleLayer.boot();
+    Configuration configuration = bootModuleLayer.configuration().resolve(finder, ModuleFinder.of(), roots);
     ClassLoader parentLoader = ClassLoader.getSystemClassLoader();
-    ModuleLayer layer = boot.defineModulesWithOneLoader(cf, parentLoader);
-    return layer.findLoader(pluginModuleName);
+    ModuleLayer configuredLayer = bootModuleLayer.defineModulesWithOneLoader(configuration, parentLoader);
+    return configuredLayer.findLoader(pluginModuleName);
   }
 
 }
