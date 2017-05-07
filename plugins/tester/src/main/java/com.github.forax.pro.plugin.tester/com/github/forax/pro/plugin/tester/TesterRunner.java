@@ -67,21 +67,21 @@ public class TesterRunner implements IntSupplier {
     return failures;
   }
 
-  private List<Class<?>> findTestClasses(ModuleReference moduleReference) {
+  private static List<Class<?>> findTestClasses(ModuleReference moduleReference) {
     try (ModuleReader moduleReader = moduleReference.open()) {
       return moduleReader.list()
           .filter(name -> name.endsWith("Tests.class")) // TODO Make test class filter configurable
-          .map(this::loadTestClass)
+          .map(TesterRunner::loadTestClass)
           .collect(Collectors.toList());
     } catch(IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
-  private Class<?> loadTestClass(String fileName) {
+  private static Class<?> loadTestClass(String fileName) {
     String className = fileName.substring(0, fileName.length() - ".class".length());
     className = className.replace('/','.');
-    ClassLoader classLoader = getClass().getClassLoader();
+    ClassLoader classLoader = TesterRunner.class.getClassLoader();
     try {
       return classLoader.loadClass(className);
     } catch (ClassNotFoundException e) {
