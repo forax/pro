@@ -43,6 +43,9 @@ public class Pro {
       DefaultConfig config = new DefaultConfig();
       ProConf proConf = config.getOrUpdate("pro", ProConf.class);
       proConf.currentDir(Paths.get("."));
+      proConf.pluginDir(Optional.ofNullable(System.getenv("PRO_PLUGIN_DIR"))
+          .map(Paths::get)
+          .orElseGet(Plugins::defaultPluginDir));
       Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
         .map(Log.Level::of)
         .orElse(Log.Level.INFO);
@@ -56,8 +59,9 @@ public class Pro {
     // initialization
     DefaultConfig config = CONFIG.get();
 
-    List<Plugin> plugins = Plugins.getAllPlugins();
-    Log log = Log.create("pro", config.getOrThrow("pro", ProConf.class).loglevel());
+    ProConf proConf = config.getOrThrow("pro", ProConf.class);
+    Log log = Log.create("pro", proConf.loglevel());
+    List<Plugin> plugins = Plugins.getAllPlugins(proConf.pluginDir());
     log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
 
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));

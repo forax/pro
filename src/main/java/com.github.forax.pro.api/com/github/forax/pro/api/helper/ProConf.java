@@ -9,6 +9,9 @@ public interface ProConf {
   Path currentDir();
   void currentDir(Path path);
   
+  Path pluginDir();
+  void pluginDir(Path path);
+  
   String loglevel();
   void loglevel(String loglevel);
   
