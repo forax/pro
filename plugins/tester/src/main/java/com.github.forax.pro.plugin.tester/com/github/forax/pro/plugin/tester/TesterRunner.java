@@ -1,12 +1,6 @@
 package com.github.forax.pro.plugin.tester;
 
-import com.github.forax.pro.helper.ModuleHelper;
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
-import org.junit.platform.launcher.core.LauncherFactory;
-import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
-import org.junit.platform.launcher.listeners.TestExecutionSummary;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -16,12 +10,19 @@ import java.lang.module.ModuleReference;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
-public class TesterRunner implements Callable<Integer> {
+import com.github.forax.pro.helper.ModuleHelper;
+
+public class TesterRunner implements IntSupplier {
   private final ClassLoader classLoader;
   private final Path testPath;
 
@@ -31,7 +32,7 @@ public class TesterRunner implements Callable<Integer> {
   }
 
   @Override
-  public Integer call() {
+  public int getAsInt() {
     ClassLoader oldContext = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(classLoader);
     try {

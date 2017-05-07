@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
 import com.github.forax.pro.api.Config;
@@ -76,9 +77,8 @@ public class TesterPlugin implements Plugin {
     ClassLoader testClassLoader = createTestClassLoader(tester, testPath, moduleName);
     try {
       Class<?> runnerClass = testClassLoader.loadClass(TesterRunner.class.getName());
-      @SuppressWarnings("unchecked")
-      Callable<Integer> runner = (Callable<Integer>) runnerClass.getConstructor(Path.class).newInstance(testPath);
-      Future<Integer> future = executor.submit(runner);
+      IntSupplier runner = (IntSupplier) runnerClass.getConstructor(Path.class).newInstance(testPath);
+      Future<Integer> future = executor.submit(runner::getAsInt);
       return future.get(2, TimeUnit.MINUTES); // TODO Make timeout configurable.
     } catch (Exception e) {
       e.printStackTrace();
