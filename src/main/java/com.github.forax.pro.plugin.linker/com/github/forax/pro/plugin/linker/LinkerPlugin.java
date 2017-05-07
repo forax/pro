@@ -133,9 +133,9 @@ public class LinkerPlugin implements Plugin {
     List<Path> modulePath =
         linker.modulePath()
           .orElseGet(() -> new StableList<Path>()
-                .append(systemModulePath)
+                .append(linker.moduleArtifactSourcePath())
                 .appendAll(FileHelper.pathFromFilesThatExist(linker.moduleDependencyPath()))
-                .append(linker.moduleArtifactSourcePath()));
+                .append(systemModulePath));
     
     log.debug(rootModules, roots -> "rootModules " + roots);
     log.debug(launchers, launcherMains -> "launchers " + launcherMains);
