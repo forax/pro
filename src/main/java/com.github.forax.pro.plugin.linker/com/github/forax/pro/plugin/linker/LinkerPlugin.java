@@ -44,6 +44,7 @@ public class LinkerPlugin implements Plugin {
     linker.stripDebug(false);
     linker.stripNativeCommands(false);
     linker.includeSystemJMODs(false);
+    linker.ignoreSigningInformation(false);
   }
   
   @Override
@@ -77,6 +78,7 @@ public class LinkerPlugin implements Plugin {
     COMPRESS(action("--compress", Jlink::compressLevel)),
     STRIP_DEBUG(exists("--strip-debug", Jlink::stripDebug)),
     STRIP_NATIVE_COMMANDS(exists("--strip-native-commands", Jlink::stripNativeCommands)),
+    IGNORE_SIGNING_INFO(exists("--ignore-signing-information", Jlink::ignoreSigningInformation)),
     RAW_ARGUMENTS(rawValues(Jlink::rawArguments)),
     OUPUT(action("--output", Jlink::destination))
     ;

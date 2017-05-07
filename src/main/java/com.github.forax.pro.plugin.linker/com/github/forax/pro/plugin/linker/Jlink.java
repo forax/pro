@@ -41,6 +41,9 @@ class Jlink {
   public boolean stripNativeCommands() {
     return linker.stripNativeCommands();
   }
+  public boolean ignoreSigningInformation() {
+    return linker.ignoreSigningInformation();
+  }
   public Optional<List<String>> rawArguments() {
     return linker.rawArguments();
   }

@@ -23,6 +23,9 @@ public interface LinkerConf {
   boolean includeSystemJMODs();
   void includeSystemJMODs(boolean includeSystemJMODs);
   
+  boolean ignoreSigningInformation();
+  void ignoreSigningInformation(boolean ignoreSigningInformation);
+  
   Optional<List<String>> rawArguments();
   void rawArguments(List<String> rawArguments);
   
