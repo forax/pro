@@ -19,9 +19,6 @@ import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.Log;
 
 public class TesterPlugin implements Plugin {
-
-  private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
   @Override
   public String name() {
     return "tester";
@@ -77,6 +74,8 @@ public class TesterPlugin implements Plugin {
   }
 
   private int execute(TesterConf tester, Path testPath) {
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    
     ModuleReference moduleReference = ModuleFinder.of(testPath).findAll().iterator().next();
     String moduleName = moduleReference.descriptor().name();
     ClassLoader testClassLoader = createTestClassLoader(tester, testPath, moduleName);
