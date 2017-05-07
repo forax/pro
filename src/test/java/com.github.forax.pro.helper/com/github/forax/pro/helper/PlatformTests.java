@@ -25,8 +25,7 @@ class PlatformTests {
         platform -> {
           Assertions.assertNotNull(platform.javaExecutableName());
           Assertions.assertFalse(platform.javaExecutableName().isEmpty());
-        }
-    );
+        });
   }
 
   @Test
@@ -35,5 +34,4 @@ class PlatformTests {
     Path path = Paths.get(System.getProperty("java.home")).resolve("bin").resolve(name);
     Assertions.assertTrue(Files.isExecutable(path), "executable? " + path);
   }
-
 }

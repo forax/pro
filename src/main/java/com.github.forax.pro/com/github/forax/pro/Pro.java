@@ -3,6 +3,14 @@ package com.github.forax.pro;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
+import com.github.forax.pro.api.Config;
+import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.helper.ProConf;
+import com.github.forax.pro.api.impl.DefaultConfig;
+import com.github.forax.pro.api.impl.Plugins;
+import com.github.forax.pro.daemon.Daemon;
+import com.github.forax.pro.helper.Log;
+import com.github.forax.pro.helper.util.StableList;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -23,40 +31,38 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.forax.pro.api.Config;
-import com.github.forax.pro.api.Plugin;
-import com.github.forax.pro.api.helper.ProConf;
-import com.github.forax.pro.api.impl.DefaultConfig;
-import com.github.forax.pro.api.impl.Plugins;
-import com.github.forax.pro.daemon.Daemon;
-import com.github.forax.pro.helper.Log;
-import com.github.forax.pro.helper.util.StableList;
-
 public class Pro {
   private Pro() {
     throw new AssertionError();
   }
-  
-  private static final ThreadLocal<DefaultConfig> CONFIG = ThreadLocal.withInitial(() -> {
-    DefaultConfig config = new DefaultConfig();
-    ProConf proConf = config.getOrUpdate("pro", ProConf.class);
-    proConf.currentDir(Paths.get("."));
-    Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
-      .map(Log.Level::of)
-      .orElse(Log.Level.INFO);
-    proConf.loglevel(logLevel.name().toLowerCase());
-    proConf.exitOnError(false);
-    return config;
-  });
+
+  private static final ThreadLocal<DefaultConfig> CONFIG =
+      ThreadLocal.withInitial(
+          () -> {
+            DefaultConfig config = new DefaultConfig();
+            ProConf proConf = config.getOrUpdate("pro", ProConf.class);
+            proConf.currentDir(Paths.get("."));
+            Log.Level logLevel =
+                Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
+                    .map(Log.Level::of)
+                    .orElse(Log.Level.INFO);
+            proConf.loglevel(logLevel.name().toLowerCase());
+            proConf.exitOnError(false);
+            return config;
+          });
   private static final Map<String, Plugin> PLUGINS;
+
   static {
     // initialization
     DefaultConfig config = CONFIG.get();
     try {
       List<Plugin> plugins = Plugins.getAllPlugins();
       Log log = Log.create("pro", config.getOrThrow("pro", ProConf.class).loglevel());
-      log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
-
+      log.info(
+          plugins,
+          ps ->
+              "registered plugins "
+                  + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
 
       plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
       plugins.forEach(plugin -> plugin.configure(config.asChecked(plugin.name())));
@@ -67,52 +73,59 @@ public class Pro {
       throw new AssertionError("Pro failed to initialize", throwable);
     }
   }
-  
-  @SuppressWarnings("unchecked")  // emulate dynamic behavior here
+
+  @SuppressWarnings("unchecked") // emulate dynamic behavior here
   public static <T> T $(String key) {
-    return (T)get(key, Object.class);
+    return (T) get(key, Object.class);
   }
-  
+
   public static void set(String key, Object value) {
     CONFIG.get().set(key, value);
   }
-  
+
   public static <T> T get(String key, Class<T> type) {
-    return CONFIG.get().get(key, type)
+    return CONFIG
+        .get()
+        .get(key, type)
         .orElseThrow(() -> new IllegalStateException("unknown key " + key));
   }
-  
+
   /*public static void scope(Runnable runnable) {
     CONFIG.enter(runnable);
   }*/
-  
+
   public static Path location(String location) {
     return Paths.get(location);
   }
+
   public static Path location(String first, String... more) {
     return Paths.get(first, more);
   }
-  
+
   public static StableList<Path> path(String... locations) {
     return list(Arrays.stream(locations).map(Pro::location));
   }
+
   public static StableList<Path> path(Path... locations) {
     return list(locations);
   }
-  
+
   public static PathMatcher globRegex(String regex) {
     return FileSystems.getDefault().getPathMatcher("glob:" + regex);
   }
+
   public static PathMatcher perlRegex(String regex) {
     return FileSystems.getDefault().getPathMatcher("regex:" + regex);
   }
-  
+
   public static StableList<Path> files(Path sourceDirectory) {
     return files(sourceDirectory, __ -> true);
   }
+
   public static StableList<Path> files(Path sourceDirectory, String globRegex) {
     return files(sourceDirectory, globRegex(globRegex));
   }
+
   public static StableList<Path> files(Path sourceDirectory, PathMatcher filter) {
     try {
       return list(Files.walk(sourceDirectory).filter(filter::matches));
@@ -120,33 +133,36 @@ public class Pro {
       throw new UncheckedIOException(e);
     }
   }
-  
+
   public static URI uri(String uri) {
     try {
       return new URI(uri);
-    } catch(URISyntaxException e) {
+    } catch (URISyntaxException e) {
       throw new RuntimeException(e);
     }
   }
-  
+
   @SafeVarargs
   public static <T> StableList<T> list(T... elements) {
     return StableList.of(elements);
   }
+
   public static <T> StableList<T> list(Collection<? extends T> collection) {
     return StableList.from(collection);
   }
+
   public static <T> StableList<T> list(Stream<? extends T> stream) {
     return list(stream.collect(StableList.toStableList()));
   }
-  
+
   public static Path resolve(Path location, Path child) {
     return location.resolve(child);
   }
+
   public static Path resolve(Path location, String child) {
     return location.resolve(child);
   }
-  
+
   /* Not sure of this one
   @SuppressWarnings("unchecked")  // emulate a dynamic language behavior
   public static <T> StableList<T> append(Object... elements) {
@@ -160,7 +176,7 @@ public class Pro {
       return Stream.of(element);
     }));
   }*/
-  
+
   /*
   @SafeVarargs
   public static <T> List<T> append(Collection< ? extends T> locations, T... others) {
@@ -172,16 +188,17 @@ public class Pro {
   public static List<Path> append(Collection<? extends Path> path1, Collection<? extends Path> path2) {
     return flatten(path1, path2);
   }*/
-  
+
   @SafeVarargs
   public static <T> List<T> flatten(Collection<? extends T>... collections) {
     return list(Arrays.stream(collections).flatMap(Collection::stream));
   }
-  
+
   public static void print(Object... elements) {
-    System.out.println(Arrays.stream(elements).map(Object::toString).collect(Collectors.joining(" ")));
+    System.out.println(
+        Arrays.stream(elements).map(Object::toString).collect(Collectors.joining(" ")));
   }
-  
+
   /*
   public static void exec(String... commands) {
     ProcessBuilder processBuilder = new ProcessBuilder(commands);
@@ -197,25 +214,28 @@ public class Pro {
     }
     exitIfNonZero(errorCode);
   }*/
-  
 
-  private static int checkPluginNames(Map<String, Plugin> allPlugins, String[] pluginNames, Config config, ArrayList<Plugin> plugins) {
+  private static int checkPluginNames(
+      Map<String, Plugin> allPlugins,
+      String[] pluginNames,
+      Config config,
+      ArrayList<Plugin> plugins) {
     int exitCode = 0;
-    for(String pluginName: pluginNames) {  
+    for (String pluginName : pluginNames) {
       Plugin plugin = allPlugins.get(pluginName);
       if (plugin == null) {
         ProConf proConf = config.getOrThrow("pro", ProConf.class);
         Log log = Log.create("pro", proConf.loglevel());
         log.error(pluginName, name -> "unknown plugin " + name);
-        exitCode = 1;  // FIXME
+        exitCode = 1; // FIXME
         continue;
       }
       plugins.add(plugin);
     }
     return exitCode;
   }
-  
-  public static void local(String localDir, Runnable action) { 
+
+  public static void local(String localDir, Runnable action) {
     DefaultConfig oldConfig = CONFIG.get();
     Path currentDir = oldConfig.getOrThrow("pro", ProConf.class).currentDir();
     try {
@@ -227,35 +247,37 @@ public class Pro {
       CONFIG.set(oldConfig);
     }
   }
-  
+
   public static void run(String... pluginNames) {
     DefaultConfig config = CONFIG.get();
     ProConf proConf = config.getOrThrow("pro", ProConf.class);
-    
+
     ArrayList<Plugin> plugins = new ArrayList<>();
     int errorCode = checkPluginNames(PLUGINS, pluginNames, config, plugins);
     if (errorCode != 0) {
       exit(proConf.exitOnError(), errorCode);
       return;
     }
-    
+
     Config pluginConfig = config.duplicate().asConfig();
-    
-    Optional<Daemon> daemonService = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
-    BiConsumer<List<Plugin>, Config> consumer = daemonService
-        .filter(Daemon::isStarted)
-        .<BiConsumer<List<Plugin>, Config>>map(daemon -> daemon::run)
-        .orElse(Pro::runAll);
+
+    Optional<Daemon> daemonService =
+        ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
+    BiConsumer<List<Plugin>, Config> consumer =
+        daemonService
+            .filter(Daemon::isStarted)
+            .<BiConsumer<List<Plugin>, Config>>map(daemon -> daemon::run)
+            .orElse(Pro::runAll);
     consumer.accept(plugins, pluginConfig);
   }
-  
+
   private static void runAll(List<Plugin> plugins, Config config) {
     ProConf proConf = config.getOrThrow("pro", ProConf.class);
     boolean exitOnError = proConf.exitOnError();
-    
+
     int errorCode = 0;
     long start = System.currentTimeMillis();
-    for(Plugin plugin: plugins) {
+    for (Plugin plugin : plugins) {
       errorCode = execute(plugin, config);
       if (errorCode != 0) {
         exit(exitOnError, errorCode);
@@ -264,7 +286,7 @@ public class Pro {
     }
     long end = System.currentTimeMillis();
     long elapsed = end - start;
-    
+
     Log log = Log.create("pro", proConf.loglevel());
     if (errorCode == 0) {
       log.info(elapsed, time -> String.format("DONE !          elapsed time %,d ms", time));
@@ -272,12 +294,13 @@ public class Pro {
       log.error(elapsed, time -> String.format("FAILED !        elapsed time %,d ms", time));
     }
   }
-  
+
   private static int execute(Plugin plugin, Config config) {
     int errorCode;
     try {
       errorCode = plugin.execute(config);
-    } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
+    } catch (IOException
+        | /*UncheckedIOException |*/ RuntimeException e) { //FIXME revisit RuntimeException !
       e.printStackTrace();
       String logLevel = config.getOrThrow("pro", ProConf.class).loglevel();
       Log log = Log.create(plugin.name(), logLevel);
@@ -286,7 +309,7 @@ public class Pro {
     }
     return errorCode;
   }
-  
+
   private static void exit(boolean exitOnError, int errorCode) {
     if (exitOnError) {
       System.exit(errorCode);

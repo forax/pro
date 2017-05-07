@@ -10,9 +10,11 @@ import java.util.Optional;
 class MetadataParser {
   interface Metadata {
     String moduleName();
+
     Optional<String> version();
+
     Optional<String> mainClass();
-    
+
     static Metadata parse(String data) {
       String module, mainClass;
       int slashIndex = data.lastIndexOf('/');
@@ -37,10 +39,12 @@ class MetadataParser {
         public String moduleName() {
           return moduleName;
         }
+
         @Override
         public Optional<String> mainClass() {
           return Optional.ofNullable(mainClass);
         }
+
         @Override
         public Optional<String> version() {
           return Optional.ofNullable(version);
@@ -50,8 +54,9 @@ class MetadataParser {
   }
 
   static Map<String, Metadata> parse(List<String> moduleMetadata) {
-    return moduleMetadata.stream()
-      .map(Metadata::parse)
-      .collect(toMap(Metadata::moduleName, identity()));
+    return moduleMetadata
+        .stream()
+        .map(Metadata::parse)
+        .collect(toMap(Metadata::moduleName, identity()));
   }
 }

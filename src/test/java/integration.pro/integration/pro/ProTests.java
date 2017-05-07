@@ -9,7 +9,8 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings("static-method")
 class ProTests {
   @Test
-  @Disabled("java.util.ServiceConfigurationError: com.github.forax.pro.api.Plugin: com.github.forax.pro.plugin.modulefixer.ModuleFixerPlugin not a subtype")
+  @Disabled(
+      "java.util.ServiceConfigurationError: com.github.forax.pro.api.Plugin: com.github.forax.pro.plugin.modulefixer.ModuleFixerPlugin not a subtype")
   void list() {
     assertEquals(0, Pro.list().size());
   }

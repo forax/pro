@@ -18,29 +18,35 @@ class Jlink {
     this.launchers = Objects.requireNonNull(launchers);
     this.modulePath = Objects.requireNonNull(modulePath);
   }
-  
+
   public Set<String> rootModules() {
     return rootModules;
   }
+
   public List<String> launchers() {
     return launchers;
   }
+
   public List<Path> modulePath() {
     return modulePath;
   }
-  
+
   public Path destination() {
     return linker.destination();
   }
+
   public int compressLevel() {
     return linker.compressLevel();
   }
+
   public boolean stripDebug() {
     return linker.stripDebug();
   }
+
   public boolean stripNativeCommands() {
     return linker.stripNativeCommands();
   }
+
   public Optional<List<String>> rawArguments() {
     return linker.rawArguments();
   }

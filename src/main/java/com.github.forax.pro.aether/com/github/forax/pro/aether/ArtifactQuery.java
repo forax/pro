@@ -8,11 +8,11 @@ public class ArtifactQuery {
   ArtifactQuery(Artifact artifact) {
     this.artifact = artifact;
   }
-  
+
   public String getArtifactKey() {
     return artifact.getGroupId() + ':' + artifact.getArtifactId();
   }
-  
+
   @Override
   public String toString() {
     return getArtifactKey();

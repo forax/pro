@@ -1,12 +1,11 @@
 package integration.pro;
 
-import com.github.forax.pro.aether.Aether;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.github.forax.pro.aether.Aether;
 import java.nio.file.Files;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("static-method")
 class AetherTests {
