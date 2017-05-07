@@ -7,20 +7,20 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings("static-method")
 class CmdLineTests {
   @Test
-  public void toStringWithoutArguments() {
+  void toStringWithoutArguments() {
     CmdLine cmdLine = new CmdLine();
     assertEquals("", cmdLine.toString());
   }
 
   @Test
-  public void toStringWithSingleArgument() {
+  void toStringWithSingleArgument() {
     CmdLine cmdLine = new CmdLine();
     cmdLine.add("one");
     assertEquals("one", cmdLine.toString());
   }
 
   @Test
-  public void toStringWithMultipleArguments() {
+  void toStringWithMultipleArguments() {
     CmdLine cmdLine = new CmdLine();
     cmdLine.add("one");
     cmdLine.add("two");
