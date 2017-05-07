@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -64,6 +65,24 @@ public class ModuleHelper {
   public static Stream<ModuleReference> findAllModulesWhichProvideAService(List<String> serviceNames, ModuleFinder finder) {
     return finder.findAll().stream()
         .filter(ref -> containsAtLeastAService(ref, serviceNames));
+  }
+
+  /**
+   * Returns the single module contained in {@code path} as a {@link ModuleReference}.
+   */
+  public static ModuleReference getOnlyModule(Path path) {
+    Iterator<ModuleReference> iterator = ModuleFinder.of(path).findAll().iterator();
+    ModuleReference first = iterator.next();
+    if (!iterator.hasNext()) {
+      return first;
+    }
+    StringBuilder sb = new StringBuilder();
+    sb.append("expected one module but was: <").append(first);
+    while (iterator.hasNext()) {
+      sb.append(", ").append(iterator.next());
+    }
+    sb.append('>');
+    throw new IllegalArgumentException(sb.toString());
   }
   
   private static Set<Requires.Modifier> requireModifiers(int modifiers) {
