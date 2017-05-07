@@ -1,3 +1,3 @@
 open module com.github.forax.pro.api {
-  requires junit.jupiter.api;
+  requires org.junit.jupiter.api;
 }

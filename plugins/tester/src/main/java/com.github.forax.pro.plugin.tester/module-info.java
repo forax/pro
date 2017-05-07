@@ -5,11 +5,11 @@ module com.github.forax.pro.plugin.tester {
   opens com.github.forax.pro.plugin.tester;
 
   // JUnit Platform
-  requires junit.platform.engine;
-  requires junit.platform.launcher;
+  requires org.junit.platform.engine;
+  requires org.junit.platform.launcher;
 
   // JUnit Jupiter
-  requires junit.jupiter.engine;
+  requires org.junit.jupiter.engine;
   
   provides com.github.forax.pro.api.Plugin
     with com.github.forax.pro.plugin.tester.TesterPlugin;
