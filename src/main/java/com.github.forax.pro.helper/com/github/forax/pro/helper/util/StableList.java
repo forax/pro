@@ -24,17 +24,11 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   private final E[] array;
   private boolean shared;
   
-  private static final Object[] EMPTY_ARRAY = new Object[0];
-  private static final StableList<?> EMPTY = new StableList<>(); 
+  private static final StableList<?> EMPTY = new StableList<>(0, new Object[0]); 
   
   private StableList(int size, E[] array) {
     this.size = size;
     this.array = array;
-  }
-  
-  @SuppressWarnings("unchecked")
-  public StableList() {
-    this(0, (E[])EMPTY_ARRAY);
   }
   
   @Override
@@ -50,7 +44,7 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   
   @Override
   public Spliterator<E> spliterator() {
-    return Spliterators.spliterator(array, 0, size, Spliterator.NONNULL);
+    return Spliterators.spliterator(array, 0, size, Spliterator.NONNULL|Spliterator.IMMUTABLE);
   }
   
   /**
@@ -112,6 +106,7 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    * @param a new stable list
    */
   public StableList<E> filter(Predicate<? super E> predicate) {
+    Objects.requireNonNull(predicate);
     return stream().filter(predicate).collect(toStableList());
   }
   
@@ -124,7 +119,8 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    * @param a new stable list
    */
   public <R> StableList<R> map(Function<? super E, ? extends R> mapper) {
-    return stream().map(mapper).collect(toStableList());
+    Objects.requireNonNull(mapper);
+    return stream().map(e -> Objects.requireNonNull(mapper.apply(e))).collect(toStableList());
   }
   
   /**
@@ -169,17 +165,32 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    */
   @SafeVarargs
   public static <E> StableList<E> of(E... elements) {
-    return StableList.<E>of().appendAll(elements);
+    return fromTrustedArray(Arrays.copyOf(elements, elements.length));
+  }
+  
+  private static <E> StableList<E> fromTrustedArray(E[] array) {
+    for(E e: array) {
+      Objects.requireNonNull(e);
+    }
+    return new StableList<>(array.length, array);
   }
   
   /**
-   * Create a new StableList and populate it with the elements of the list taken as parameters.
-   * @param list a list of elements.
+   * Create a new StableList and populate it with the elements of the collection taken as parameters.
+   * @param collection a collection of elements.
    * @return a new StableList with all elements of the list.
-   * @throws NPE if one element of the array is null.
+   * @throws NullPointerException if one element of the collection is null or
+   *         the collection itself is null.
    */
-  public static <E> StableList<E> from(Collection<? extends E> list) {
-    return StableList.<E>of().appendAll(list);
+  @SuppressWarnings("unchecked")
+  public static <E> StableList<E> from(Collection<? extends E> collection) {
+    if (collection.isEmpty()) {
+      return StableList.of();
+    }
+    if (collection instanceof StableList<?>) {
+      return (StableList<E>)collection;
+    }
+    return fromTrustedArray((E[])collection.toArray(new Object[0]));
   }
   
   /**

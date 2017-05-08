@@ -134,8 +134,7 @@ public class LinkerPlugin implements Plugin {
     
     List<Path> modulePath =
         linker.modulePath()
-          .orElseGet(() -> new StableList<Path>()
-                .append(linker.moduleArtifactSourcePath())
+          .orElseGet(() -> StableList.of(linker.moduleArtifactSourcePath())
                 .appendAll(FileHelper.pathFromFilesThatExist(linker.moduleDependencyPath()))
                 .append(systemModulePath));
     

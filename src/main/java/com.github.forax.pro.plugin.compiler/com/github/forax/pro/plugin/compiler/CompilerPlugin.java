@@ -79,7 +79,7 @@ public class CompilerPlugin implements Plugin {
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
     return modulePath
              .or(() -> Optional.of(
-                    new StableList<Path>().appendAll(moduleDependencyPath).appendAll(additionnalPath)))
+                    StableList.from(moduleDependencyPath).appendAll(additionnalPath)))
              .map(FileHelper.unchecked(FileHelper::pathFromFilesThatExist))
              .filter(list -> !list.isEmpty());
   }

@@ -84,8 +84,7 @@ public class UberPackagerPlugin implements Plugin {
     
     //FIXME add the class of module uberbooter
     
-    List<Path> modulePaths = new StableList<Path>()
-        .append(packager.moduleArtifactSourcePath())
+    List<Path> modulePaths = StableList.of(packager.moduleArtifactSourcePath())
         .appendAll(packager.moduleDependencyPath());
     
     try(BufferedWriter writer = Files.newBufferedWriter(uberExplodedPath.resolve("modules.txt"))) {
