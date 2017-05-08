@@ -186,12 +186,15 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    * Returns a collector that store all elements in a stable list.
    * @return a stable list storing all elements.
    */
-  @SuppressWarnings("unchecked")
   public static <T> Collector<T, ?, StableList<T>> toStableList() {
-    return Collector.of(() -> (StableList<T>[])new StableList<?>[] { StableList.of() },
-        (array, element) -> array[0] = array[0].append(element),
-        (array1, array2) -> { array1[0] = array1[0].appendAll(array2[0]); return array1; },
-        array -> array[0]);
+    class Box {
+      StableList<T> list;
+      public Box(StableList<T> list) { this.list = list; }
+    }
+    return Collector.of(() -> new Box(StableList.of()),
+        (box, element) -> box.list = box.list.append(element),
+        (box1, box2) -> { box1.list = box1.list.appendAll(box2.list); return box1; },
+        box -> box.list);
   }
   
   /*
