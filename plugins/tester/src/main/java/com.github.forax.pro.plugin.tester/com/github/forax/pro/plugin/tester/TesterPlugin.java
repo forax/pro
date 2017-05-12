@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.IntSupplier;
@@ -31,15 +32,18 @@ public class TesterPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    config.getOrUpdate(name(), TesterConf.class);
+    TesterConf tester = config.getOrUpdate(name(), TesterConf.class);
+    tester.timeout(60);
   }
 
   @Override
   public void configure(MutableConfig config) {
     TesterConf tester = config.getOrUpdate(name(), TesterConf.class);
+    ProConf pro = config.getOrThrow("pro", ProConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
 
     // inputs
+    derive(tester, TesterConf::pluginDir, pro, ProConf::pluginDir);
     derive(tester, TesterConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
   }
 
@@ -55,39 +59,37 @@ public class TesterPlugin implements Plugin {
         .stream()
         .flatMap(ref -> ref.location().stream())
         .map(Paths::get)
+        .sorted()
         .collect(Collectors.toList());
   }
 
   @Override
   public int execute(Config config) throws IOException {
-    ProConf proConf = config.getOrThrow("pro", ProConf.class);
-    Log log = Log.create(name(), proConf.loglevel());
+    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
+    log.debug(config, conf -> "config " + config);
     TesterConf tester = config.getOrThrow(name(), TesterConf.class);
-    log.debug(tester, _tester -> "config " + _tester);
-    
-    Path pluginDir = proConf.pluginDir();
 
     int exitCodeSum = 0;
     for (Path path : directories(tester.moduleExplodedTestPath())) {
-      exitCodeSum += execute(pluginDir, path.toAbsolutePath().normalize());
+      log.debug(path, p -> String.format("Testing %s...", p.toFile().getName()));
+      exitCodeSum += execute(tester, path.toAbsolutePath().normalize());
     }
     return exitCodeSum;
   }
 
-  private int execute(Path pluginDir, Path testPath) throws IOException {
+  private int execute(TesterConf tester, Path testPath) throws IOException {
     ExecutorService executor = Executors.newSingleThreadExecutor();
 
     ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
     String moduleName = moduleReference.descriptor().name();
-    ClassLoader testClassLoader = createTestClassLoader(pluginDir, testPath, moduleName);
+    ClassLoader testClassLoader = createTestClassLoader(tester, testPath, moduleName);
 
     IntSupplier runner;
     try {
       Class<?> runnerClass = testClassLoader.loadClass(TesterRunner.class.getName());
       runner = (IntSupplier) runnerClass.getConstructor(Path.class).newInstance(testPath);
-      
       Future<Integer> future = executor.submit(runner::getAsInt);
-      return future.get(2, TimeUnit.MINUTES); // TODO Make timeout configurable.
+      return future.get(tester.timeout(), TimeUnit.SECONDS);
       
     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InterruptedException e) {
       throw new IOException("Loading, creating or invoking the TesterRunner failed", e);
@@ -99,17 +101,23 @@ public class TesterPlugin implements Plugin {
     }
   }
 
-  private ClassLoader createTestClassLoader(Path pluginDir, Path testPath, String moduleName) {
+  private ClassLoader createTestClassLoader(TesterConf tester, Path testPath, String testModuleName) {
     String pluginModuleName = TesterPlugin.class.getModule().getName(); // "com.github.forax.pro.plugin.tester"
-    List<String> roots = List.of(pluginModuleName, moduleName);
-    
-    Path pluginPath = pluginDir.resolve(name()); // "[pro]/plugins/tester"
-    ModuleFinder finder = ModuleFinder.of(testPath, pluginPath);
+    List<String> rootNames = List.of(pluginModuleName, testModuleName);
+
+    List<Path> moduleFinderRoots = new ArrayList<>();
+    moduleFinderRoots.add(testPath); // "target/test/exploded/[MODULE_NAME]
+    moduleFinderRoots.add(tester.pluginDir().resolve(name())); // "[PRO_HOME]/plugins/tester"
+    moduleFinderRoots.addAll(tester.moduleExplodedTestPath()); // "target/test/exploded"
+
+    ModuleFinder finder = ModuleFinder.of(moduleFinderRoots.toArray(new Path[0]));
     ModuleLayer bootModuleLayer = ModuleLayer.boot();
-    Configuration configuration = bootModuleLayer.configuration().resolve(finder, ModuleFinder.of(), roots);
+    Configuration configuration = bootModuleLayer.configuration().resolve(finder, ModuleFinder.of(), rootNames);
     ClassLoader parentLoader = ClassLoader.getSystemClassLoader();
     ModuleLayer configuredLayer = bootModuleLayer.defineModulesWithOneLoader(configuration, parentLoader);
-    return configuredLayer.findLoader(pluginModuleName);
+    ClassLoader classLoader = configuredLayer.findLoader(pluginModuleName);
+    classLoader.setDefaultAssertionStatus(true); // -ea
+    return classLoader;
   }
   
   private static UndeclaredThrowableException rethrow(Throwable cause) {

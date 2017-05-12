@@ -37,27 +37,30 @@ public class TesterRunner implements IntSupplier {
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
       ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
-      System.out.println("[tester] Test run of module " + moduleReference.descriptor().name() + " starts...");
       List<Class<?>> testClasses = findTestClasses(moduleReference);
       Launcher launcher = LauncherFactory.create();
-      return launch(launcher, testClasses);
+      return launch(moduleReference, launcher, testClasses);
     } finally {
       Thread.currentThread().setContextClassLoader(oldContext);
     }
   }
 
-  private static int launch(Launcher launcher, List<Class<?>> testClasses) {
+  private static int launch(ModuleReference moduleReference, Launcher launcher, List<Class<?>> testClasses) {
     LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
     testClasses.forEach(testClass -> builder.selectors(selectClass(testClass)));
-    
+
+    long startTimeMillis = System.currentTimeMillis();
     LauncherDiscoveryRequest launcherDiscoveryRequest = builder.build();
     SummaryGeneratingListener summaryGeneratingListener = new SummaryGeneratingListener();
     launcher.execute(launcherDiscoveryRequest, summaryGeneratingListener);
+    long duration = System.currentTimeMillis() - startTimeMillis;
     
     TestExecutionSummary summary = summaryGeneratingListener.getSummary();
     int failures = (int) summary.getTestsFailedCount();
     if (failures == 0) {
-      System.out.println("[tester] Test run successfully executed " + summary.getTestsSucceededCount() + " tests.");
+      long succeeded = summary.getTestsSucceededCount();
+      String moduleName = moduleReference.descriptor().toNameAndVersion();
+      System.out.printf("[tester] Successfully tested %s: %d tests in %d ms%n", moduleName, succeeded, duration);
     } else {
       StringWriter stringWriter = new StringWriter();
       summary.printTo(new PrintWriter(stringWriter));
