@@ -7,6 +7,5 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
 public interface ConventionFacade {
-  Path pluginDir();
   List<Path> javaModuleExplodedTestPath();
 }
