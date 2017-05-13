@@ -7,6 +7,15 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
 public interface TesterConf {
+  // pro
+  Path pluginDir();
+  void pluginDir(Path pluginDir);
+
+  // convention
   List<Path> moduleExplodedTestPath();
   void moduleExplodedTestPath(List<Path> moduleExplodedTestPath);
+
+  // tester
+  int timeout();
+  void timeout(int seconds);
 }

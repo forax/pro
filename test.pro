@@ -1,5 +1,8 @@
 import static com.github.forax.pro.Pro.*
 
+// set("pro.loglevel", "debug")
+set("tester.timeout", 99)
+
 // run "pro" tests
 run("tester")
 
