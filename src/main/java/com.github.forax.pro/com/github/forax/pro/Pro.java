@@ -84,10 +84,6 @@ public class Pro {
         .orElseThrow(() -> new IllegalStateException("unknown key " + key));
   }
   
-  /*public static void scope(Runnable runnable) {
-    CONFIG.enter(runnable);
-  }*/
-  
   public static Path location(String location) {
     return Paths.get(location);
   }
