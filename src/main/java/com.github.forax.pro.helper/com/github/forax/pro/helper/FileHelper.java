@@ -6,7 +6,6 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -24,11 +23,6 @@ public class FileHelper {
 
   public static List<Path> pathFromFilesThatExist(List<Path> paths) {
     return List.of(paths.stream().filter(Files::exists).toArray(Path[]::new));
-  }
-
-  public static Path relativize(Path path) {
-    Path workingDirectory = Paths.get(".").toAbsolutePath().normalize();
-    return workingDirectory.relativize(path.toAbsolutePath().normalize());
   }
 
   /**
