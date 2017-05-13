@@ -45,6 +45,7 @@ public class TesterPlugin implements Plugin {
     // inputs
     derive(tester, TesterConf::pluginDir, pro, ProConf::pluginDir);
     derive(tester, TesterConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
+    derive(tester, TesterConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
   }
 
   @Override
@@ -90,14 +91,14 @@ public class TesterPlugin implements Plugin {
       runner = (IntSupplier) runnerClass.getConstructor(Path.class).newInstance(testPath);
       Future<Integer> future = executor.submit(runner::getAsInt);
       return future.get(tester.timeout(), TimeUnit.SECONDS);
-      
+
     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InterruptedException e) {
       throw new IOException("Loading, creating or invoking the TesterRunner failed", e);
     } catch(InvocationTargetException | ExecutionException e) {
       throw rethrow(e.getCause());
     } catch(TimeoutException e) {
       e.printStackTrace(); // FIXME
-      return 1;  
+      return 1;
     }
   }
 
@@ -109,6 +110,7 @@ public class TesterPlugin implements Plugin {
     moduleFinderRoots.add(testPath); // "target/test/exploded/[MODULE_NAME]
     moduleFinderRoots.add(tester.pluginDir().resolve(name())); // "[PRO_HOME]/plugins/tester"
     moduleFinderRoots.addAll(tester.moduleExplodedTestPath()); // "target/test/exploded"
+    moduleFinderRoots.addAll(tester.moduleDependencyPath()); // "deps"
 
     ModuleFinder finder = ModuleFinder.of(moduleFinderRoots.toArray(new Path[0]));
     ModuleLayer bootModuleLayer = ModuleLayer.boot();
@@ -119,7 +121,7 @@ public class TesterPlugin implements Plugin {
     classLoader.setDefaultAssertionStatus(true); // -ea
     return classLoader;
   }
-  
+
   private static UndeclaredThrowableException rethrow(Throwable cause) {
     if (cause instanceof RuntimeException) {
       throw (RuntimeException)cause;

@@ -14,6 +14,8 @@ public interface TesterConf {
   // convention
   List<Path> moduleExplodedTestPath();
   void moduleExplodedTestPath(List<Path> moduleExplodedTestPath);
+  List<Path> moduleDependencyPath();
+  void moduleDependencyPath(List<Path> moduleDependencyPath);
 
   // tester
   int timeout();
