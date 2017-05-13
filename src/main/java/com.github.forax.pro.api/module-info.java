@@ -8,8 +8,6 @@ module com.github.forax.pro.api {
   
   exports com.github.forax.pro.api.impl
     to com.github.forax.pro;
-  exports com.github.forax.pro.api.impl.file
-    to com.github.forax.pro;
   
   uses com.github.forax.pro.api.Plugin;
 }
