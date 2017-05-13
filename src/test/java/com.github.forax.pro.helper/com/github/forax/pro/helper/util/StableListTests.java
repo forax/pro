@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.function.IntFunction;
 
 @SuppressWarnings("static-method")
 class StableListTests {
@@ -125,6 +126,18 @@ class StableListTests {
       () -> assertThrows(NullPointerException.class, () -> StableList.of().join("", null, "")),
       () -> assertThrows(NullPointerException.class, () -> StableList.of().join("", "", null)),
       () -> assertThrows(NullPointerException.class, () -> StableList.of().join(null))
+    );
+  }
+  
+  @Test
+  public void toArrayFactory() {
+    assertAll(
+      () -> assertArrayEquals(new Object[0], StableList.of().toArray(Object[]::new)),
+      () -> assertArrayEquals(new Integer[] {1, 3}, StableList.of(1, 3).toArray(Integer[]::new)),
+      () -> assertArrayEquals(new Object[] { "foo" }, StableList.of("foo").toArray(Object[]::new)),
+      () -> assertArrayEquals(new String[] { "foo", "bar", "baz" }, StableList.of("foo", "bar", "baz").toArray(String[]::new)),
+      () -> assertThrows(NullPointerException.class, () -> StableList.of().toArray((IntFunction<Object[]>)null)),
+      () -> assertThrows(ArrayStoreException.class, () -> StableList.of(1).toArray(String[]::new))
     );
   }
 }

@@ -8,6 +8,7 @@ import java.util.RandomAccess;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -146,6 +147,18 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    */
   public String join(String delimiter) {
     return join(delimiter, "", "");
+  }
+  
+  /**
+   * Create an array containing the elements of the current list.
+   * 
+   * @param factory a function which produces a new array from a provided length
+   * @return the array created by the factory populated with the values
+   */
+  public <T> T[] toArray(IntFunction<T[]> factory) {
+    T[] array = factory.apply(size);
+    System.arraycopy(this.array, 0, array, 0, size);
+    return array;
   }
   
   /**
