@@ -23,6 +23,7 @@ import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
+import com.github.forax.pro.helper.util.StableList;
 
 public class TesterPlugin implements Plugin {
   @Override
@@ -106,13 +107,13 @@ public class TesterPlugin implements Plugin {
     String pluginModuleName = TesterPlugin.class.getModule().getName(); // "com.github.forax.pro.plugin.tester"
     List<String> rootNames = List.of(pluginModuleName, testModuleName);
 
-    List<Path> moduleFinderRoots = new ArrayList<>();
-    moduleFinderRoots.add(testPath); // "target/test/exploded/[MODULE_NAME]
-    moduleFinderRoots.add(tester.pluginDir().resolve(name())); // "[PRO_HOME]/plugins/tester"
-    moduleFinderRoots.addAll(tester.moduleExplodedTestPath()); // "target/test/exploded"
-    moduleFinderRoots.addAll(tester.moduleDependencyPath()); // "deps"
+    StableList<Path> moduleFinderRoots = StableList
+        .of(testPath)                                // "target/test/exploded/[MODULE_NAME]
+        .append(tester.pluginDir().resolve(name()))  // "[PRO_HOME]/plugins/tester"
+        .appendAll(tester.moduleExplodedTestPath())  // "target/test/exploded")
+        .appendAll(tester.moduleDependencyPath());   // "deps"
 
-    ModuleFinder finder = ModuleFinder.of(moduleFinderRoots.toArray(new Path[0]));
+    ModuleFinder finder = ModuleFinder.of(moduleFinderRoots.toArray(Path[]::new));
     ModuleLayer bootModuleLayer = ModuleLayer.boot();
     Configuration configuration = bootModuleLayer.configuration().resolve(finder, ModuleFinder.of(), rootNames);
     ClassLoader parentLoader = ClassLoader.getSystemClassLoader();
