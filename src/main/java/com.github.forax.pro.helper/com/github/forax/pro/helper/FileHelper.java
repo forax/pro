@@ -32,11 +32,11 @@ public class FileHelper {
    * @throws IOException if a file can not be deleted
    */
   public static void deleteAllFiles(Path directory, boolean removeDirectory) throws IOException {
-    Files.walkFileTree(directory, new FileVisitor<Path>() {
+    Files.walkFileTree(directory, new FileVisitor<>() {
       @Override
       public FileVisitResult postVisitDirectory(Path path, IOException e) throws IOException {
         if (removeDirectory || !path.equals(directory)) {
-          Files.delete(path);  
+          Files.delete(path);
         }
         return FileVisitResult.CONTINUE;
       }
@@ -58,7 +58,7 @@ public class FileHelper {
       }
     });
   }
-  
+
   public interface IORunnable {
     public void run() throws IOException;
   }
@@ -120,18 +120,18 @@ public class FileHelper {
       }
     };
   }
-  
+
   public static Predicate<Path> pathFilenameEndsWith(String text) {
     return path -> path.getFileName().toString().endsWith(text);
   }
-  
+
   public static Predicate<Path> pathFilenameEquals(String text) {
     return path -> path.getFileName().toString().equals(text);
   }
-  
+
   public static List<Path> walkIfNecessary(List<Path> list, Predicate<? super Path> filter) {
     return list.stream()
-               .flatMap(FileHelper.<Path, Stream<Path>>unchecked(path -> {
+               .flatMap(FileHelper.unchecked(path -> {
                    if (!Files.isDirectory(path)) {
                      return Stream.of(path);
                    }
@@ -139,7 +139,7 @@ public class FileHelper {
                }))
                .collect(Collectors.toList());
   }
-  
+
   public static void walkAndFindCounterpart(Path srcPath, Path dstPath, Function<Stream<Path>, Stream<Path>> configure, IOBiConsumer<Path, Path> consumer) {
     try(Stream<Path> stream = Files.walk(srcPath)) {
       configure.apply(stream)
