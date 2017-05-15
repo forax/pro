@@ -20,3 +20,4 @@ script:
 - chmod u+x ./build.sh
 - ./build.sh
 - ./target/pro/bin/pro build test.pro
+- ./target/pro/bin/pro build format.pro
