@@ -109,8 +109,6 @@ public class Bootstrap {
           path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
       set("compiler.moduleDependencyPath",
           path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
-      set("compiler.upgradeModulePath",
-          path("target/main/artifact/", "deps"));
       
       extras.run();
 
