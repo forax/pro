@@ -396,7 +396,7 @@ public class ModuleHelper {
     return new Generator()
           .$("%s",             desc -> desc.isOpen()? "open":"")
           .$("module %s {",    ModuleDescriptor::name)
-          .$("  requires %s;", ModuleDescriptor::requires, Requires::name)
+          .$("  requires %s;", ModuleDescriptor::requires, Requires::toString)
           .$("  exports %s;",  ModuleDescriptor::exports,  Exports::source,   "to %s", Exports::targets)
           .$("  opens %s;",    ModuleDescriptor::opens,    Opens::source,     "to %s", Opens::targets)
           .$("")
