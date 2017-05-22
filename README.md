@@ -1,13 +1,13 @@
 [![pro build status](https://api.travis-ci.org/forax/pro.svg?branch=master)](https://travis-ci.org/forax/pro)
 # pro
-a Java 9 compatible build tool
+A Java 9 compatible build tool
 
 > No need to be a maven to be able to use a build tool 
 
 
-# rational
+# rationale
 With the introduction of modules in Java 9, creating modules/jars is easier and
-new applications will tend to have many more smaller modules that it was previously the case.
+new applications will tend to have many more, smaller modules than before.
 The build model of Maven is not well suited to describe this new world.
 
 
@@ -27,14 +27,15 @@ The build model of Maven is not well suited to describe this new world.
 There is a small demo in the github project [pro-demo](https://github.com/forax/pro-demo/).
 
 # build instructions
-To compile and build pro, run 
+To compile and build pro, run:
 ```
 build.sh
 ```
 pro will bootstrap itself.
-The bootstrap process only works with the latest [jdk9](https://jdk9.java.net/) build,
-you may have to change the value of the variable JAVA_HOME at the starts of the script build.sh.
 
-Once built, you have an image of the tool in target/pro,
-this image embeds its own small JDK so no need to install anything Java related to be able to build your application.
+The bootstrap process only works with the latest [jdk9](https://jdk9.java.net/) build,
+you may have to change the value of the variable JAVA_HOME at the start of the script build.sh.
+
+Once built, you have an image of the tool in target/pro.
+This image embeds its own small JDK: no need to install anything Java-related to be able to build your application.
 Obviously, you will need a JDK to run your application. 
