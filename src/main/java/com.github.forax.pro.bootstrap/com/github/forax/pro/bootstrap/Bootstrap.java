@@ -14,10 +14,10 @@ public class Bootstrap {
   public static void main(String[] args) throws IOException {
     set("pro.loglevel", "verbose");
     set("pro.exitOnError", true);
-    
+
     //set("compiler.lint", "exports,module");
     set("compiler.lint", "all,-varargs,-overloads");
-    
+
     set("packager.moduleMetadata", list(
         "com.github.forax.pro@0.9",
         "com.github.forax.pro.aether@0.9",
@@ -40,7 +40,7 @@ public class Bootstrap {
         "com.github.forax.pro.daemon@0.9",
         "com.github.forax.pro.daemon.imp@0.9"
         ));
-    
+
     //set("modulefixer.force", true);
     set("modulefixer.additionalRequires", list(
         "maven.aether.provider=commons.lang",
@@ -52,7 +52,7 @@ public class Bootstrap {
         "aether.transport.http=aether.util",
         "aether.connector.basic=aether.util"
         ));
-    
+
     set("linker.includeSystemJMODs", true);
     set("linker.launchers", list(
         "pro=com.github.forax.pro.main/com.github.forax.pro.main.Main"
@@ -75,7 +75,7 @@ public class Bootstrap {
                   .collect(Collectors.toSet())));
 
     run("modulefixer", "compiler", "packager");
-    
+
     compileAndPackagePlugin("runner", () -> { /* empty */});
     compileAndPackagePlugin("tester", () -> {
       set("resolver.remoteRepositories", list(
@@ -84,12 +84,12 @@ public class Bootstrap {
       set("resolver.dependencies", list(
           // "API"
           "org.opentest4j=org.opentest4j:opentest4j:1.0.0-M2",
-          "org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.0.0-M4",
-          "org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.0.0-M4",
+          "org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.0.0-M5",
+          "org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.0.0-M5",
           // "Launcher + Engine"
-          "org.junit.platform.engine=org.junit.platform:junit-platform-engine:1.0.0-M4",
-          "org.junit.platform.launcher=org.junit.platform:junit-platform-launcher:1.0.0-M4",
-          "org.junit.jupiter.engine=org.junit.jupiter:junit-jupiter-engine:5.0.0-M4"
+          "org.junit.platform.engine=org.junit.platform:junit-platform-engine:1.0.0-M5",
+          "org.junit.platform.launcher=org.junit.platform:junit-platform-launcher:1.0.0-M5",
+          "org.junit.jupiter.engine=org.junit.jupiter:junit-jupiter-engine:5.0.0-M5"
       ));
     });
 
@@ -103,13 +103,13 @@ public class Bootstrap {
 
   private static void compileAndPackagePlugin(String name, Runnable extras) throws IOException {
     deleteAllFiles(location("plugins/" + name + "/target"), false);
-    
+
     local("plugins/" + name, () -> {
       set("resolver.moduleDependencyPath",
           path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
       set("compiler.moduleDependencyPath",
           path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
-      
+
       extras.run();
 
       run("resolver", "modulefixer", "compiler", "packager");
