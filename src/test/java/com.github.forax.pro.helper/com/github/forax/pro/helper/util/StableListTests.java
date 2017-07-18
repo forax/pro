@@ -95,7 +95,7 @@ class StableListTests {
   @Test
   public void filter() {
     assertAll(
-      () -> StableList.of().filter(__ -> { fail("should not be called"); return true; }),
+      () -> StableList.of().filter(__ -> fail("should not be called")),
       () -> assertEquals(List.of("foo"), StableList.of("foo").filter(__ -> true)),
       () -> assertEquals(List.of(2), StableList.of(1, 2, 3).filter(i -> i % 2 == 0)),
       () -> assertThrows(NullPointerException.class, () -> StableList.of().filter(null))
@@ -105,7 +105,7 @@ class StableListTests {
   @Test
   public void map() {
     assertAll(
-      () -> StableList.of().map(__ -> { fail("should not be called"); return ""; }),
+      () -> StableList.of().map(__ -> fail("should not be called")),
       () -> assertEquals(List.of(3), StableList.of("3").map(Integer::parseInt)),
       () -> assertEquals(List.of("0", "42"), StableList.of(0, 42).map(Object::toString)),
       () -> assertThrows(NullPointerException.class, () -> StableList.of().map(null)),
@@ -128,7 +128,7 @@ class StableListTests {
       () -> assertThrows(NullPointerException.class, () -> StableList.of().join(null))
     );
   }
-  
+
   @Test
   public void toArrayFactory() {
     assertAll(
