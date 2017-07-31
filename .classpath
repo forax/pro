@@ -40,6 +40,6 @@
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.commons.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.engine.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.launcher.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk-9-b167"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-9"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
