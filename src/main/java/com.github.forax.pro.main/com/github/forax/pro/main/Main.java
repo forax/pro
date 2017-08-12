@@ -25,8 +25,8 @@ public class Main {
   
   enum InputFile {
     ARGUMENT(args -> (args.length == 1)? Optional.of(Paths.get(args[0])): Optional.empty()),
-    DEFAULT_JSON(args -> Optional.of(Paths.get("build.json"))),
-    DEFAULT_PRO(args -> Optional.of(Paths.get("build.pro")))
+    DEFAULT_PRO(args -> Optional.of(Paths.get("build.pro"))),
+    DEFAULT_JSON(args -> Optional.of(Paths.get("build.json")))
     ;
     
     private final Function<String[], Optional<Path>> mapper;
