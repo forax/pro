@@ -61,7 +61,6 @@ public class Bootstrap {
         ));
     set("linker.rootModules", list(
         "com.github.forax.pro.main",
-        "com.github.forax.pro.builder",
         "com.github.forax.pro.plugin.convention",
         "com.github.forax.pro.plugin.resolver",
         "com.github.forax.pro.plugin.modulefixer",
