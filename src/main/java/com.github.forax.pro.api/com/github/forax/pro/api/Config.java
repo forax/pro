@@ -2,7 +2,7 @@ package com.github.forax.pro.api;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.function.BiConsumer;
+//import java.util.function.BiConsumer;
 
 /**
  * Read only part of the configuration tree API.
@@ -37,7 +37,7 @@ public interface Config {
    * @param key a qualified name corresponding to a node
    * @param consumer the consumer called for each pair key/value
    */
-  public void forEach(String key, BiConsumer<? super String, Object> consumer);
+  //public void forEach(String key, BiConsumer<? super String, Object> consumer);
   
   /**
    * Returns the value associated with a key or throw a {@link NoSuchElementException} if the value do not exist.

@@ -1,7 +1,7 @@
 package com.github.forax.pro.api.impl;
 
 import java.util.Optional;
-import java.util.function.BiConsumer;
+//import java.util.function.BiConsumer;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
@@ -38,10 +38,10 @@ public class DefaultConfig implements MutableConfig, EvalContext {
     Configs.set(root, key, value);
   }
   
-  @Override
-  public void forEach(String key, BiConsumer<? super String, Object> consumer) {
-     Configs.forEach(root, key, consumer); 
-  }
+  //@Override
+  //public void forEach(String key, BiConsumer<? super String, Object> consumer) {
+  //   Configs.forEach(root, key, consumer); 
+  //}
   
   public DefaultConfig duplicate() {
     return new DefaultConfig(root);
@@ -82,10 +82,10 @@ public class DefaultConfig implements MutableConfig, EvalContext {
         DefaultConfig.this.set(key, object);
       }
       
-      @Override
-      public void forEach(String key, BiConsumer<? super String, Object> consumer) {
-        DefaultConfig.this.forEach(key, consumer);
-      }
+      //@Override
+      //public void forEach(String key, BiConsumer<? super String, Object> consumer) {
+      //  DefaultConfig.this.forEach(key, consumer);
+      //}
       
       @Override
       public String toString() {
@@ -101,10 +101,10 @@ public class DefaultConfig implements MutableConfig, EvalContext {
         return DefaultConfig.this.get(key, type);
       }
       
-      @Override
-      public void forEach(String key, BiConsumer<? super String, Object> consumer) {
-        DefaultConfig.this.forEach(key, consumer);
-      }
+      //@Override
+      //public void forEach(String key, BiConsumer<? super String, Object> consumer) {
+      //  DefaultConfig.this.forEach(key, consumer);
+      //}
       
       @Override
       public String toString() {

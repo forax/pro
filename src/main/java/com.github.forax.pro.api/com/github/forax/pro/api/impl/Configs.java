@@ -49,9 +49,9 @@ public class Configs {
     return asQuery(proxy)._get_(key, type, readOnly);
   }
   
-  private static void forEachProperty(Object proxy, BiConsumer<? super String, Object> consumer) {
-    asQuery(proxy)._map_().forEach(consumer);
-  }
+  //private static void forEachProperty(Object proxy, BiConsumer<? super String, Object> consumer) {
+  //  asQuery(proxy)._map_().forEach(consumer);
+  //}
   
   @SuppressWarnings("unchecked")
   public static <T, U, V> void derive(T to, BiConsumer<? super T, ? super V> setter, U from, Function<? super U, ? extends V> eval) {
@@ -94,20 +94,27 @@ public class Configs {
     return getProperty(result, properties[properties.length - 1], type, readOnly);
   }
   
-  static void forEach(Object proxy, String key, BiConsumer<? super String, Object> consumer) {
-    String[] properties = splitAsProperties(key);
-    Object result = traverse(proxy, properties, properties.length, key);
-    forEachProperty(result, consumer);
-  }
+  //static void forEach(Object proxy, String key, BiConsumer<? super String, Object> consumer) {
+  //  String[] properties = splitAsProperties(key);
+  //  Object result = traverse(proxy, properties, properties.length, key);
+  //  forEachProperty(result, consumer);
+  //}
 
-  static Stream<String> toStringStream(String prefix, Object value) {
+  static Stream<String> toStringStream(String prefix, Object value, EvalContext context) {
     if (!(value instanceof Query)) {
       return Stream.of(prefix + " = " + value);
     }
     Map<String, Object> map = ((Query)value)._map_();
     return map.entrySet()
        .stream()
-       .flatMap(entry -> toStringStream(prefix.isEmpty()? entry.getKey(): prefix + "." + entry.getKey(), entry.getValue()));
+       .flatMap(entry -> toStringStream(prefix.isEmpty()? entry.getKey(): prefix + "." + entry.getKey(), eval(entry.getValue(), context), context));
+  }
+  
+  private static Object eval(Object value, EvalContext context) {
+    if (value instanceof Eval) { // need to evaluate
+      return ((Eval)value).eval(context);
+    }
+    return value;
   }
   
   static Object duplicate(Object proxy, EvalContext context) {
@@ -318,7 +325,7 @@ public class Configs {
             if (declaringClass == Object.class) {
               switch(name) {
               case "toString":
-                return toStringStream("", proxy).collect(Collectors.joining("\n", "{\n", "\n}"));
+                return toStringStream("", proxy, context).collect(Collectors.joining("\n", "{\n", "\n}"));
               case "equals":
                 return proxy == args[1];
               case "hashCode":
@@ -326,6 +333,8 @@ public class Configs {
               default:
               }
             } else {
+              try {
+              
               int parameterCount = method.getParameterCount();
               if (parameterCount == 0) {
                 return getterMap.get(name).invokeExact(context, id, map, method.getReturnType(), proxyReadOnly, proxyFrozen);
@@ -336,7 +345,12 @@ public class Configs {
                 }
                 Object value = args[0];
                 setterMap.get(name).invokeExact(map, value);
-                return null;
+                return proxy; // acts as a builder;
+              }
+              
+              } catch(RuntimeException e) {
+                e.printStackTrace();
+                throw e;
               }
             }
           }
