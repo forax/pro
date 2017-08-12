@@ -1,11 +1,14 @@
 import static com.github.forax.pro.Pro.*;
+import static com.github.forax.pro.builder.Builders.*;
 
-set("pro.loglevel", "verbose");
-set("pro.exitOnError", true);
+pro.
+  loglevel("verbose").
+  exitOnError(true)
 
-set("compiler.lint", "all,-varargs,-overloads");
-set("compiler.moduleDependencyPath", path("deps", "../../target/main/artifact/", "../../deps"));
-
-run("compiler", "packager");
+compiler.
+  lint("all,-varargs,-overloads").
+  moduleDependencyPath(path("deps", "../../target/main/artifact/", "../../deps"))
+          
+run(compiler, packager)
 
 /exit
