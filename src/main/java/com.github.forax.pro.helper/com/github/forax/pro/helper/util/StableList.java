@@ -15,6 +15,9 @@ import java.util.stream.Collectors;
 
 /**
  * An unmodifiable list that tries to share it's backing array if possible.
+ * 
+ * This list is not thread safe.
+ * 
  * This list is optimize for the case where {@link StableList#append(Object)} is used
  * without keeping a reference to the original stable list. 
  *
