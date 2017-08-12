@@ -113,9 +113,6 @@ public class ResolverPlugin implements Plugin {
       sourceResolved &= resolveModuleDependencies(moduleTestFinder, dependencyFinder, unresolvedModules);
     }
     
-    System.out.println("sourceResolved " + sourceResolved);
-    System.out.println("unresolved modules " + unresolvedModules);
-    
     // everything is resolved, nothing to do
     if (sourceResolved) {
       return 0;
