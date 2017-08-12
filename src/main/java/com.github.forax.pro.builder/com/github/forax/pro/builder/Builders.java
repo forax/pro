@@ -8,6 +8,7 @@ public class Builders {
   public static final ProBuilder pro =
     Pro.getOrUpdate("pro", ProBuilder.class);
   
+  @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface ProBuilder {
     public ProBuilder loglevel(java.lang.String loglevel);
@@ -19,6 +20,7 @@ public class Builders {
   public static final CompilerBuilder compiler =
     Pro.getOrUpdate("compiler", CompilerBuilder.class);
   
+  @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface CompilerBuilder {
     public CompilerBuilder verbose(boolean verbose);
@@ -42,6 +44,7 @@ public class Builders {
   public static final LinkerBuilder linker =
     Pro.getOrUpdate("linker", LinkerBuilder.class);
   
+  @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface LinkerBuilder {
     public LinkerBuilder serviceNames(java.util.List<java.lang.String> serviceNames);
@@ -63,6 +66,7 @@ public class Builders {
   public static final ModulefixerBuilder modulefixer =
     Pro.getOrUpdate("modulefixer", ModulefixerBuilder.class);
   
+  @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface ModulefixerBuilder {
     public ModulefixerBuilder force(boolean force);
@@ -75,6 +79,7 @@ public class Builders {
   public static final PackagerBuilder packager =
     Pro.getOrUpdate("packager", PackagerBuilder.class);
   
+  @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface PackagerBuilder {
     public PackagerBuilder moduleArtifactSourcePath(java.nio.file.Path moduleArtifactSourcePath);
@@ -88,6 +93,7 @@ public class Builders {
   public static final ResolverBuilder resolver =
     Pro.getOrUpdate("resolver", ResolverBuilder.class);
   
+  @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface ResolverBuilder {
     public ResolverBuilder moduleSourcePath(java.util.List<java.nio.file.Path> moduleSourcePath);
@@ -102,6 +108,7 @@ public class Builders {
   public static final RunnerBuilder runner =
     Pro.getOrUpdate("runner", RunnerBuilder.class);
   
+  @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface RunnerBuilder {
     public RunnerBuilder javaCommand(java.nio.file.Path javaCommand);
@@ -116,6 +123,7 @@ public class Builders {
   public static final TesterBuilder tester =
     Pro.getOrUpdate("tester", TesterBuilder.class);
   
+  @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface TesterBuilder {
     public TesterBuilder timeout(int timeout);

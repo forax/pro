@@ -53,6 +53,7 @@ public class GenBuilder {
         "  public static final ", className, " ", name, " =\n",
         "    Pro.getOrUpdate(\"", name, "\", ", className ,".class);\n", 
         "  \n",
+        "  @SuppressWarnings(\"exports\")\n",
         "  @com.github.forax.pro.api.TypeCheckedConfig\n",
         "  public interface ", className, " {\n",
             stream(confType.getDeclaredMethods()).filter(m -> m.getParameterCount() != 0).flatMap(m -> methodTemplate(className, m)),
