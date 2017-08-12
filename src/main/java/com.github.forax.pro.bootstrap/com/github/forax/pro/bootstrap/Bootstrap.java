@@ -10,6 +10,8 @@ import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.util.stream.Collectors;
 
+import com.github.forax.pro.helper.ModuleHelper;
+
 public class Bootstrap {
   public static void main(String[] args) throws IOException {
     set("pro.loglevel", "verbose");
@@ -71,9 +73,8 @@ public class Bootstrap {
         "com.github.forax.pro.uberbooter",            // needed by ubermain
         "com.github.forax.pro.daemon.imp"
         )                                             // then add all system modules
-        .appendAll(ModuleFinder.ofSystem().findAll().stream()
+        .appendAll(ModuleHelper.systemModulesFinder().findAll().stream()
                   .map(ref -> ref.descriptor().name())
-                  .filter(name -> !name.startsWith("com.github.forax.pro"))
                   .collect(Collectors.toSet())));
 
     run("modulefixer", "compiler", "packager");
