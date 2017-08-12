@@ -118,8 +118,6 @@ public class Aether {
   }
    
   public List<ArtifactDescriptor> download(List<ArtifactInfo> unresolvedArtifacts) throws IOException {
-    System.out.println("download unresolvedArtifacts " + unresolvedArtifacts);
-
     List<RemoteRepository> repositories = this.remoteRepositories;
     List<ArtifactRequest> artifactRequests = unresolvedArtifacts.stream()
         .map(dependency -> {
