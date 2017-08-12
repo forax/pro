@@ -3,7 +3,9 @@ package com.github.forax.pro.plugin.resolver;
 import static com.github.forax.pro.api.MutableConfig.derive;
 
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -174,6 +176,7 @@ public class ResolverPlugin implements Plugin {
         undeclaredArtifactIds.add(resolvedArtifact);
       } else {
         log.info(null, __ -> moduleName + " (" + resolvedArtifact + ") downloaded from repositories");
+        checkArtifactModuleName(log, moduleName, resolvedArtifact);
         Files.copy(resolvedArtifact.getPath(), moduleDependencyPath.resolve(moduleName + ".jar"));
       }
     }
@@ -183,7 +186,7 @@ public class ResolverPlugin implements Plugin {
     
     return 0;
   }
-  
+
   private static void verifyDeclaration(String kind, Set<String> unresolvedModules, Set<String> dependencySet) {
     ArrayList<String> undeclaredModules = new ArrayList<>();
     for(String module: unresolvedModules) {
@@ -193,6 +196,23 @@ public class ResolverPlugin implements Plugin {
     }
     if (!undeclaredModules.isEmpty()) {
       throw new IllegalStateException("no dependency declared for unresolved " + kind + " " + undeclaredModules);
+    }
+  }
+  
+  private static void checkArtifactModuleName(Log log, String moduleName, ArtifactDescriptor resolvedArtifact) {
+    ModuleFinder finder = ModuleFinder.of(resolvedArtifact.getPath());
+    Optional<ModuleReference> reference = finder.findAll().stream().findFirst();
+    if (!reference.isPresent()) {
+      log.info(null, __ -> "WARNING! artifact " + resolvedArtifact + " is not a valide jar");
+      return;
+    }
+    ModuleDescriptor descriptor = reference.get().descriptor();
+    if (descriptor.isAutomatic()) {
+      return;
+    }
+    String artifactModuleName = descriptor.name();
+    if (!artifactModuleName.equals(moduleName)) {
+      log.info(null, __ -> "WARNING! artifact module name " + artifactModuleName + " (" + resolvedArtifact + ") declared in the module-info is different from declared module name " + moduleName);
     }
   }
 }
