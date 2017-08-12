@@ -4,6 +4,7 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.aether" path="src/main/java/com.github.forax.pro.aether"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.aether.fakeguava" path="src/main/java/com.github.forax.pro.aether.fakeguava"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.api" path="src/main/java/com.github.forax.pro.api"/>
+	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.builder" path="src/main/java/com.github.forax.pro.builder"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="src/main/java/com.github.forax.pro.helper"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.main" path="src/main/java/com.github.forax.pro.main"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.convention" path="src/main/java/com.github.forax.pro.plugin.convention"/>
@@ -13,8 +14,8 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.packager" path="src/main/java/com.github.forax.pro.plugin.packager"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.linker" path="src/main/java/com.github.forax.pro.plugin.linker"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.uberpackager" path="src/main/java/com.github.forax.pro.plugin.uberpackager"/>
-	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.sandboxer" path="src/main/java/com.github.forax.pro.plugin.sandboxer"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.bootstrap" path="src/main/java/com.github.forax.pro.bootstrap"/>
+	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.bootstrap.genbuilder" path="src/main/java/com.github.forax.pro.bootstrap.genbuilder"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.ubermain" path="src/main/java/com.github.forax.pro.ubermain"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.uberbooter" path="src/main/java/com.github.forax.pro.uberbooter"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.daemon" path="src/main/java/com.github.forax.pro.daemon"/>
@@ -23,8 +24,9 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/java/com.github.forax.pro.plugin.tester" path="plugins/tester/src/main/java/com.github.forax.pro.plugin.tester"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.api" path="src/test/java/com.github.forax.pro.api"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="src/test/java/com.github.forax.pro.helper"/>
-	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/integration.pro" path="src/test/java/integration.pro"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.tester" path="plugins/tester/src/test/java/com.github.forax.pro.plugin.tester"/>
+	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/integration.pro" path="src/test/java/integration.pro"/>
+	
 	<classpathentry kind="lib" path="deps/aether.api-1.0.1.jar"/>
 	<classpathentry kind="lib" path="deps/aether.connector.basic-1.0.1.jar"/>
 	<classpathentry kind="lib" path="deps/aether.impl-1.0.1.jar"/>
