@@ -23,6 +23,7 @@ public class Bootstrap {
         "com.github.forax.pro.aether@0.9",
         "com.github.forax.pro.ather.fakeguava@0.9",
         "com.github.forax.pro.api@0.9",
+        "com.github.forax.pro.builder@0.9",
         "com.github.forax.pro.helper@0.9",
         "com.github.forax.pro.main@0.9/com.github.forax.pro.main.Main",
         "com.github.forax.pro.plugin.convention@0.9",
@@ -35,6 +36,7 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.tester@0.9",
         "com.github.forax.pro.plugin.uberpackager@0.9",
         "com.github.forax.pro.plugin.bootstrap@0.9/com.github.forax.pro.bootstrap.Bootstrap",
+        "com.github.forax.pro.bootstrap.genbuilder@0.9/com.github.forax.pro.bootstrap.genbuilder.GenBuilder",
         "com.github.forax.pro.ubermain@0.9",
         "com.github.forax.pro.uberbooter@0.9",
         "com.github.forax.pro.daemon@0.9",
@@ -59,6 +61,7 @@ public class Bootstrap {
         ));
     set("linker.rootModules", list(
         "com.github.forax.pro.main",
+        "com.github.forax.pro.builder",
         "com.github.forax.pro.plugin.convention",
         "com.github.forax.pro.plugin.resolver",
         "com.github.forax.pro.plugin.modulefixer",
@@ -93,11 +96,15 @@ public class Bootstrap {
       ));
     });
 
-    run("linker", "uberpackager");
-
+    run("linker"/*, "uberpackager" */);
+    
     copyPackagedPluginToTargetImage("runner");
     copyPackagedPluginToTargetImage("tester");
-
+    
+    // re-generate builders
+    //update(java.nio.file.Paths.get("target/image/plugins"));
+    //com.github.forax.pro.bootstrap.genbuilder.GenBuilder.generate();
+    
     Vanity.postOperations();
   }
 

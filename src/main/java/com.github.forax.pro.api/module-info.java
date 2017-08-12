@@ -7,7 +7,8 @@ module com.github.forax.pro.api {
   exports com.github.forax.pro.api.helper;
   
   exports com.github.forax.pro.api.impl
-    to com.github.forax.pro;
+    to com.github.forax.pro,
+       com.github.forax.pro.bootstrap.genbuilder;
   
   uses com.github.forax.pro.api.Plugin;
 }

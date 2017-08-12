@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,7 @@ import java.util.stream.Stream;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.helper.ProConf;
+import com.github.forax.pro.api.impl.Configs.Query;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
 import com.github.forax.pro.daemon.Daemon;
@@ -54,7 +56,7 @@ public class Pro {
       return config;
     }
   };
-  private static final Map<String, Plugin> PLUGINS;
+  static final HashMap<String, Plugin> PLUGINS;
   static {
     // initialization
     DefaultConfig config = CONFIG.get();
@@ -66,8 +68,20 @@ public class Pro {
 
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
     plugins.forEach(plugin -> plugin.configure(config.asChecked(plugin.name())));
-
-    PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity()));    
+    
+    PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity(), (_1, _2) -> { throw new AssertionError(); }, HashMap::new));
+  }
+  
+  public static void update(Path dynamicPluginDir) {
+    DefaultConfig config = CONFIG.get();
+    List<Plugin> plugins = Plugins.getDynamicPlugins(dynamicPluginDir);
+    for(Plugin plugin : plugins) {
+      String pluginName = plugin.name();
+      if (PLUGINS.putIfAbsent(pluginName, plugin) == null) {
+        plugin.init(config.asChecked(pluginName));
+        plugin.configure(config.asChecked(pluginName));
+      }
+    }
   }
   
   @SuppressWarnings("unchecked")  // emulate dynamic behavior here
@@ -82,6 +96,10 @@ public class Pro {
   public static <T> T get(String key, Class<T> type) {
     return CONFIG.get().get(key, type)
         .orElseThrow(() -> new IllegalStateException("unknown key " + key));
+  }
+  
+  public static <T> T getOrUpdate(String key, Class<T> type) {
+    return CONFIG.get().getOrUpdate(key, type);
   }
   
   public static Path location(String location) {
@@ -224,6 +242,18 @@ public class Pro {
     } finally {
       CONFIG.set(oldConfig);
     }
+  }
+  
+  public static void run(Object... plugins) {
+    run(Arrays.stream(plugins).map(o -> {
+      if (o instanceof Plugin) {
+        return ((Plugin)o).name();
+      }
+      if (o instanceof Query) {
+        return ((Query)o)._id_();
+      }
+      return o.toString();
+    }).toArray(String[]::new));
   }
   
   public static void run(String... pluginNames) {
