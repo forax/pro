@@ -74,7 +74,7 @@ public class ResolverPlugin implements Plugin {
     List<String> rootSourceNames = moduleFinder.findAll().stream()
             .map(ref -> ref.descriptor().name())
             .collect(Collectors.toList());
-    ModuleFinder allFinder = ModuleFinder.compose(moduleFinder, dependencyFinder, ModuleFinder.ofSystem());
+    ModuleFinder allFinder = ModuleFinder.compose(moduleFinder, dependencyFinder, ModuleHelper.systemModulesFinder());
     
     return ModuleHelper.resolveOnlyRequires(allFinder, rootSourceNames,
         (moduleName, __) -> unresolvedModules.add(moduleName));
@@ -112,6 +112,9 @@ public class ResolverPlugin implements Plugin {
       ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(resolver.moduleTestPath());
       sourceResolved &= resolveModuleDependencies(moduleTestFinder, dependencyFinder, unresolvedModules);
     }
+    
+    System.out.println("sourceResolved " + sourceResolved);
+    System.out.println("unresolved modules " + unresolvedModules);
     
     // everything is resolved, nothing to do
     if (sourceResolved) {

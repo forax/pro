@@ -124,7 +124,7 @@ public class ModuleFixerPlugin implements Plugin {
     HashMap<String, List<ModuleReference>> exportMap = new HashMap<>();
     ModuleFinder moduleFinder = ModuleFinder.compose(
         ModuleFinder.of(moduleDependencyPath.toArray(new Path[0])),
-        ModuleFinder.ofSystem());
+        ModuleHelper.systemModulesFinder());
     for(ModuleReference ref: moduleFinder.findAll()) {
       Set<String> exports;
       ModuleDescriptor descriptor = ref.descriptor();

@@ -171,10 +171,7 @@ public class CompilerPlugin implements Plugin {
       return 1; //FIXME
     }
     
-    ModuleFinder systemFinder = ModuleHelper.filter(ModuleFinder.ofSystem(), ref -> {
-      String name = ref.descriptor().name();
-      return name.startsWith("java.") || name.startsWith("jdk.");
-    });
+    ModuleFinder systemFinder = ModuleHelper.systemModulesFinder();
     
     log.debug(moduleFinder, finder -> pass + " modules " + finder.findAll().stream().map(ref -> ref.descriptor().name()).sorted().collect(Collectors.joining(", ")));
     log.debug(dependencyFinder, finder -> pass + " dependency modules " + finder.findAll().stream().map(ref -> ref.descriptor().name()).sorted().collect(Collectors.joining(", ")));

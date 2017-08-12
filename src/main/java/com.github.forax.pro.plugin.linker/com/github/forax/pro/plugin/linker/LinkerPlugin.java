@@ -119,7 +119,7 @@ public class LinkerPlugin implements Plugin {
           .collect(Collectors.toCollection(HashSet::new));
     });
     linker.serviceNames().ifPresent(serviceNames -> {
-      ModuleFinder rootFinder = ModuleFinder.compose(moduleFinder, ModuleFinder.ofSystem());
+      ModuleFinder rootFinder = ModuleFinder.compose(moduleFinder, ModuleHelper.systemModulesFinder());
       ModuleHelper.findAllModulesWhichProvideAService(serviceNames, rootFinder)
         .map(ref -> ref.descriptor().name())
         .forEach(rootModules::add);

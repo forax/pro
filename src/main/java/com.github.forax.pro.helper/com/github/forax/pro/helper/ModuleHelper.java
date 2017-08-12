@@ -228,6 +228,18 @@ public class ModuleHelper {
                    .toArray(ModuleFinder[]::new));
   }
   
+  /**
+   * Return the system modules currently installed.
+   * This filter out modules that do not starts with java.* or jdk.*.
+   * @return the system modules currently installed.
+   */
+  public static ModuleFinder systemModulesFinder() {
+    return filter(ModuleFinder.ofSystem(), ref -> {
+      String name = ref.descriptor().name();
+      return name.startsWith("java.") || name.startsWith("jdk.");
+    });
+  }
+  
   public static ModuleFinder filter(ModuleFinder finder, Predicate<? super ModuleReference> predicate) {
     return new ModuleFinder() {
       private Set<ModuleReference> filtered;
@@ -275,12 +287,13 @@ public class ModuleHelper {
       }
       String name = work.moduleName;
       Supplier<String> chain = work.chain;
+      moduleFounds.add(name);
       Optional<ModuleReference> optRef = finder.find(name);
       if (optRef.isPresent()) {
         optRef.get().descriptor().requires()
           .stream()
           .map(Requires::name)
-          .filter(moduleFounds::add)  // side effect !, it filters out require already presents in moduleFound
+          .filter(require -> !moduleFounds.contains(require))  
           .forEach(require -> works.offer(new Work(() -> chain.get() + " -> " + require, require)));
       } else {
         resolved = false;
