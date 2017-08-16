@@ -6,7 +6,6 @@ import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
 import static java.nio.file.Files.createDirectories;
 
 import java.io.IOException;
-import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.util.stream.Collectors;
 
@@ -97,14 +96,14 @@ public class Bootstrap {
     });
 
     run("linker"/*, "uberpackager" */);
-    
+
     copyPackagedPluginToTargetImage("runner");
     copyPackagedPluginToTargetImage("tester");
-    
+
     // re-generate builders
     //update(java.nio.file.Paths.get("target/image/plugins"));
     //com.github.forax.pro.bootstrap.genbuilder.GenBuilder.generate();
-    
+
     Vanity.postOperations();
   }
 
