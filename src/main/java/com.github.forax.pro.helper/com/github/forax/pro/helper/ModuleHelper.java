@@ -54,14 +54,14 @@ import com.github.forax.pro.helper.parser.ModuleClassVisitor;
 
 public class ModuleHelper {
   private ModuleHelper() {
-    throw new AssertionError(); 
+    throw new AssertionError();
   }
 
   private static boolean containsAtLeastAService(ModuleReference ref, List<String> serviceNames) {
      Set<String> provides = ref.descriptor().provides().stream().map(Provides::service).collect(Collectors.toSet());
      return serviceNames.stream().anyMatch(provides::contains);
-  } 
-  
+  }
+
   public static Stream<ModuleReference> findAllModulesWhichProvideAService(List<String> serviceNames, ModuleFinder finder) {
     return finder.findAll().stream()
         .filter(ref -> containsAtLeastAService(ref, serviceNames));
@@ -71,7 +71,11 @@ public class ModuleHelper {
    * Returns the single module contained in {@code path} as a {@link ModuleReference}.
    */
   public static ModuleReference getOnlyModule(Path path) {
-    Iterator<ModuleReference> iterator = ModuleFinder.of(path).findAll().iterator();
+    Set<ModuleReference> all = ModuleFinder.of(path).findAll();
+    if (all.isEmpty()) {
+      throw new IllegalArgumentException("expected at least on module but found none in " + path);
+    }
+    Iterator<ModuleReference> iterator = all.iterator();
     ModuleReference first = iterator.next();
     if (!iterator.hasNext()) {
       return first;
@@ -84,7 +88,7 @@ public class ModuleHelper {
     sb.append('>');
     throw new IllegalArgumentException(sb.toString());
   }
-  
+
   private static Set<Requires.Modifier> requireModifiers(int modifiers) {
     return Map.of(
         ACC_MANDATED, Requires.Modifier.MANDATED,
@@ -97,7 +101,7 @@ public class ModuleHelper {
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
   }
-  
+
   private static void parseModule(Path moduleInfoPath, ModuleClassVisitor visitor) {
     try {
       JavacModuleParser.parse(moduleInfoPath, visitor);
@@ -105,17 +109,17 @@ public class ModuleHelper {
       throw new UncheckedIOException(e);
     }
   }
-  
+
   private static Optional<ModuleNode> sourceModuleInfo(Path moduleInfoPath) {
     class Visitor implements  ModuleClassVisitor {
       ModuleNode moduleNode;
-      
+
       @Override
       public ModuleVisitor visitModule(String name, int flags, String version) {
         return moduleNode = new ModuleNode(name, flags, version);
       }
     }
-    
+
     Visitor visitor = new Visitor();
     parseModule(moduleInfoPath, visitor);
     ModuleNode moduleNode = visitor.moduleNode;
@@ -132,11 +136,11 @@ public class ModuleHelper {
     moduleNode.provides = fixNull(moduleNode.provides);
     return Optional.of(moduleNode);
   }
-  
+
   private static <T> List<T> fixNull(List<T> list) {
     return list == null? new ArrayList<>(): list;
   }
-  
+
   private static Set<String> findJavaPackages(Path moduleDirectory) {
     try(Stream<Path> stream = Files.walk(moduleDirectory)) {
       return stream
@@ -149,15 +153,15 @@ public class ModuleHelper {
       throw new UncheckedIOException(e);
     }
   }
-  
+
   public static Optional<ModuleDescriptor> sourceModuleDescriptor(Path moduleInfoPath) {
     return sourceModuleInfo(moduleInfoPath).map(moduleNode -> createModuleDescriptor(moduleNode, moduleInfoPath));
   }
-  
+
   private static ModuleDescriptor createModuleDescriptor(ModuleNode moduleNode, Path moduleInfoPath) {
     Set<Modifier> modifiers = (moduleNode.access & ACC_OPEN) != 0? Set.of(Modifier.OPEN): Set.of();
     ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(moduleNode.name, modifiers);
-    
+
     moduleNode.requires.forEach(require -> builder.requires(requireModifiers(require.access), require.module));
     moduleNode.exports.forEach(export -> {
       if (export.modules.isEmpty()) {
@@ -187,7 +191,7 @@ public class ModuleHelper {
 
     return descriptor;
   }
-  
+
   public static ModuleFinder sourceModuleFinder(Path directory) {
     return new ModuleFinder() {
       @Override
@@ -199,7 +203,7 @@ public class ModuleHelper {
           throw new UncheckedIOException(e);
         }
       }
-      
+
       @Override
       public Optional<ModuleReference> find(String name) {
         return Optional.of(directory.resolve(name))
@@ -211,7 +215,7 @@ public class ModuleHelper {
       }
     };
   }
-  
+
   static ModuleReference moduleReference(ModuleDescriptor descriptor, URI uri, ModuleReader moduleReader) {
     return new ModuleReference(descriptor, uri) {
       @Override
@@ -220,14 +224,14 @@ public class ModuleHelper {
       }
     };
   }
-  
+
   public static ModuleFinder sourceModuleFinders(List<Path> directories) {
     return ModuleFinder.compose(
         directories.stream()
                    .map(ModuleHelper::sourceModuleFinder)
                    .toArray(ModuleFinder[]::new));
   }
-  
+
   /**
    * Return the system modules currently installed.
    * This filter out modules that do not starts with java.* or jdk.*.
@@ -239,11 +243,11 @@ public class ModuleHelper {
       return name.startsWith("java.") || name.startsWith("jdk.");
     });
   }
-  
+
   public static ModuleFinder filter(ModuleFinder finder, Predicate<? super ModuleReference> predicate) {
     return new ModuleFinder() {
       private Set<ModuleReference> filtered;
-      
+
       @Override
       public Set<ModuleReference> findAll() {
         if (filtered != null) {
@@ -252,33 +256,33 @@ public class ModuleHelper {
         return filtered = Collections.unmodifiableSet(
             finder.findAll().stream().filter(predicate).collect(Collectors.toSet()));
       }
-      
+
       @Override
       public Optional<ModuleReference> find(String name) {
         return finder.find(name).filter(predicate);
       }
     };
   }
-  
+
   public interface ResolverFailureListener {
     public void dependencyNotFound(String moduleName, String dependencyChain);
   }
-  
+
   public static boolean resolveOnlyRequires(ModuleFinder finder, List<String> rootNames, ResolverFailureListener listener) {
     class Work {
       final Supplier<String> chain;
       final String moduleName;
-      
+
       Work(Supplier<String> chain, String moduleName) {
         this.chain = chain;
         this.moduleName = moduleName;
       }
     }
-    
+
     HashSet<String> moduleFounds = new HashSet<>(rootNames);
     ArrayDeque<Work> works = new ArrayDeque<>();
     rootNames.forEach(root -> works.offer(new Work(() -> root, root)));
-    
+
     boolean resolved = true;
     for(;;) {
       Work work = works.poll();
@@ -293,7 +297,7 @@ public class ModuleHelper {
         optRef.get().descriptor().requires()
           .stream()
           .map(Requires::name)
-          .filter(require -> !moduleFounds.contains(require))  
+          .filter(require -> !moduleFounds.contains(require))
           .forEach(require -> works.offer(new Work(() -> chain.get() + " -> " + require, require)));
       } else {
         resolved = false;
@@ -302,13 +306,13 @@ public class ModuleHelper {
     }
   }
 
-  
+
   public static ModuleDescriptor mergeModuleDescriptor(ModuleDescriptor sourceModule, ModuleDescriptor testModule) {
     boolean open = sourceModule.isOpen() || testModule.isOpen();
-    
+
     Set<Modifier> moduleModifiers = open? Set.of(Modifier.OPEN): Set.of();
     Builder builder = ModuleDescriptor.newModule(testModule.name(), moduleModifiers);
-    
+
     HashMap<String, Set<Requires.Modifier>> requires = merge(ModuleDescriptor::requires,
         Requires::name, Requires::modifiers, ModuleHelper::mergeRequiresModifiers, sourceModule, testModule);
     HashMap<String, Set<String>> exports = merge(ModuleDescriptor::exports,
@@ -321,7 +325,7 @@ public class ModuleHelper {
         x -> x, x -> true, (_1, _2) -> true, sourceModule, testModule);
     HashMap<String, Set<String>> provides = merge(ModuleDescriptor::provides,
         Provides::service, p -> new HashSet<>(p.providers()), ModuleHelper::mergeAll, sourceModule, testModule);
-    
+
     requires.forEach((name, modifiers) -> builder.requires(modifiers, name));
     exports.forEach((source, target) -> {
       if (target.isEmpty()) {
@@ -341,10 +345,10 @@ public class ModuleHelper {
     });
     uses.keySet().forEach(builder::uses);
     provides.forEach((service, providers) -> builder.provides(service, providers.stream().collect(toList())));
-    
+
     return builder.build();
   }
-  
+
   private static <T, V> HashMap<String, V> merge(Function<ModuleDescriptor, Set<? extends T>> propertyExtractor, Function<? super T, String> keyMapper, Function<? super T, ? extends V> valueMapper, BiFunction<? super V, ? super V, ? extends V> valueMerger, ModuleDescriptor sourceDescriptor, ModuleDescriptor testDescriptor) {
     LinkedHashMap<String, V> map = new LinkedHashMap<>();
     Consumer<T> consumer = element -> map.merge(keyMapper.apply(element), valueMapper.apply(element), valueMerger);
@@ -352,14 +356,14 @@ public class ModuleHelper {
     propertyExtractor.apply(testDescriptor).forEach(consumer);
     return map;
   }
-  
+
   private static Set<String> mergeAll(Set<String> s1, Set<String> s2) {
     LinkedHashSet<String> set = new LinkedHashSet<>();
     set.addAll(s1);
     set.addAll(s2);
     return set;
   }
-  
+
   private static Set<String> mergeRestrictions(Set<String> s1, Set<String> s2) {
     if (s1.isEmpty()) {
       return s1;
@@ -369,7 +373,7 @@ public class ModuleHelper {
     }
     return mergeAll(s1, s2);
   }
-  
+
   private static Set<Requires.Modifier> mergeRequiresModifiers(Set<Requires.Modifier> s1, Set<Requires.Modifier> s2) {
     boolean transitive = s1.contains(Requires.Modifier.TRANSITIVE) || s2.contains(Requires.Modifier.TRANSITIVE);
     boolean staticz = s1.contains(Requires.Modifier.STATIC) && s2.contains(Requires.Modifier.STATIC);
@@ -378,12 +382,12 @@ public class ModuleHelper {
           Optional.of(Requires.Modifier.STATIC).filter(__ -> staticz)
         ).flatMap(Optional::stream).collect(Collectors.toSet());
   }
-  
-  
+
+
   public static String moduleDescriptorToSource(ModuleDescriptor descriptor) {
     class Generator {
       private final ArrayList<Stream<String>> streams = new ArrayList<>();
-      
+
       Generator $(String text) {
         streams.add(Stream.of(text)); return this;
       }
@@ -405,7 +409,7 @@ public class ModuleHelper {
         return streams.stream().flatMap(x -> x).collect(Collectors.joining("\n"));
       }
     }
-    
+
     return new Generator()
           .$("%s",             desc -> desc.isOpen()? "open":"")
           .$("module %s {",    ModuleDescriptor::name)
@@ -422,13 +426,13 @@ public class ModuleHelper {
   public static byte[] moduleDescriptorToBinary(ModuleDescriptor descriptor) {
     ClassWriter classWriter = new ClassWriter(0);
     classWriter.visit(V1_9, ACC_MODULE, "module-info", null, null, null);
-    int moduleFlags = (descriptor.isOpen()? ACC_OPEN: 0) | ACC_SYNTHETIC;   // mark all generated module-info.class as synthetic    
+    int moduleFlags = (descriptor.isOpen()? ACC_OPEN: 0) | ACC_SYNTHETIC;   // mark all generated module-info.class as synthetic
     String moduleVersion = descriptor.version().map(Version::toString).orElse(null);
     org.objectweb.asm.ModuleVisitor mv = classWriter.visitModule(descriptor.name(), moduleFlags, moduleVersion);
     descriptor.packages().forEach(packaze -> mv.visitPackage(packaze.replace('.', '/')));
-    
+
     descriptor.mainClass().ifPresent(mainClass -> mv.visitMainClass(mainClass.replace('.', '/')));
-    
+
     descriptor.requires().forEach(require -> {
       int modifiers = require.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
       mv.visitRequire(require.name(), modifiers, null);
@@ -449,7 +453,7 @@ public class ModuleHelper {
     classWriter.visitEnd();
     return classWriter.toByteArray();
   }
-  
+
   private static int modifierToInt(Requires.Modifier modifier) {
     switch(modifier) {
     case MANDATED:
@@ -464,7 +468,7 @@ public class ModuleHelper {
       throw new IllegalStateException("unknown modifier " + modifier);
     }
   }
-  
+
   private static int modifierToInt(Exports.Modifier modifier) {
     switch(modifier) {
     case MANDATED:
@@ -475,7 +479,7 @@ public class ModuleHelper {
       throw new IllegalStateException("unknown modifier " + modifier);
     }
   }
-  
+
   private static int modifierToInt(Opens.Modifier modifier) {
     switch(modifier) {
     case MANDATED:
