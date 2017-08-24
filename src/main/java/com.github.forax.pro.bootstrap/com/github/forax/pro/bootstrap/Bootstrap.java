@@ -83,15 +83,18 @@ public class Bootstrap {
       set("resolver.remoteRepositories", list(
         uri("https://oss.sonatype.org/content/repositories/snapshots")
       ));
+      String junitPlatformVersion = "1.0.0-RC3";
+      String junitJupiterVersion = "5.0.0-RC3";
+      String opentest4jVersion = "1.0.0-RC1";
       set("resolver.dependencies", list(
           // "API"
-          "org.opentest4j=org.opentest4j:opentest4j:1.0.0-M3",
-          "org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.0.0-M6",
-          "org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.0.0-M6",
+          "org.opentest4j=org.opentest4j:opentest4j:" + opentest4jVersion,
+          "org.junit.platform.commons=org.junit.platform:junit-platform-commons:" + junitPlatformVersion,
+          "org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:" + junitJupiterVersion,
           // "Launcher + Engine"
-          "org.junit.platform.engine=org.junit.platform:junit-platform-engine:1.0.0-M6",
-          "org.junit.platform.launcher=org.junit.platform:junit-platform-launcher:1.0.0-M6",
-          "org.junit.jupiter.engine=org.junit.jupiter:junit-jupiter-engine:5.0.0-M6"
+          "org.junit.platform.engine=org.junit.platform:junit-platform-engine:" + junitPlatformVersion,
+          "org.junit.platform.launcher=org.junit.platform:junit-platform-launcher:" + junitPlatformVersion,
+          "org.junit.jupiter.engine=org.junit.jupiter:junit-jupiter-engine:" + junitJupiterVersion
       ));
     });
 
