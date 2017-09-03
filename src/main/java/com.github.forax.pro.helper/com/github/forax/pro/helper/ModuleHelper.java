@@ -1,9 +1,14 @@
 package com.github.forax.pro.helper;
 
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACC_MANDATED;
+import static org.objectweb.asm.Opcodes.ACC_MODULE;
 import static org.objectweb.asm.Opcodes.ACC_OPEN;
+import static org.objectweb.asm.Opcodes.ACC_STATIC_PHASE;
+import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
+import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
 import static org.objectweb.asm.Opcodes.V1_9;
 
 import java.io.IOException;
@@ -28,7 +33,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,21 +76,16 @@ public class ModuleHelper {
    */
   public static ModuleReference getOnlyModule(Path path) {
     Set<ModuleReference> all = ModuleFinder.of(path).findAll();
-    if (all.isEmpty()) {
-      throw new IllegalArgumentException("expected at least on module but found none in " + path);
+    Optional<ModuleReference> first = all.stream().findFirst();
+    switch(all.size()) {
+    case 0:
+      throw new IllegalArgumentException("expected one module in " + path + " but found none");
+    case 1:
+      return first.get();
+    default:
+      throw new IllegalArgumentException(
+          "expected one module in " + path + " but found: " + all.stream().map(ModuleReference::toString).collect(joining(", ", "<", ">")));
     }
-    Iterator<ModuleReference> iterator = all.iterator();
-    ModuleReference first = iterator.next();
-    if (!iterator.hasNext()) {
-      return first;
-    }
-    StringBuilder sb = new StringBuilder();
-    sb.append("expected one module but was: <").append(first);
-    while (iterator.hasNext()) {
-      sb.append(", ").append(iterator.next());
-    }
-    sb.append('>');
-    throw new IllegalArgumentException(sb.toString());
   }
 
   private static Set<Requires.Modifier> requireModifiers(int modifiers) {
