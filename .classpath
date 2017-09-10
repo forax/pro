@@ -26,7 +26,7 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="src/test/java/com.github.forax.pro.helper"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.tester" path="plugins/tester/src/test/java/com.github.forax.pro.plugin.tester"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/integration.pro" path="src/test/java/integration.pro"/>
-	
+
 	<classpathentry kind="lib" path="deps/aether.api-1.0.1.jar"/>
 	<classpathentry kind="lib" path="deps/aether.connector.basic-1.0.1.jar"/>
 	<classpathentry kind="lib" path="deps/aether.impl-1.0.1.jar"/>
@@ -36,10 +36,11 @@
 	<classpathentry kind="lib" path="deps/maven.aether.provider-3.3.9.jar"/>
 	<classpathentry kind="lib" path="deps/aether.util-1.0.1.jar"/>
 	<classpathentry kind="lib" path="deps/asm-debug-all-6.0_ALPHA2.jar"/>
+	<classpathentry kind="lib" path="deps/org.apiguardian.jar"/>
 	<classpathentry kind="lib" path="deps/org.json-20160810.jar"/>
 	<classpathentry kind="lib" path="deps/org.junit.jupiter.api.jar"/>
+	<classpathentry kind="lib" path="deps/org.junit.platform.commons.jar"/>
 	<classpathentry kind="lib" path="deps/org.opentest4j.jar"/>
-	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.commons.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.engine.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.launcher.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-9"/>
