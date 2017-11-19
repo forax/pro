@@ -1,6 +1,6 @@
 package com.github.forax.pro.plugin.tester;
 
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModule;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -37,17 +37,16 @@ public class TesterRunner implements IntSupplier {
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
       ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
-      List<Class<?>> testClasses = findTestClasses(moduleReference);
       Launcher launcher = LauncherFactory.create();
-      return launch(moduleReference, launcher, testClasses);
+      return launch(moduleReference, launcher);
     } finally {
       Thread.currentThread().setContextClassLoader(oldContext);
     }
   }
 
-  private static int launch(ModuleReference moduleReference, Launcher launcher, List<Class<?>> testClasses) {
+  private static int launch(ModuleReference moduleReference, Launcher launcher) {
     LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
-    testClasses.forEach(testClass -> builder.selectors(selectClass(testClass)));
+    builder.selectors(selectModule(moduleReference.descriptor().name()));
 
     long startTimeMillis = System.currentTimeMillis();
     LauncherDiscoveryRequest launcherDiscoveryRequest = builder.build();
@@ -70,26 +69,4 @@ public class TesterRunner implements IntSupplier {
     return failures;
   }
 
-  private static List<Class<?>> findTestClasses(ModuleReference moduleReference) {
-    try (ModuleReader moduleReader = moduleReference.open()) {
-      return moduleReader.list()
-          .filter(name -> name.endsWith("Tests.class")) // TODO Make test class filter configurable
-          .map(TesterRunner::loadTestClass)
-          .collect(Collectors.toList());
-    } catch(IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  private static Class<?> loadTestClass(String fileName) {
-    String className = fileName.substring(0, fileName.length() - ".class".length());
-    className = className.replace('/','.');
-    ClassLoader classLoader = TesterRunner.class.getClassLoader();
-    try {
-      return classLoader.loadClass(className);
-    } catch (ClassNotFoundException e) {
-      throw new UncheckedIOException(
-          new IOException("Loading failed for name: " + className + " (" + fileName + ')', e));
-    }
-  }
 }
