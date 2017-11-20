@@ -2,16 +2,11 @@ package com.github.forax.pro.plugin.tester;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModule;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UncheckedIOException;
-import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.function.IntSupplier;
-import java.util.stream.Collectors;
 
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;

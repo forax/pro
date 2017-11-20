@@ -73,17 +73,17 @@ public class TesterPlugin implements Plugin {
     int exitCodeSum = 0;
     for (Path path : directories(tester.moduleExplodedTestPath())) {
       log.debug(path, p -> String.format("Testing %s...", p.toFile().getName()));
-      exitCodeSum += execute(tester, path.toAbsolutePath().normalize());
+      exitCodeSum += execute(log, tester, path.toAbsolutePath().normalize());
     }
     return exitCodeSum;
   }
 
-  private int execute(TesterConf tester, Path testPath) throws IOException {
+  private int execute(Log log, TesterConf tester, Path testPath) throws IOException {
     ExecutorService executor = Executors.newSingleThreadExecutor();
 
     ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
     String moduleName = moduleReference.descriptor().name();
-    ClassLoader testClassLoader = createTestClassLoader(tester, testPath, moduleName);
+    ClassLoader testClassLoader = createTestClassLoader(log, tester, testPath, moduleName);
 
     IntSupplier runner;
     try {
@@ -102,7 +102,7 @@ public class TesterPlugin implements Plugin {
     }
   }
 
-  private ClassLoader createTestClassLoader(TesterConf tester, Path testPath, String testModuleName) {
+  private ClassLoader createTestClassLoader(Log log, TesterConf tester, Path testPath, String testModuleName) {
     String pluginModuleName = TesterPlugin.class.getModule().getName(); // "com.github.forax.pro.plugin.tester"
     List<String> rootNames = List.of(pluginModuleName, testModuleName);
 
@@ -111,12 +111,15 @@ public class TesterPlugin implements Plugin {
         .append(tester.pluginDir().resolve(name()))  // "[PRO_HOME]/plugins/tester"
         .appendAll(tester.moduleExplodedTestPath())  // "target/test/exploded")
         .appendAll(tester.moduleDependencyPath());   // "deps"
+    log.debug(moduleFinderRoots, roots -> "moduleFinderRoots: " + roots);
 
     ModuleFinder finder = ModuleFinder.of(moduleFinderRoots.toArray(Path[]::new));
     ModuleLayer bootModuleLayer = ModuleLayer.boot();
     Configuration configuration = bootModuleLayer.configuration().resolve(finder, ModuleFinder.of(), rootNames);
+    log.debug(configuration, cfg -> "configuration: " + cfg);
     ClassLoader parentLoader = ClassLoader.getSystemClassLoader();
     ModuleLayer configuredLayer = bootModuleLayer.defineModulesWithOneLoader(configuration, parentLoader);
+    log.debug(configuredLayer, layer -> "configuredLayer: " + layer);
     ClassLoader classLoader = configuredLayer.findLoader(pluginModuleName);
     classLoader.setDefaultAssertionStatus(true); // -ea
     return classLoader;
