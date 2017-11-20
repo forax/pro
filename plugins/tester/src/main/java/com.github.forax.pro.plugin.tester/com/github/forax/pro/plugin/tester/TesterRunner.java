@@ -1,12 +1,17 @@
 package com.github.forax.pro.plugin.tester;
 
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModule;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.IntSupplier;
+import java.util.stream.Collectors;
 
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
@@ -32,16 +37,17 @@ public class TesterRunner implements IntSupplier {
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
       ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
+      List<Class<?>> testClasses = findTestClasses(moduleReference);
       Launcher launcher = LauncherFactory.create();
-      return launch(moduleReference, launcher);
+      return launch(moduleReference, launcher, testClasses);
     } finally {
       Thread.currentThread().setContextClassLoader(oldContext);
     }
   }
 
-  private static int launch(ModuleReference moduleReference, Launcher launcher) {
+  private static int launch(ModuleReference moduleReference, Launcher launcher, List<Class<?>> testClasses) {
     LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
-    builder.selectors(selectModule(moduleReference.descriptor().name()));
+    testClasses.forEach(testClass -> builder.selectors(selectClass(testClass)));
 
     long startTimeMillis = System.currentTimeMillis();
     LauncherDiscoveryRequest launcherDiscoveryRequest = builder.build();
@@ -62,6 +68,29 @@ public class TesterRunner implements IntSupplier {
       System.out.println(stringWriter);
     }
     return failures;
+  }
+
+  private static List<Class<?>> findTestClasses(ModuleReference moduleReference) {
+    try (ModuleReader moduleReader = moduleReference.open()) {
+      return moduleReader.list()
+              .filter(name -> name.endsWith("Tests.class")) // TODO Make test class filter configurable
+              .map(TesterRunner::loadTestClass)
+              .collect(Collectors.toList());
+    } catch(IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private static Class<?> loadTestClass(String fileName) {
+    String className = fileName.substring(0, fileName.length() - ".class".length());
+    className = className.replace('/','.');
+    ClassLoader classLoader = TesterRunner.class.getClassLoader();
+    try {
+      return classLoader.loadClass(className);
+    } catch (ClassNotFoundException e) {
+      throw new UncheckedIOException(
+              new IOException("Loading failed for name: " + className + " (" + fileName + ')', e));
+    }
   }
 
 }
