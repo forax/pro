@@ -3,6 +3,9 @@ sudo: false
 language: java
 
 matrix:
+# Java 9 (openjdk-9.0.1 fails with java.security.InvalidAlgorithmParameterException: the trustAnchors parameter must be non-empty)
+  allow_failures:
+    - env: JDK_RELEASE='Open JDK 9.0.1'
   include:
 # Java 9 "provided by Travis CI"
     - jdk: oraclejdk9
@@ -16,6 +19,7 @@ matrix:
       install: . ./.travis/install-jdk-10.sh
 
 script:
+- java --version
 - chmod u+x ./build.sh
 - ./build.sh
 - ./target/pro/bin/pro build test.pro
