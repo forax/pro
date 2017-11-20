@@ -1,7 +1,19 @@
 sudo: false
 
 language: java
-jdk: oraclejdk9
+
+matrix:
+  include:
+# Java 9 "provided by Travis CI"
+    - jdk: oraclejdk9
+      env: JDK_RELEASE='Oracle JDK 9'
+      install: true
+# Java 9 "openjdk"
+    - env: JDK_RELEASE='Open JDK 9.0.1'
+      install: . ./.travis/install-jdk-9.sh
+# Java 10 "most recent Early-Access release"
+    - env: JDK_RELEASE='JDK 10 Early-Access'
+      install: . ./.travis/install-jdk-10.sh
 
 script:
 - chmod u+x ./build.sh
