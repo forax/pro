@@ -5,7 +5,7 @@ set -e
 # Download and extract JDK from http://jdk.java.net/9/
 #
 
-JDK_FEATURE=9.0.1
+JDK_FEATURE=9.0.4
 JDK_ARCHIVE=openjdk-${JDK_FEATURE}_linux-x64_bin.tar.gz
 
 cd ~
