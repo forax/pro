@@ -3,16 +3,16 @@ sudo: false
 language: java
 
 matrix:
-# Java 9 (openjdk-9.0.1 fails with java.security.InvalidAlgorithmParameterException: the trustAnchors parameter must be non-empty)
+# Java 9 (openjdk-9.0.4 fails with sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target)
   allow_failures:
-    - env: JDK_RELEASE='Open JDK 9.0.1'
+    - env: JDK_RELEASE='Open JDK 9.0.4'
   include:
 # Java 9 "provided by Travis CI"
     - jdk: oraclejdk9
       env: JDK_RELEASE='Oracle JDK 9'
       install: true
 # Java 9 "openjdk"
-    - env: JDK_RELEASE='Open JDK 9.0.1'
+    - env: JDK_RELEASE='Open JDK 9.0.4'
       install: . ./.travis/install-jdk-9.sh
 # Java 10 "most recent Early-Access release"
     - env: JDK_RELEASE='JDK 10 Early-Access'
