@@ -60,10 +60,10 @@
 	<classpathentry kind="lib" path="deps/org.json-20160810.jar">
 	  <attributes><attribute name="module" value="true"/></attributes>
     </classpathentry>
-	<classpathentry kind="lib" path="deps/junit-jupiter-api-5.1.0-M1.jar">
+	<classpathentry kind="lib" path="deps/junit-jupiter-api-5.1.0-M2.jar">
 	  <attributes><attribute name="module" value="true"/></attributes>
     </classpathentry>
-	<classpathentry kind="lib" path="deps/junit-platform-commons-1.1.0-M1.jar">
+	<classpathentry kind="lib" path="deps/junit-platform-commons-1.1.0-M2.jar">
 	  <attributes><attribute name="module" value="true"/></attributes>
     </classpathentry>
 	<classpathentry kind="lib" path="deps/org.opentest4j.jar">
