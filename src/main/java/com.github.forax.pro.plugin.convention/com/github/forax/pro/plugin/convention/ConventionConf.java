@@ -2,7 +2,6 @@ package com.github.forax.pro.plugin.convention;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 import com.github.forax.pro.api.TypeCheckedConfig;
 
