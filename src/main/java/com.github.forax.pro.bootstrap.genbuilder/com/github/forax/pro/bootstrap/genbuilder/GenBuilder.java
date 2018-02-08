@@ -92,8 +92,4 @@ public class GenBuilder {
     template(directory,
         plugins.stream().filter(plugin -> !invalidPlugins.contains(plugin.name())));
   }
-
-  public static void main(String[] args) throws IOException {
-    generate();
-  }
 }
