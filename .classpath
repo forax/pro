@@ -82,12 +82,12 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/org.junit.jupiter.api.jar">
+	<classpathentry kind="lib" path="deps/junit-jupiter-api-5.1.0-RC1.jar>
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/org.junit.platform.commons.jar">
+	<classpathentry kind="lib" path="deps/junit-platform-commons-1.1.0-RC1.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
