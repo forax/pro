@@ -11,7 +11,7 @@ public interface ConventionFacade {
   List<Path> javaModuleSourcePath();
   Path javaModuleDocSourcePath();
   
-  List<Path> javaModuleTestPath();
+  List<Path> javaModuleMergedTestPath();
   Path javaModuleDocTestPath();
   
   List<Path> javaModuleDependencyPath();

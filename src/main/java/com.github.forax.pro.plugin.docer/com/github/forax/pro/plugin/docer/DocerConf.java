@@ -20,8 +20,8 @@ public interface DocerConf {
   Path moduleDocSourcePath();
   void moduleDocSourcePath(Path docPath);
   
-  List<Path> moduleTestPath();
-  void moduleTestPath(List<Path> modulePath);
+  List<Path> moduleMergedTestPath();
+  void moduleMergedTestPath(List<Path> modulePath);
   Path moduleDocTestPath();
   void moduleDocTestPath(Path docPath);
   

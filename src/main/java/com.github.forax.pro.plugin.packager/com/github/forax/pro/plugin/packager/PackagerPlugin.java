@@ -35,7 +35,8 @@ public class PackagerPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    config.getOrUpdate(name(), PackagerConf.class);
+    PackagerConf packager = config.getOrUpdate(name(), PackagerConf.class);
+    packager.generateSourceTestBale(false);
   }
   
   @Override
@@ -44,12 +45,18 @@ public class PackagerPlugin implements Plugin {
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class); 
     
     // inputs
-    MutableConfig.derive(packager, PackagerConf::moduleArtifactSourcePath, convention, ConventionFacade::javaModuleArtifactSourcePath);
-    MutableConfig.derive(packager, PackagerConf::moduleArtifactTestPath, convention, ConventionFacade::javaModuleArtifactTestPath);
-    
-    // outputs
+    MutableConfig.derive(packager, PackagerConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
+    MutableConfig.derive(packager, PackagerConf::moduleTestPath, convention, ConventionFacade::javaModuleTestPath);
     MutableConfig.derive(packager, PackagerConf::moduleExplodedSourcePath, convention, ConventionFacade::javaModuleExplodedSourcePath);
     MutableConfig.derive(packager, PackagerConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
+    MutableConfig.derive(packager, PackagerConf::moduleDocSourcePath, convention, ConventionFacade::javaModuleDocSourcePath);
+    MutableConfig.derive(packager, PackagerConf::moduleDocTestPath, convention, ConventionFacade::javaModuleDocTestPath);
+    
+    // outputs
+    MutableConfig.derive(packager, PackagerConf::moduleArtifactSourcePath, convention, ConventionFacade::javaModuleArtifactSourcePath);
+    MutableConfig.derive(packager, PackagerConf::moduleArtifactTestPath, convention, ConventionFacade::javaModuleArtifactTestPath);
+    MutableConfig.derive(packager, PackagerConf::moduleBaleSourcePath, convention, ConventionFacade::javaModuleBaleSourcePath);
+    MutableConfig.derive(packager, PackagerConf::moduleBaleTestPath, convention, ConventionFacade::javaModuleBaleTestPath);
   }
   
   @Override
@@ -90,24 +97,57 @@ public class PackagerPlugin implements Plugin {
     
     Map<String, Metadata> metadataMap = packager.moduleMetadata().map(MetadataParser::parse).orElse(Map.of());
     
-    int errorCode = packageModules(log, jarTool, moduleExplodedSourcePath, moduleArtifactSourcePath, packager, metadataMap, "");
+    int errorCode = packageAll(moduleExplodedSourcePath, moduleArtifactSourcePath,
+        (input, output) -> packageModule(log, jarTool, input, output, packager, metadataMap, ""));
     if (errorCode != 0) {
       return errorCode;
     }
+    if (Files.exists(packager.moduleDocSourcePath())) {
+      errorCode = packageAll(List.of(packager.moduleDocSourcePath()), packager.moduleBaleSourcePath(),
+          (input, output) -> packageSourceOrDoc(log, jarTool, input, output, packager, metadataMap, "doc"));
+      if (errorCode != 0) {
+        return errorCode;
+      }
+    }
+    errorCode = packageAll(FileHelper.pathFromFilesThatExist(packager.moduleSourcePath()), packager.moduleBaleSourcePath(),
+        (input, output) -> packageSourceOrDoc(log, jarTool, input, output, packager, metadataMap, "source"));
+    if (errorCode != 0) {
+      return errorCode;
+    } 
     if (!moduleExplodedTestPath.stream().anyMatch(Files::exists)) {
       return 0;
     }
-    return packageModules(log, jarTool, moduleExplodedTestPath, moduleArtifactTestPath, packager, metadataMap, "test-");
+    errorCode = packageAll(moduleExplodedTestPath, moduleArtifactTestPath,
+        (input, output) -> packageModule(log, jarTool, input, output, packager, metadataMap, "test-"));
+    if (errorCode != 0) {
+      return errorCode;
+    }
+    if (Files.exists(packager.moduleDocTestPath())) {
+      errorCode = packageAll(List.of(packager.moduleDocTestPath()), packager.moduleBaleTestPath(),
+          (input, output) -> packageSourceOrDoc(log, jarTool, input, output, packager, metadataMap, "test-doc"));
+      if (errorCode != 0) {
+        return errorCode;
+      }
+    }
+    if (packager.generateSourceTestBale()) { 
+      packageAll(FileHelper.pathFromFilesThatExist(packager.moduleTestPath()), packager.moduleBaleTestPath(),
+          (input, output) -> packageSourceOrDoc(log, jarTool, input, output, packager, metadataMap, "test-source"));
+    }
+    return 0;
   }
 
-  private static int packageModules(Log log, ToolProvider jarTool, List<Path> moduleExplodedPath, Path moduleArtifactPath, PackagerConf packager, Map<String, Metadata> metadataMap, String prefix) throws IOException {
-    FileHelper.deleteAllFiles(moduleArtifactPath, false);
-    Files.createDirectories(moduleArtifactPath);
+  interface Action {
+    int apply(Path input, Path output);
+  }
+  
+  private static int packageAll(List<Path> inputs, Path output, Action action) throws IOException {
+    FileHelper.deleteAllFiles(output, false);
+    Files.createDirectories(output);
     
-    for(Path explodedPath: moduleExplodedPath) {
-      try(DirectoryStream<Path> directoryStream = Files.newDirectoryStream(explodedPath)) {
-        for(Path moduleExploded: directoryStream) {
-          int exitCode = packageModule(log, jarTool, moduleExploded, moduleArtifactPath, packager, metadataMap, prefix);
+    for(Path path: inputs) {
+      try(DirectoryStream<Path> directoryStream = Files.newDirectoryStream(path)) {
+        for(Path input: directoryStream) {
+          int exitCode = action.apply(input, output);
           if (exitCode != 0) {
             return exitCode;
           }
@@ -130,6 +170,24 @@ public class PackagerPlugin implements Plugin {
     Jar jar = new Jar(moduleExploded, moduleArtifact.resolve(prefix + moduleName + "-" + version + ".jar"));
     jar.setModuleVersion(version);
     metadata.flatMap(Metadata::mainClass).ifPresent(jar::setMainClass);
+    packager.rawArguments().ifPresent(jar::rawArguments);
+    
+    CmdLine cmdLine = new CmdLine().add("--create");
+    cmdLine = OptionAction.gatherAll(JarOption.class, option -> option.action).apply(jar, cmdLine);
+    String[] arguments = cmdLine.add(".").toArguments();
+    
+    log.verbose(jar, _jar -> OptionAction.toPrettyString(JarOption.class, option -> option.action).apply(_jar, "jar"));
+    int exitCode = jarTool.run(System.out, System.err, arguments);
+    return exitCode;
+  }
+  
+  private static int packageSourceOrDoc(Log log, ToolProvider jarTool, Path input, Path outputPath, PackagerConf packager, Map<String, Metadata> metadataMap, String suffix) {
+    String moduleName = input.getFileName().toString();
+    
+    Optional<Metadata> metadata = Optional.ofNullable(metadataMap.get(moduleName));
+    String version = metadata.flatMap(Metadata::version).orElse("1.0");
+    
+    Jar jar = new Jar(input, outputPath.resolve(moduleName + "-" + suffix + "-" + version + ".jar"));
     packager.rawArguments().ifPresent(jar::rawArguments);
     
     CmdLine cmdLine = new CmdLine().add("--create");

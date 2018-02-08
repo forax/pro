@@ -13,7 +13,12 @@ import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 import java.io.File;
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.net.URI;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
@@ -51,7 +56,7 @@ public class DocerPlugin implements Plugin {
     // inputs
     derive(compiler, DocerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
     derive(compiler, DocerConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
-    derive(compiler, DocerConf::moduleTestPath, convention, ConventionFacade::javaModuleTestPath);
+    derive(compiler, DocerConf::moduleMergedTestPath, convention, ConventionFacade::javaModuleMergedTestPath);
     
     // outputs
     derive(compiler, DocerConf::moduleDocSourcePath, convention, ConventionFacade::javaModuleDocSourcePath);
@@ -63,7 +68,7 @@ public class DocerPlugin implements Plugin {
     DocerConf docer = config.getOrThrow(name(), DocerConf.class);
     docer.moduleDependencyPath().forEach(registry::watch);
     docer.moduleSourcePath().forEach(registry::watch);
-    docer.moduleTestPath().forEach(registry::watch);
+    docer.moduleMergedTestPath().forEach(registry::watch);
   }
   
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
@@ -99,80 +104,54 @@ public class DocerPlugin implements Plugin {
         .orElseThrow(() -> new IllegalStateException("can not find javadoc"));
     DocerConf docer = config.getOrThrow(name(), DocerConf.class);
     
-    
-    ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(docer.moduleSourcePath());
-    int errorCode = generateDoc(log, javadocTool, docer,
-        docer.moduleSourcePath(),
-        moduleSourceFinder,
-        docer.moduleDocSourcePath(),
-        "source:");
+    List<Path> moduleSourcePath = FileHelper.pathFromFilesThatExist(docer.moduleSourcePath());
+    ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(moduleSourcePath);
+    int errorCode = generateAll(moduleSourceFinder, docer.moduleDocSourcePath(),
+        (input, output) -> generateDoc(log, javadocTool, docer, input, output, "source:"));
     if (errorCode != 0) {
       return errorCode;
     }
-    List<Path> moduleTestPath = FileHelper.pathFromFilesThatExist(docer.moduleTestPath());
+    List<Path> moduleTestPath = FileHelper.pathFromFilesThatExist(docer.moduleMergedTestPath());
     if (!docer.generateTestDoc() || moduleTestPath.isEmpty()) {
       return 0;
     }
     
-    ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(docer.moduleTestPath());
-    if (moduleTestFinder.findAll().isEmpty()) {
-      log.info(docer.moduleTestPath(), testPath -> "test: can not find any test modules in " + testPath.stream().map(Path::toString).collect(Collectors.joining(", ")));
-      return 0;
-    }
-    
-    return generateDoc(log, javadocTool, docer,
-        docer.moduleTestPath(),
-        moduleTestFinder,
-        docer.moduleDocTestPath(),
-        "test:");
+    ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(moduleTestPath);
+    return generateAll(moduleTestFinder, docer.moduleDocTestPath(),
+        (input, output) -> generateDoc(log, javadocTool, docer, input, output, "test:"));
   }
 
-  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docer, List<Path> moduleSourcePath, ModuleFinder moduleFinder, Path destination, String pass) throws IOException {
-    Optional<List<Path>> modulePath = modulePathOrDependencyPath(docer.modulePath(),
-        docer.moduleDependencyPath(), List.of());
+  interface Action {
+    int apply(Path input, Path output);
+  }
+  
+  private static int generateAll(ModuleFinder finder, Path output, Action action) throws IOException {
+    FileHelper.deleteAllFiles(output, false);
+    Files.createDirectories(output);
     
-    ModuleFinder dependencyFinder = ModuleFinder.compose(
-        modulePath
-            .stream()
-            .flatMap(List::stream)
-            .map(ModuleFinder::of)
-            .toArray(ModuleFinder[]::new));
-    List<String> rootSourceNames = moduleFinder.findAll().stream()
-            .map(ref -> ref.descriptor().name())
-            .collect(Collectors.toList());
-    if (rootSourceNames.isEmpty()) {
-      log.error(moduleSourcePath, sourcePath -> pass + " can not find any modules in " + sourcePath.stream().map(Path::toString).collect(Collectors.joining(", ")));
-      return 1; //FIXME
+    for(ModuleReference module: finder.findAll()) {
+      Optional<URI> location = module.location();
+      if (!location.isPresent()) {
+        continue;
+      }
+      int exitCode = action.apply(Paths.get(location.get()), output);
+      if (exitCode != 0) {
+        return exitCode;
+      }
     }
-    
-    ModuleFinder systemFinder = ModuleHelper.systemModulesFinder();
-    
-    log.debug(moduleFinder, finder -> pass + " modules " + finder.findAll().stream().map(ref -> ref.descriptor().name()).sorted().collect(Collectors.joining(", ")));
-    log.debug(dependencyFinder, finder -> pass + " dependency modules " + finder.findAll().stream().map(ref -> ref.descriptor().name()).sorted().collect(Collectors.joining(", ")));
-    log.debug(systemFinder, finder -> pass + " system modules " + finder.findAll().stream().map(ref -> ref.descriptor().name()).sorted().collect(Collectors.joining(", ")));
-    
-    boolean resolved = ModuleHelper.resolveOnlyRequires(
-        ModuleFinder.compose(moduleFinder, dependencyFinder, systemFinder),
-        rootSourceNames,
-        (moduleName, dependencyChain) -> {
-          log.error(null, __ -> pass + " can not resolve " + moduleName + " from " + dependencyChain);
-        });
-    if (!resolved) {
-      return 1;  //FIXME
-    }
-    
-    deleteAllFiles(destination, false);
-    
-    Javadoc javadoc = new Javadoc(destination, moduleSourcePath);
+    return 0;
+  }
+  
+  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docer, Path input, Path output, String pass) {
+    Javadoc javadoc = new Javadoc(output.resolve(input.getFileName().toString()), docer.moduleSourcePath());
     docer.rawArguments().ifPresent(javadoc::rawArguments);
-    modulePath.ifPresent(javadoc::modulePath);
+    javadoc.modulePath(docer.moduleDependencyPath());
     docer.upgradeModulePath().ifPresent(javadoc::upgradeModulePath);
     docer.rootModules().ifPresent(javadoc::rootModules);
     
-    
     CmdLine cmdLine = gatherAll(JavadocOption.class, option -> option.action).apply(javadoc, new CmdLine());
     List<Path> files = docer.files().orElseGet(
-        () -> walkIfNecessary(moduleSourcePath, pathFilenameEndsWith(".java")));  //FIXME, use rootNames ??
+        () -> walkIfNecessary(List.of(input), pathFilenameEndsWith(".java")));  //FIXME, use rootNames ??
     files.forEach(cmdLine::add);
     String[] arguments = cmdLine.toArguments();
     log.verbose(files, fs -> OptionAction.toPrettyString(JavadocOption.class, option -> option.action).apply(javadoc, "javadoc") + "\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
