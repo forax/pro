@@ -11,6 +11,7 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.resolver" path="src/main/java/com.github.forax.pro.plugin.resolver"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.modulefixer" path="src/main/java/com.github.forax.pro.plugin.modulefixer"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.compiler" path="src/main/java/com.github.forax.pro.plugin.compiler"/>
+	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.docer" path="src/main/java/com.github.forax.pro.plugin.docer"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.packager" path="src/main/java/com.github.forax.pro.plugin.packager"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.linker" path="src/main/java/com.github.forax.pro.plugin.linker"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.uberpackager" path="src/main/java/com.github.forax.pro.plugin.uberpackager"/>
@@ -26,55 +27,90 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="src/test/java/com.github.forax.pro.helper"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.plugin.tester" path="plugins/tester/src/test/java/com.github.forax.pro.plugin.tester"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/integration.pro" path="src/test/java/integration.pro"/>
-
 	<classpathentry kind="lib" path="deps/aether.api-1.0.1.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/aether.connector.basic-1.0.1.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/aether.impl-1.0.1.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/aether.spi-1.0.1.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/aether.transport.file-1.0.1.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/aether.transport.http-1.0.1.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/maven.aether.provider-3.3.9.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/aether.util-1.0.1.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/asm-debug-all-6.0_ALPHA2.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/org.apiguardian.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/org.json-20160810.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/org.junit.jupiter.api.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/org.junit.platform.commons.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="deps/org.opentest4j.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.engine.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.launcher.jar">
-	  <attributes><attribute name="module" value="true"/></attributes>
-    </classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-9"/>
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-9">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

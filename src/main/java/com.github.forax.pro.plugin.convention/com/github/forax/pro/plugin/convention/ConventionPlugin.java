@@ -31,6 +31,8 @@ public class ConventionPlugin implements Plugin {
            pro, c -> List.of(c.currentDir().resolve("target/main/exploded")));
     derive(convention, ConventionConf::javaModuleArtifactSourcePath,
            pro, c -> c.currentDir().resolve("target/main/artifact"));
+    derive(convention, ConventionConf::javaModuleDocSourcePath,
+        pro, c -> c.currentDir().resolve("target/main/doc"));
     
     derive(convention, ConventionConf::javaModuleTestPath,
         pro, c -> List.of(c.currentDir().resolve("src/test/java")));
@@ -42,6 +44,8 @@ public class ConventionPlugin implements Plugin {
         pro, c -> List.of(c.currentDir().resolve("target/test/exploded")));
     derive(convention, ConventionConf::javaModuleArtifactTestPath,
         pro, c -> c.currentDir().resolve("target/test/artifact"));
+    derive(convention, ConventionConf::javaModuleDocTestPath,
+        pro, c -> c.currentDir().resolve("target/test/doc"));
     
     derive(convention, ConventionConf::javaModuleDependencyPath,
         pro, c -> List.of(c.currentDir().resolve("deps")));

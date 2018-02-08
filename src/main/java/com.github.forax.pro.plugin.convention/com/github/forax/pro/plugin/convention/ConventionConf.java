@@ -2,6 +2,7 @@ package com.github.forax.pro.plugin.convention;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import com.github.forax.pro.api.TypeCheckedConfig;
 
@@ -18,6 +19,8 @@ public interface ConventionConf {
   void javaModuleExplodedSourcePath(List<Path> path);
   Path javaModuleArtifactSourcePath();
   void javaModuleArtifactSourcePath(Path path);
+  Path javaModuleDocSourcePath();
+  void javaModuleDocSourcePath(Path docPath);
 
   List<Path> javaModuleTestPath();
   void javaModuleTestPath(List<Path> path);
@@ -29,6 +32,8 @@ public interface ConventionConf {
   void javaModuleExplodedTestPath(List<Path> path);
   Path javaModuleArtifactTestPath();
   void javaModuleArtifactTestPath(Path path);
+  Path javaModuleDocTestPath();
+  void javaModuleDocTestPath(Path docPath);
 
   Path javaMavenLocalRepositoryPath();
   void javaMavenLocalRepositoryPath(Path path);

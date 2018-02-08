@@ -47,7 +47,7 @@ public interface Plugin {
    * This method can be called several times with different configurations.
    * 
    * The implementation of this method should use 
-   * @link {@link MutableConfig#derive(Object, java.util.function.BiConsumer, Object, java.util.function.Function)}
+   * {@link MutableConfig#derive(Object, java.util.function.BiConsumer, Object, java.util.function.Function)}
    * to explain how a value is computed from the values of other properties.
    * 
    * The implementation of this method should *never* try to store the

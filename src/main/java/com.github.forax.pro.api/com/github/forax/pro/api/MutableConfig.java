@@ -1,5 +1,6 @@
 package com.github.forax.pro.api;
 
+import java.util.NoSuchElementException;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 

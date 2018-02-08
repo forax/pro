@@ -37,16 +37,6 @@ public class Log {
     this.level = level;
   }
   
-  /**
-   * Returns true is this logger is allowed to display message
-   * for the level taken as parameter
-   * @param level the level
-   * @return true is this logger is allowed to display message for the level
-   */
-  /*public boolean allows(Level level) {
-    return this.level <= level.level;
-  }*/
-  
   private static final int DEBUG = Level.DEBUG.level;
   private static final int VERBOSE = Level.VERBOSE.level;
   private static final int INFO = Level.INFO.level;
@@ -57,8 +47,8 @@ public class Log {
    * @param level level of the logger.
    * @return a new logger
    */
-  public static Log create(String name, String logLevel)  {
-    return create(name, Level.of(logLevel));
+  public static Log create(String name, String level)  {
+    return create(name, Level.of(level));
   }
   
   /**

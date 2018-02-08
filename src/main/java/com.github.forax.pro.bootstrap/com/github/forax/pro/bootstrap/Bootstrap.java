@@ -31,6 +31,7 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.resolver@0.9",
         "com.github.forax.pro.plugin.modulefixer@0.9",
         "com.github.forax.pro.plugin.compiler@0.9",
+        "com.github.forax.pro.plugin.docer@0.9",
         "com.github.forax.pro.plugin.packager@0.9",
         "com.github.forax.pro.plugin.linker@0.9",
         "com.github.forax.pro.plugin.runner@0.9",
@@ -66,6 +67,7 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.resolver",
         "com.github.forax.pro.plugin.modulefixer",
         "com.github.forax.pro.plugin.compiler",
+        "com.github.forax.pro.plugin.docer",
         "com.github.forax.pro.plugin.packager",
         "com.github.forax.pro.plugin.linker",
         "com.github.forax.pro.plugin.uberpackager",
@@ -76,7 +78,7 @@ public class Bootstrap {
                   .map(ref -> ref.descriptor().name())
                   .collect(Collectors.toSet())));
 
-    run("modulefixer", "compiler", "packager");
+    run("modulefixer", "compiler", "docer", "packager");
 
     compileAndPackagePlugin("runner", () -> { /* empty */});
     compileAndPackagePlugin("tester", () -> {
