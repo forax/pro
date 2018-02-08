@@ -14,7 +14,7 @@ esac
 
 
 # For Cygwin, ensure paths are in UNIX format before anything is touched
-[ -z "$JAVA_HOME" ] && export JAVA_HOME=/usr/jdk/jdk-9
+[ -z "$JAVA_HOME" ] && export JAVA_HOME=/usr/jdk/jdk-10
 
 if $darwin; then
   [ -n "$JAVA_HOME" ] && JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-9.jdk/Contents/Home/"
