@@ -2,11 +2,10 @@ package com.github.forax.pro.plugin.docer;
 
 
 import static com.github.forax.pro.api.MutableConfig.derive;
-import static com.github.forax.pro.api.helper.OptionAction.action;
+import static com.github.forax.pro.api.helper.OptionAction.*;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
-import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 
@@ -15,7 +14,6 @@ import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.net.URI;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,6 +44,8 @@ public class DocerPlugin implements Plugin {
   public void init(MutableConfig config) {
     DocerConf docer = config.getOrUpdate(name(), DocerConf.class);
     docer.generateTestDoc(false);
+    docer.quiet(false);
+    docer.html5(true);
   }
   
   @Override
@@ -86,6 +86,8 @@ public class DocerPlugin implements Plugin {
     ROOT_MODULES(actionMaybe("--add-modules", Javadoc::rootModules, ",")),
     UPGRADE_MODULE_PATH(actionMaybe("--upgrade-module-path", Javadoc::upgradeModulePath, File.pathSeparator)),
     MODULE_PATH(actionMaybe("--module-path", Javadoc::modulePath, File.pathSeparator)),
+    QUIET(exists("-quiet", Javadoc::quiet)),
+    HTML5(exists("-html5", Javadoc::html5))
     ;
     
     final OptionAction<Javadoc> action;
@@ -107,7 +109,7 @@ public class DocerPlugin implements Plugin {
     List<Path> moduleSourcePath = FileHelper.pathFromFilesThatExist(docer.moduleSourcePath());
     ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(moduleSourcePath);
     int errorCode = generateAll(moduleSourceFinder, docer.moduleDocSourcePath(),
-        (input, output) -> generateDoc(log, javadocTool, docer, input, output, "source:"));
+        (input, output) -> generateDoc(log, javadocTool, docer, input, output));
     if (errorCode != 0) {
       return errorCode;
     }
@@ -118,7 +120,7 @@ public class DocerPlugin implements Plugin {
     
     ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(moduleTestPath);
     return generateAll(moduleTestFinder, docer.moduleDocTestPath(),
-        (input, output) -> generateDoc(log, javadocTool, docer, input, output, "test:"));
+        (input, output) -> generateDoc(log, javadocTool, docer, input, output));
   }
 
   interface Action {
@@ -142,12 +144,14 @@ public class DocerPlugin implements Plugin {
     return 0;
   }
   
-  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docer, Path input, Path output, String pass) {
+  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docer, Path input, Path output) {
     Javadoc javadoc = new Javadoc(output.resolve(input.getFileName().toString()), docer.moduleSourcePath());
     docer.rawArguments().ifPresent(javadoc::rawArguments);
     javadoc.modulePath(docer.moduleDependencyPath());
     docer.upgradeModulePath().ifPresent(javadoc::upgradeModulePath);
     docer.rootModules().ifPresent(javadoc::rootModules);
+    javadoc.quiet(docer.quiet());
+    javadoc.html5(docer.html5());
     
     CmdLine cmdLine = gatherAll(JavadocOption.class, option -> option.action).apply(javadoc, new CmdLine());
     List<Path> files = docer.files().orElseGet(

@@ -12,6 +12,12 @@ public interface DocerConf {
   boolean generateTestDoc();
   void generateTestDoc(boolean generate);
   
+  boolean quiet();
+  void quiet(boolean quiet);
+  
+  boolean html5();
+  void html5(boolean enable);
+  
   Optional<List<String>> rawArguments();
   void rawArguments(List<String> rawArguments);
   

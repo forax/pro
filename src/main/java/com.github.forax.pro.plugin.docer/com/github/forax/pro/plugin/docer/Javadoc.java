@@ -13,6 +13,8 @@ class Javadoc {
   private List<Path> upgradeModulePath;
   private List<String> rootModules;
   private List<String> rawArguments;
+  private boolean quiet;
+  private boolean html5;
   
   Javadoc(Path destination, List<Path> moduleSourcePath) {
     this.destination = destination;
@@ -52,5 +54,18 @@ class Javadoc {
   }
   public void rootModules(List<String> rootModules) {
     this.rootModules = Objects.requireNonNull(rootModules);
+  }
+  
+  public boolean quiet() {
+    return quiet;
+  }
+  public void quiet(boolean quiet) {
+    this.quiet = quiet;
+  }
+  public boolean html5() {
+    return html5;
+  }
+  public void html5(boolean enable) {
+    this.html5 = enable;
   }
 }
