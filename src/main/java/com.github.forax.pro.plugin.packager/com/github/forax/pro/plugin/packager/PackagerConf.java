@@ -20,9 +20,10 @@ public interface PackagerConf {
   
   Path moduleArtifactSourcePath();
   void moduleArtifactSourcePath(Path moduleArtifactSourcePath);
-  Path moduleBaleSourcePath();
-  void moduleBaleSourcePath(Path moduleBaleSourcePath);
-  
+  Path moduleSrcArtifactSourcePath();
+  void moduleSrcArtifactSourcePath(Path moduleSrcArtifactSourcePath);
+  Path moduleDocArtifactSourcePath();
+  void moduleDocArtifactSourcePath(Path moduleDocArtifactSourcePath);
   
   List<Path> moduleTestPath();
   void moduleTestPath(List<Path> moduleTestPath);
@@ -33,8 +34,10 @@ public interface PackagerConf {
   
   Path moduleArtifactTestPath();
   void moduleArtifactTestPath(Path destination);
-  Path moduleBaleTestPath();
-  void moduleBaleTestPath(Path moduleBaleTestPath);
+  Path moduleSrcArtifactTestPath();
+  void moduleSrcArtifactTestPath(Path moduleSrcArtifactTestPath);
+  Path moduleDocArtifactTestPath();
+  void moduleDocArtifactTestPath(Path moduleDocArtifactTestPath);
   
   Optional<List<String>> moduleMetadata();
   void moduleMetadata(List<String> metadata);

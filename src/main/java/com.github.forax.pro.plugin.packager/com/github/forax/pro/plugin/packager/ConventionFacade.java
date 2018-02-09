@@ -16,6 +16,8 @@ public interface ConventionFacade {
   
   Path javaModuleArtifactSourcePath();
   Path javaModuleArtifactTestPath();
-  Path javaModuleBaleSourcePath();
-  Path javaModuleBaleTestPath();
+  Path javaModuleSrcArtifactSourcePath();
+  Path javaModuleDocArtifactSourcePath();
+  Path javaModuleSrcArtifactTestPath();
+  Path javaModuleDocArtifactTestPath();
 }

@@ -33,8 +33,10 @@ public class ConventionPlugin implements Plugin {
            pro, c -> c.currentDir().resolve("target/main/artifact"));
     derive(convention, ConventionConf::javaModuleDocSourcePath,
         pro, c -> c.currentDir().resolve("target/main/doc"));
-    derive(convention, ConventionConf::javaModuleBaleSourcePath,
-        pro, c -> c.currentDir().resolve("target/main/bale"));
+    derive(convention, ConventionConf::javaModuleSrcArtifactSourcePath,
+        pro, c -> c.currentDir().resolve("target/main/artifact-src"));
+    derive(convention, ConventionConf::javaModuleDocArtifactSourcePath,
+        pro, c -> c.currentDir().resolve("target/main/artifact-doc"));
     
     derive(convention, ConventionConf::javaModuleTestPath,
         pro, c -> List.of(c.currentDir().resolve("src/test/java")));
@@ -48,8 +50,10 @@ public class ConventionPlugin implements Plugin {
         pro, c -> c.currentDir().resolve("target/test/artifact"));
     derive(convention, ConventionConf::javaModuleDocTestPath,
         pro, c -> c.currentDir().resolve("target/test/doc"));
-    derive(convention, ConventionConf::javaModuleBaleTestPath,
-        pro, c -> c.currentDir().resolve("target/test/bale"));
+    derive(convention, ConventionConf::javaModuleSrcArtifactTestPath,
+        pro, c -> c.currentDir().resolve("target/test/artifact-src"));
+    derive(convention, ConventionConf::javaModuleDocArtifactTestPath,
+        pro, c -> c.currentDir().resolve("target/test/artifact-doc"));
     
     derive(convention, ConventionConf::javaModuleDependencyPath,
         pro, c -> List.of(c.currentDir().resolve("deps")));

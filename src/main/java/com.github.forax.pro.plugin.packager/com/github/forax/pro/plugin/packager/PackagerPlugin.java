@@ -55,8 +55,10 @@ public class PackagerPlugin implements Plugin {
     // outputs
     MutableConfig.derive(packager, PackagerConf::moduleArtifactSourcePath, convention, ConventionFacade::javaModuleArtifactSourcePath);
     MutableConfig.derive(packager, PackagerConf::moduleArtifactTestPath, convention, ConventionFacade::javaModuleArtifactTestPath);
-    MutableConfig.derive(packager, PackagerConf::moduleBaleSourcePath, convention, ConventionFacade::javaModuleBaleSourcePath);
-    MutableConfig.derive(packager, PackagerConf::moduleBaleTestPath, convention, ConventionFacade::javaModuleBaleTestPath);
+    MutableConfig.derive(packager, PackagerConf::moduleSrcArtifactSourcePath, convention, ConventionFacade::javaModuleSrcArtifactSourcePath);
+    MutableConfig.derive(packager, PackagerConf::moduleDocArtifactSourcePath, convention, ConventionFacade::javaModuleDocArtifactSourcePath);
+    MutableConfig.derive(packager, PackagerConf::moduleSrcArtifactTestPath, convention, ConventionFacade::javaModuleSrcArtifactTestPath);
+    MutableConfig.derive(packager, PackagerConf::moduleDocArtifactTestPath, convention, ConventionFacade::javaModuleDocArtifactTestPath);
   }
   
   @Override
@@ -102,14 +104,15 @@ public class PackagerPlugin implements Plugin {
     if (errorCode != 0) {
       return errorCode;
     }
+    
     if (Files.exists(packager.moduleDocSourcePath())) {
-      errorCode = packageAll(List.of(packager.moduleDocSourcePath()), packager.moduleBaleSourcePath(),
+      errorCode = packageAll(List.of(packager.moduleDocSourcePath()), packager.moduleDocArtifactSourcePath(),
           (input, output) -> packageSourceOrDoc(log, jarTool, input, output, packager, metadataMap, "doc"));
       if (errorCode != 0) {
         return errorCode;
       }
     }
-    errorCode = packageAll(FileHelper.pathFromFilesThatExist(packager.moduleSourcePath()), packager.moduleBaleSourcePath(),
+    errorCode = packageAll(FileHelper.pathFromFilesThatExist(packager.moduleSourcePath()), packager.moduleSrcArtifactSourcePath(),
         (input, output) -> packageSourceOrDoc(log, jarTool, input, output, packager, metadataMap, "source"));
     if (errorCode != 0) {
       return errorCode;
@@ -123,14 +126,14 @@ public class PackagerPlugin implements Plugin {
       return errorCode;
     }
     if (Files.exists(packager.moduleDocTestPath())) {
-      errorCode = packageAll(List.of(packager.moduleDocTestPath()), packager.moduleBaleTestPath(),
+      errorCode = packageAll(List.of(packager.moduleDocTestPath()), packager.moduleDocArtifactTestPath(),
           (input, output) -> packageSourceOrDoc(log, jarTool, input, output, packager, metadataMap, "test-doc"));
       if (errorCode != 0) {
         return errorCode;
       }
     }
     if (packager.generateSourceTestBale()) { 
-      packageAll(FileHelper.pathFromFilesThatExist(packager.moduleTestPath()), packager.moduleBaleTestPath(),
+      packageAll(FileHelper.pathFromFilesThatExist(packager.moduleTestPath()), packager.moduleSrcArtifactTestPath(),
           (input, output) -> packageSourceOrDoc(log, jarTool, input, output, packager, metadataMap, "test-source"));
     }
     return 0;

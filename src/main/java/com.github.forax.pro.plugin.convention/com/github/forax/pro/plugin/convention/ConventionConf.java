@@ -20,8 +20,10 @@ public interface ConventionConf {
   void javaModuleArtifactSourcePath(Path path);
   Path javaModuleDocSourcePath();
   void javaModuleDocSourcePath(Path docPath);
-  Path javaModuleBaleSourcePath();
-  void javaModuleBaleSourcePath(Path path);
+  Path javaModuleSrcArtifactSourcePath();
+  void javaModuleSrcArtifactSourcePath(Path path);
+  Path javaModuleDocArtifactSourcePath();
+  void javaModuleDocArtifactSourcePath(Path path);
 
   List<Path> javaModuleTestPath();
   void javaModuleTestPath(List<Path> path);
@@ -35,8 +37,10 @@ public interface ConventionConf {
   void javaModuleArtifactTestPath(Path path);
   Path javaModuleDocTestPath();
   void javaModuleDocTestPath(Path docPath);
-  Path javaModuleBaleTestPath();
-  void javaModuleBaleTestPath(Path path);
+  Path javaModuleSrcArtifactTestPath();
+  void javaModuleSrcArtifactTestPath(Path path);
+  Path javaModuleDocArtifactTestPath();
+  void javaModuleDocArtifactTestPath(Path path);
 
   Path javaMavenLocalRepositoryPath();
   void javaMavenLocalRepositoryPath(Path path);
