@@ -39,6 +39,7 @@ import com.sun.source.tree.TreeVisitor;
 import com.sun.source.tree.UsesTree;
 import com.sun.source.util.JavacTask;
 
+@SuppressWarnings("restriction")
 public class JavacModuleParser { 
   static class ModuleHandler {
     private static final String[] EMPTY_ARRAY = new String[0];
