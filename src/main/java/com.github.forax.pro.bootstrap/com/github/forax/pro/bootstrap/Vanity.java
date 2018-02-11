@@ -1,6 +1,6 @@
 package com.github.forax.pro.bootstrap;
 
-import static com.github.forax.pro.Pro.get;
+import static com.github.forax.pro.Pro.getOrElseThrow;
 import static com.github.forax.pro.helper.FileHelper.unchecked;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ class Vanity {
   }
   
   static void postOperations() throws IOException {
-    Path imagePath = get("convention.javaLinkerImagePath", Path.class);
+    Path imagePath = getOrElseThrow("convention.javaLinkerImagePath", Path.class);
     
     // remove unnecessary commands
     try(Stream<Path> stream = Files.list(imagePath.resolve("bin"))) {

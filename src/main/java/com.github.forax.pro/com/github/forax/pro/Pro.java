@@ -84,17 +84,16 @@ public class Pro {
     }
   }
   
-  @SuppressWarnings("unchecked")  // emulate dynamic behavior here
-  public static <T> T $(String key) {
-    return (T)get(key, Object.class);
-  }
-  
   public static void set(String key, Object value) {
     CONFIG.get().set(key, value);
   }
   
-  public static <T> T get(String key, Class<T> type) {
-    return CONFIG.get().get(key, type)
+  public static <T> Optional<T> get(String key, Class<T> type) {
+    return CONFIG.get().get(key, type);
+  }
+  
+  public static <T> T getOrElseThrow(String key, Class<T> type) {
+    return get(key, type)
         .orElseThrow(() -> new IllegalStateException("unknown key " + key));
   }
   
