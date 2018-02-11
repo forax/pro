@@ -12,39 +12,45 @@ import java.util.stream.Collectors;
 import com.github.forax.pro.helper.ModuleHelper;
 
 public class Bootstrap {
+  @SuppressWarnings("deprecation")
+  private static int jdkVersion() {
+    return Runtime.version().major();
+  }
+  
   public static void main(String[] args) throws IOException {
     set("pro.loglevel", "verbose");
     set("pro.exitOnError", true);
 
     //set("compiler.lint", "exports,module");
     set("compiler.lint", "all,-varargs,-overloads");
-    //set("compiler.release", 10);
+    set("compiler.release", jdkVersion());
 
+    String version = "0." + jdkVersion();
     set("packager.moduleMetadata", list(
-        "com.github.forax.pro@0.10",
-        "com.github.forax.pro.aether@0.10",
-        "com.github.forax.pro.ather.fakeguava@0.10",
-        "com.github.forax.pro.api@0.10",
-        "com.github.forax.pro.bootstrap@0.10",
-        "com.github.forax.pro.builder@0.10",
-        "com.github.forax.pro.helper@0.10",
-        "com.github.forax.pro.main@0.10/com.github.forax.pro.main.Main",
-        "com.github.forax.pro.plugin.convention@0.10",
-        "com.github.forax.pro.plugin.resolver@0.10",
-        "com.github.forax.pro.plugin.modulefixer@0.10",
-        "com.github.forax.pro.plugin.compiler@0.10",
-        "com.github.forax.pro.plugin.docer@0.10",
-        "com.github.forax.pro.plugin.packager@0.10",
-        "com.github.forax.pro.plugin.linker@0.10",
-        "com.github.forax.pro.plugin.runner@0.10",
-        "com.github.forax.pro.plugin.tester@0.10",
-        "com.github.forax.pro.plugin.uberpackager@0.10",
-        "com.github.forax.pro.plugin.bootstrap@0.10/com.github.forax.pro.bootstrap.Bootstrap",
-        "com.github.forax.pro.bootstrap.genbuilder@0.10/com.github.forax.pro.bootstrap.genbuilder.GenBuilder",
-        "com.github.forax.pro.ubermain@0.10",
-        "com.github.forax.pro.uberbooter@0.10",
-        "com.github.forax.pro.daemon@0.10",
-        "com.github.forax.pro.daemon.imp@0.10"
+        "com.github.forax.pro@" + version,
+        "com.github.forax.pro.aether@" + version,
+        "com.github.forax.pro.ather.fakeguava@" + version,
+        "com.github.forax.pro.api@" + version,
+        "com.github.forax.pro.bootstrap@" + version,
+        "com.github.forax.pro.builder@" + version,
+        "com.github.forax.pro.helper@" + version,
+        "com.github.forax.pro.main@" + version + "/com.github.forax.pro.main.Main",
+        "com.github.forax.pro.plugin.convention@" + version,
+        "com.github.forax.pro.plugin.resolver@" + version,
+        "com.github.forax.pro.plugin.modulefixer@" + version,
+        "com.github.forax.pro.plugin.compiler@" + version,
+        "com.github.forax.pro.plugin.docer@" + version,
+        "com.github.forax.pro.plugin.packager@" + version,
+        "com.github.forax.pro.plugin.linker@" + version,
+        "com.github.forax.pro.plugin.runner@" + version,
+        "com.github.forax.pro.plugin.tester@" + version,
+        "com.github.forax.pro.plugin.uberpackager@" + version,
+        "com.github.forax.pro.plugin.bootstrap@" + version + "/com.github.forax.pro.bootstrap.Bootstrap",
+        "com.github.forax.pro.bootstrap.genbuilder@" + version + "/com.github.forax.pro.bootstrap.genbuilder.GenBuilder",
+        "com.github.forax.pro.ubermain@" + version,
+        "com.github.forax.pro.uberbooter@" + version,
+        "com.github.forax.pro.daemon@" + version,
+        "com.github.forax.pro.daemon.imp@" + version
         ));
 
     //set("modulefixer.force", true);
