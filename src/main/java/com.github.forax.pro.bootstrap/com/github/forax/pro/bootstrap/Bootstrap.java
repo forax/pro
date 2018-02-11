@@ -18,7 +18,7 @@ public class Bootstrap {
 
     //set("compiler.lint", "exports,module");
     set("compiler.lint", "all,-varargs,-overloads");
-    set("compiler.release", 10);
+    //set("compiler.release", 10);
 
     set("packager.moduleMetadata", list(
         "com.github.forax.pro@0.10",
