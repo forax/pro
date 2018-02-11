@@ -24,6 +24,7 @@ public class Bootstrap {
         "com.github.forax.pro.aether@0.10",
         "com.github.forax.pro.ather.fakeguava@0.10",
         "com.github.forax.pro.api@0.10",
+        "com.github.forax.pro.bootstrap@0.10",
         "com.github.forax.pro.builder@0.10",
         "com.github.forax.pro.helper@0.10",
         "com.github.forax.pro.main@0.10/com.github.forax.pro.main.Main",
