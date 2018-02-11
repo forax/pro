@@ -23,6 +23,8 @@ import java.util.Optional;
 public interface Config {
   /**
    * Returns the value associated with the key or {@code Optional#empty()} if there is no key registered. 
+   * 
+   * @param <T> type of the value.
    * @param key a qualified name 
    * @param type the expected type of the value associated with the key.
    * @return either the value corresponding to the key or {@code Optional#empty()} otherwise.
@@ -41,6 +43,8 @@ public interface Config {
   
   /**
    * Returns the value associated with a key or throw a {@link NoSuchElementException} if the value do not exist.
+   *
+   * @param <T> type of the value.
    * @param key a qualified name.
    * @param type the expected type of the value corresponding to the key
    * @return  the value associated with the key.

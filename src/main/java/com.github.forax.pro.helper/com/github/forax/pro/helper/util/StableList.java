@@ -118,6 +118,7 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    * Returns a stable list consisting of the results of applying the given
    * function to the elements of this list. 
    * 
+   * @param <R> type of the element of returned list
    * @param mapper a function that takes an element and returns the new
    *        element to be stored in the new list
    * @return a new stable list
@@ -155,6 +156,7 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   /**
    * Create an array containing the elements of the current list.
    * 
+   * @param <T> type of the array element.
    * @param factory a function which produces a new array from a provided length
    * @return the array created by the factory populated with the values
    */
@@ -166,6 +168,8 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   
   /**
    * Create an empty StableList.
+   * 
+   * @param <E> type of the element.
    * @return an empty StableList.
    */
   @SuppressWarnings("unchecked")
@@ -175,6 +179,8 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   
   /**
    * Create a new StableList and populate it with the elements taken as parameters.
+   *
+   * @param <E> type of the elements
    * @param elements a array of elements.
    * @return a new StableList with all elements of the array.
    * @throws NullPointerException if one element of the array is null.
@@ -193,6 +199,8 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   
   /**
    * Create a new StableList and populate it with the elements of the collection taken as parameters.
+   *
+   * @param <E> type of the elements.
    * @param collection a collection of elements.
    * @return a new StableList with all elements of the list.
    * @throws NullPointerException if one element of the collection is null or
@@ -211,6 +219,8 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   
   /**
    * Returns a collector that store all elements in a stable list.
+   *
+   * @param <T> type of the list elements.
    * @return a stable list storing all elements.
    */
   public static <T> Collector<T, ?, StableList<T>> toStableList() {

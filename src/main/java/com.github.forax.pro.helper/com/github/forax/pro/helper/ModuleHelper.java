@@ -73,6 +73,9 @@ public class ModuleHelper {
 
   /**
    * Returns the single module contained in {@code path} as a {@link ModuleReference}.
+   * 
+   * @param path the path containing a single module. 
+   * @return the single module contained in {@code path}.
    */
   public static ModuleReference getOnlyModule(Path path) {
     Set<ModuleReference> all = ModuleFinder.of(path).findAll();

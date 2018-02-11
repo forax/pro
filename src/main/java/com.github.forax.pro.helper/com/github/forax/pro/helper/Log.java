@@ -63,6 +63,7 @@ public class Log {
   
   /**
    * log an error message.
+   * @param <T> type of the value.
    * @param value value that will be sent to the message factory.
    * @param messageFactory function that will creates the error message. 
    */
@@ -84,6 +85,7 @@ public class Log {
   
   /**
    * log a debug message.
+   * @param <T> type of the value.
    * @param value value that will be sent to the message factory.
    * @param messageFactory function that will creates the error message. 
    */
@@ -95,6 +97,7 @@ public class Log {
   
   /**
    * log a verbose message.
+   * @param <T> type of the value.
    * @param value value that will be sent to the message factory.
    * @param messageFactory function that will creates the error message. 
    */
@@ -106,6 +109,7 @@ public class Log {
   
   /**
    * log an info message.
+   * @param <T> type of the value.
    * @param value value that will be sent to the message factory.
    * @param messageFactory function that will creates the error message. 
    */

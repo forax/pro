@@ -19,9 +19,11 @@ public interface MutableConfig extends Config {
    * This method can only be used if the tree is in read/write mode.
    * @see #get(String, Class) for a read-only access.
    * 
+   * @param <T> type of the value
    * @param key a qualified name
    * @param type the type of the value, it must be an interface tagged
    *        with the annotation {@code TypeCheckedConfig} to allow vivification.
+   * @return the value associated with the key       
    *        
    * @throws NoSuchElementException if there is no value associated with the key.
    * @throws ClassCastException if the value is not a subclass of the given type.  
@@ -46,6 +48,9 @@ public interface MutableConfig extends Config {
    * Allow to create a computed value that depends on another value from the same tree.
    * Each time the value will be asked, the function {@code eval} will be evaluated.
    * 
+   * @param <T> type the vivified object {@code to}.
+   * @param <U> type the vivified object {@code from}.
+   * @param <V> type of the values.
    * @param to a vivified object that was obtained from the tree
    * @param setter a lambda that will set a key of the vivified object, it must be a method of
    *        the interface of the vivified object.
