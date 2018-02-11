@@ -20,4 +20,5 @@ script:
 - java --version
 - chmod u+x ./build.sh
 - ./build.sh
+- ./target/pro/bin/pro version
 - ./target/pro/bin/pro build test.pro
