@@ -19,7 +19,6 @@ public interface ModuleFixerConf {
   
   Optional<List<String>> additionalRequires();
   void additionalRequires(List<String> additionalRequires);
-  
   Optional<List<String>> additionalUses();
   void additionalUses(List<String> additionalUses);
 }

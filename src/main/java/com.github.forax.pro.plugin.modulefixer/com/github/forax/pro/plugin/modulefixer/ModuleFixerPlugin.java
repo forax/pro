@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Modifier;
+import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
@@ -19,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -86,6 +88,14 @@ public class ModuleFixerPlugin implements Plugin {
     moduleDependencyPath.forEach(registry::watch);
   }
   
+  enum RequireModifier {
+    PLAIN, STATIC;
+    
+    RequireModifier or(RequireModifier require) {
+      return this == STATIC || require == STATIC? STATIC: PLAIN;
+    }
+  }
+  
   @Override
   public int execute(Config config) throws IOException {
     Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
@@ -100,20 +110,20 @@ public class ModuleFixerPlugin implements Plugin {
       final Set<String> exports;
       final Set<String> uses;
       final Map<String, Set<String>> provides;
-      final Set<String> requireModules;
+      final Map<String, RequireModifier> requireModuleMap;
       
-      Info(Set<String> requirePackages, Set<String> exports, Set<String> uses, Map<String, Set<String>> provides, Set<String> requireModules) {
+      Info(Set<String> requirePackages, Set<String> exports, Set<String> uses, Map<String, Set<String>> provides, Map<String, RequireModifier> requireModuleMap) {
         this.requirePackages = requirePackages;
         this.exports = exports;
         this.uses = uses;
         this.provides = provides;
-        this.requireModules = requireModules;
+        this.requireModuleMap = requireModuleMap;
       }
     }
     
     // gather additional requires, uses and provides
     boolean force = moduleFixer.force();
-    Map<String, Set<String>> additionalRequireMap = parseAdditionals(moduleFixer.additionalRequires());
+    Map<String, Map<String, RequireModifier>> additionalRequireMap = parseAdditionalRequireMap(moduleFixer.additionalRequires());
     Map<String, Set<String>> additionalUses = parseAdditionals(moduleFixer.additionalUses());
     
     //System.out.println("additionalRequireMap " + additionalRequireMap);
@@ -137,9 +147,9 @@ public class ModuleFixerPlugin implements Plugin {
         Map<String, Set<String>> provides = new HashMap<>();
         findRequiresExportsUsesAndProvides(ref, requires, exports, uses, provides);
         
-        Set<String> additionalRequireModules = Optional.ofNullable(additionalRequireMap.get(name)).orElseGet(HashSet::new);
+        Map<String, RequireModifier> additionalRequireModuleMap = Optional.ofNullable(additionalRequireMap.get(name)).orElseGet(HashMap::new);
         moduleInfoMap.put(ref,
-            new Info(requires, exports, uses, provides, additionalRequireModules));
+            new Info(requires, exports, uses, provides, additionalRequireModuleMap));
       } else {
         exports = descriptor.exports().stream().map(export -> export.source().replace('.', '/')).collect(Collectors.toCollection(HashSet::new));
       }
@@ -177,7 +187,11 @@ public class ModuleFixerPlugin implements Plugin {
             return Stream.of(refs.get(0).descriptor().name());
           })
           .collect(Collectors.toSet());
-      info.requireModules.addAll(calculatedRequires);
+      
+      // merge calculated requires with explicitly declared requires
+      calculatedRequires.forEach(require -> {
+        info.requireModuleMap.merge(require, RequireModifier.PLAIN, RequireModifier::or);
+      });
     });
     unknownRequiredPackages.forEach((unknownRequiredPackage, modules) -> {
       String moduleNames = modules.stream().map(ref -> ref.descriptor().name()).collect(joining(", "));
@@ -197,7 +211,7 @@ public class ModuleFixerPlugin implements Plugin {
     for(Map.Entry<ModuleReference, Info> entry: moduleInfoMap.entrySet()) {
       ModuleReference ref = entry.getKey();
       Info info = entry.getValue();
-      Path generatedModuleInfoPath = generateModuleInfo(ref, info.requireModules, info.exports, info.uses, info.provides, moduleDependencyFixerPath);
+      Path generatedModuleInfoPath = generateModuleInfo(ref, info.requireModuleMap, info.exports, info.uses, info.provides, moduleDependencyFixerPath);
       
       if (errorCode == 0) { // stop to patch at the first error, but generate all module-info.class
         errorCode = patchModularJar(jarTool, ref, generatedModuleInfoPath);
@@ -216,7 +230,9 @@ public class ModuleFixerPlugin implements Plugin {
   }
   
   private static Path generateModuleInfo(ModuleReference ref,
-                                         Set<String> requires, Set<String> exports, Set<String> uses, Map<String, Set<String>> provides,
+                                         Map<String, RequireModifier> requires,
+                                         Set<String> exports, Set<String> uses,
+                                         Map<String, Set<String>> provides,
                                          Path moduleDependencyFixerPath) throws IOException {
     String moduleName = ref.descriptor().name();
     
@@ -231,7 +247,7 @@ public class ModuleFixerPlugin implements Plugin {
     
     ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(moduleName, Set.of(Modifier.OPEN));
     ref.descriptor().version().ifPresent(version -> builder.version(version.toString()));
-    requires.forEach(builder::requires);
+    requires.forEach((require, requireModifier) -> builder.requires(requireModifier == RequireModifier.STATIC? EnumSet.of(Requires.Modifier.STATIC): Set.of(), require));
     exports.forEach(export -> builder.exports(export.replace('/', '.')));
     uses.forEach(use -> builder.uses(use.replace('/', '.')));
     provides.forEach((service, providers) -> builder.provides(service, new ArrayList<>(providers)));
@@ -273,6 +289,7 @@ public class ModuleFixerPlugin implements Plugin {
 
       Set<String> providers = lineReader.lines()
         .map(ModuleFixerPlugin::parseProviderLine)
+        .filter(provider -> !provider.isEmpty())  // skip empty line
         .collect(Collectors.toSet());
       provides.put(service, providers);
 
@@ -406,6 +423,15 @@ public class ModuleFixerPlugin implements Plugin {
         .stream()
         .map(line -> line.split("="))
         .collect(Collectors.groupingBy(tokens -> tokens[0], Collectors.mapping(tokens -> tokens[1], Collectors.toSet())));
+  }
+  
+  private static Map<String, Map<String, RequireModifier>> parseAdditionalRequireMap(Optional<List<String>> additionals) {
+    return additionals.orElse(List.of())
+        .stream()
+        .map(line -> line.split("="))
+        .collect(Collectors.groupingBy(tokens -> tokens[0],
+            Collectors.mapping(tokens -> tokens[1].split("/"),
+                Collectors.toMap(values -> values[0], values -> values.length == 0? RequireModifier.PLAIN: RequireModifier.STATIC))));
   }
   
   static String packageOf(String typeName) {
