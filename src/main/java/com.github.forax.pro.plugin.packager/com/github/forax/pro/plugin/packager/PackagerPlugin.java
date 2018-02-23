@@ -97,7 +97,9 @@ public class PackagerPlugin implements Plugin {
     List<Path> moduleExplodedTestPath = FileHelper.pathFromFilesThatExist(packager.moduleExplodedTestPath());
     Path moduleArtifactTestPath = packager.moduleArtifactTestPath();
     
-    Map<String, Metadata> metadataMap = packager.moduleMetadata().map(MetadataParser::parse).orElse(Map.of());
+    @SuppressWarnings("deprecation")
+    Optional<List<String>> modules = packager.modules().or(() -> packager.moduleMetadata());
+    Map<String, Metadata> metadataMap = modules.map(MetadataParser::parse).orElse(Map.of());
     
     int errorCode = packageAll(moduleExplodedSourcePath, moduleArtifactSourcePath,
         (input, output) -> packageModule(log, jarTool, input, output, packager, metadataMap, ""));

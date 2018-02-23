@@ -39,8 +39,21 @@ public interface PackagerConf {
   Path moduleDocArtifactTestPath();
   void moduleDocArtifactTestPath(Path moduleDocArtifactTestPath);
   
+  /**
+   * @deprecated use {@link #modules()} instead.
+   * @return the modules informations.
+   */
+  @Deprecated
   Optional<List<String>> moduleMetadata();
+  /**
+   * @deprecated use {@link #modules(List)} instead.
+   * @param metadata the modules informations.
+   */
+  @Deprecated
   void moduleMetadata(List<String> metadata);
+  
+  Optional<List<String>> modules();
+  void modules(List<String> modules);
   
   Optional<List<String>> rawArguments();
   void rawArguments(List<String> rawArguments);
