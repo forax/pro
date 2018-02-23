@@ -63,9 +63,12 @@ public class GenBuilder {
 
   private static Stream<Object> methodTemplate(String className, Method method) {
     String name = method.getName();
-    return Stream.of(
-        "    ", className, " ", name, "(", method.getGenericParameterTypes()[0].getTypeName(), " ", name, ");\n"
-        );
+    return Stream.concat(
+             Stream.of(
+               "    ", "@Deprecated", "\n").filter(__ -> method.isAnnotationPresent(Deprecated.class)),
+             Stream.of(
+               "    ", className, " ", name, "(", method.getGenericParameterTypes()[0].getTypeName(), " ", name, ");\n"
+             ));
   }
 
   private static Stream<String> toStream(Object o) {
