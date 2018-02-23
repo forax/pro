@@ -26,7 +26,7 @@ public class Bootstrap {
     set("compiler.release", jdkVersion());
 
     String version = "0." + jdkVersion();
-    set("packager.moduleMetadata", list(
+    set("packager.modules", list(
         "com.github.forax.pro@" + version,
         "com.github.forax.pro.aether@" + version,
         "com.github.forax.pro.ather.fakeguava@" + version,
