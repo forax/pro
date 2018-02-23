@@ -93,8 +93,8 @@ public class Bootstrap {
       set("resolver.remoteRepositories", list(
         uri("https://oss.sonatype.org/content/repositories/snapshots")
       ));
-      String junitPlatformVersion = "1.0.0";
-      String junitJupiterVersion = "5.0.0";
+      String junitPlatformVersion = "1.1.0";
+      String junitJupiterVersion = "5.1.0";
       String opentest4jVersion = "1.0.0";
       String apiGuardianVersion = "1.0.0";
       set("resolver.dependencies", list(
