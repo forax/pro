@@ -65,6 +65,9 @@ public class Bootstrap {
         "aether.connector.basic=aether.util"
         ));
 
+    //FIXME need to add a test if offline ??
+    //set("docer.link", "https://docs.oracle.com/javase/9/docs/api/");
+    
     set("linker.includeSystemJMODs", true);
     set("linker.launchers", list(
         "pro=com.github.forax.pro.main/com.github.forax.pro.main.Main"
