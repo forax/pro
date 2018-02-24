@@ -18,6 +18,9 @@ public interface DocerConf {
   boolean html5();
   void html5(boolean enable);
   
+  Optional<String> link();
+  void link(String link);
+  
   Optional<List<String>> rawArguments();
   void rawArguments(List<String> rawArguments);
   

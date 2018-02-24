@@ -15,6 +15,7 @@ class Javadoc {
   private List<String> rawArguments;
   private boolean quiet;
   private boolean html5;
+  private String link;
   
   Javadoc(Path destination, List<Path> moduleSourcePath) {
     this.destination = destination;
@@ -67,5 +68,11 @@ class Javadoc {
   }
   public void html5(boolean enable) {
     this.html5 = enable;
+  }
+  public Optional<String> link() {
+    return Optional.ofNullable(link);
+  }
+  public void link(String link) {
+    this.link = Objects.requireNonNull(link);
   }
 }

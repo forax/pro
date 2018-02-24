@@ -87,7 +87,8 @@ public class DocerPlugin implements Plugin {
     UPGRADE_MODULE_PATH(actionMaybe("--upgrade-module-path", Javadoc::upgradeModulePath, File.pathSeparator)),
     MODULE_PATH(actionMaybe("--module-path", Javadoc::modulePath, File.pathSeparator)),
     QUIET(exists("-quiet", Javadoc::quiet)),
-    HTML5(exists("-html5", Javadoc::html5))
+    HTML5(exists("-html5", Javadoc::html5)),
+    LINK(actionMaybe("-link", Javadoc::link))
     ;
     
     final OptionAction<Javadoc> action;
@@ -152,6 +153,7 @@ public class DocerPlugin implements Plugin {
     docer.rootModules().ifPresent(javadoc::rootModules);
     javadoc.quiet(docer.quiet());
     javadoc.html5(docer.html5());
+    docer.link().ifPresent(javadoc::link);
     
     CmdLine cmdLine = gatherAll(JavadocOption.class, option -> option.action).apply(javadoc, new CmdLine());
     List<Path> files = docer.files().orElseGet(
