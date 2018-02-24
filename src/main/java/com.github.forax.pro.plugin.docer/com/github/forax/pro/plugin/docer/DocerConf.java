@@ -1,6 +1,7 @@
 package com.github.forax.pro.plugin.docer;
 
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -18,8 +19,8 @@ public interface DocerConf {
   boolean html5();
   void html5(boolean enable);
   
-  Optional<String> link();
-  void link(String link);
+  Optional<URI> link();
+  void link(URI link);
   
   Optional<List<String>> rawArguments();
   void rawArguments(List<String> rawArguments);

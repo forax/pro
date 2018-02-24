@@ -1,6 +1,12 @@
 package com.github.forax.pro.bootstrap;
 
-import static com.github.forax.pro.Pro.*;
+import static com.github.forax.pro.Pro.list;
+import static com.github.forax.pro.Pro.local;
+import static com.github.forax.pro.Pro.location;
+import static com.github.forax.pro.Pro.path;
+import static com.github.forax.pro.Pro.run;
+import static com.github.forax.pro.Pro.set;
+import static com.github.forax.pro.Pro.uri;
 import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
 import static java.nio.file.Files.createDirectories;
@@ -65,8 +71,7 @@ public class Bootstrap {
         "aether.connector.basic=aether.util"
         ));
 
-    //FIXME need to add a test if offline ??
-    //set("docer.link", "https://docs.oracle.com/javase/9/docs/api/");
+    set("docer.link", uri("https://docs.oracle.com/javase/9/docs/api/"));
     
     set("linker.includeSystemJMODs", true);
     set("linker.launchers", list(

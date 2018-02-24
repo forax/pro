@@ -2,8 +2,9 @@ package com.github.forax.pro.plugin.docer;
 
 
 import static com.github.forax.pro.api.MutableConfig.derive;
-import static com.github.forax.pro.api.helper.OptionAction.*;
+import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
+import static com.github.forax.pro.api.helper.OptionAction.exists;
 import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
@@ -13,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.net.InetAddress;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -153,7 +155,7 @@ public class DocerPlugin implements Plugin {
     docer.rootModules().ifPresent(javadoc::rootModules);
     javadoc.quiet(docer.quiet());
     javadoc.html5(docer.html5());
-    docer.link().ifPresent(javadoc::link);
+    docer.link().filter(url -> isLinkHostOnline(log, url)).ifPresent(javadoc::link);
     
     CmdLine cmdLine = gatherAll(JavadocOption.class, option -> option.action).apply(javadoc, new CmdLine());
     List<Path> files = docer.files().orElseGet(
@@ -163,5 +165,16 @@ public class DocerPlugin implements Plugin {
     log.verbose(files, fs -> OptionAction.toPrettyString(JavadocOption.class, option -> option.action).apply(javadoc, "javadoc") + "\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
     
     return javadocTool.run(System.out, System.err, arguments);
+  }
+  
+  private static boolean isLinkHostOnline(Log log, URI uri) {
+    String host = uri.getHost();
+    try {  
+      InetAddress.getByName(host);
+      return true;
+    } catch (@SuppressWarnings("unused") IOException e) {
+      log.info(host, t -> "link: could not reach host " + host);
+      return false;
+    }
   }
 }

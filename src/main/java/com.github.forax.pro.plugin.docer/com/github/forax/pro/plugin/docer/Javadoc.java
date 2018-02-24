@@ -1,5 +1,6 @@
 package com.github.forax.pro.plugin.docer;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -15,7 +16,7 @@ class Javadoc {
   private List<String> rawArguments;
   private boolean quiet;
   private boolean html5;
-  private String link;
+  private URI link;
   
   Javadoc(Path destination, List<Path> moduleSourcePath) {
     this.destination = destination;
@@ -69,10 +70,10 @@ class Javadoc {
   public void html5(boolean enable) {
     this.html5 = enable;
   }
-  public Optional<String> link() {
+  public Optional<URI> link() {
     return Optional.ofNullable(link);
   }
-  public void link(String link) {
+  public void link(URI link) {
     this.link = Objects.requireNonNull(link);
   }
 }
