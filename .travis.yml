@@ -6,7 +6,7 @@ matrix:
   include:
 # 9
     - jdk: oraclejdk9
-      env: JDK_RELEASE='OracleJDK 9'
+      env: JDK_RELEASE='Oracle JDK 9'
       install: true
     - env: JDK_RELEASE='OpenJDK 9'
       install: . ./.travis/install-jdk.sh -F 9
@@ -16,10 +16,13 @@ matrix:
     - env: JDK_RELEASE='OpenJDK 10'
       install: . ./.travis/install-jdk.sh -F 10 -L GPL
 # 11
-    - env: JDK_RELEASE='OracleJDK 11-ea'
+    - env: JDK_RELEASE='Oracle JDK 11-ea'
       install: . ./.travis/install-jdk.sh -F 11 -L BCL
     - env: JDK_RELEASE='OpenJDK 11-ea'
       install: . ./.travis/install-jdk.sh -F 11 -L GPL
+  allow_failures:
+    - env: JDK_RELEASE='Oracle JDK 11-ea'
+    - env: JDK_RELEASE='OpenJDK 11-ea'
 
 script:
 - java --version
