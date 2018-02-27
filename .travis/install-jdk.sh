@@ -3,23 +3,23 @@
 #
 # Install JDK for Linux
 #
-# Copied from: https://sormuras.github.io/blog/2017-12-08-install-jdk-on-travis
-#
 # This script determines the most recent early-access build number,
 # downloads the JDK archive to the user home directory and extracts
 # it there.
 #
 # Example usage
 #
-#   install-jdk.sh                 | install most recent early-access JDK
-#   install-jdk.sh -W /usr/opt     | install most recent early-access JDK to /usr/opt
+#   install-jdk.sh                 | install most recent (early-access) JDK
+#   install-jdk.sh -W /usr/opt     | install most recent (early-access) JDK to /usr/opt
 #   install-jdk.sh -F 9            | install most recent OpenJDK 9
 #   install-jdk.sh -F 10           | install most recent OpenJDK 10
-#   install-jdk.sh -F 10 -L BCL    | install most recent OracleJDK 10
+#   install-jdk.sh -F 10 -L BCL    | install most recent Oracle JDK 10
+#   install-jdk.sh -F 11           | install most recent OpenJDK 11
+#   install-jdk.sh -F 11 -L BCL    | install most recent Oracle JDK 11
 #
 # Options
 #
-#   -F f | Feature number of the JDK release, [9|10|...]
+#   -F f | Feature number of the JDK release  [9|10|...]
 #   -B b | Build number of the JDK release    [?|1|2...]
 #   -L l | License of the JDK                 [GPL|BCL]
 #   -W w | Working directory and install path [${HOME}]
@@ -28,9 +28,14 @@
 #
 #   JAVA_HOME is set to the extracted JDK directory
 #   PATH is prepended with ${JAVA_HOME}/bin
+#
+# (C) 2018 Christian Stein
+#
+# https://github.com/sormuras/bach/blob/master/install-jdk.sh
+#
 set -e
 
-JDK_FEATURE='10'
+JDK_FEATURE='11'
 JDK_BUILD='?'
 JDK_LICENSE='GPL'
 JDK_WORKSPACE=${HOME}
@@ -83,6 +88,22 @@ if [ "${JDK_FEATURE}" == '10' ]; then
 
   JDK_ARCHIVE=${JDK_BASENAME}-${JDK_FEATURE}+${JDK_BUILD}_linux-x64_bin.tar.gz
   JDK_URL=${JDK_DOWNLOAD}/jdk${JDK_FEATURE}/archive/${JDK_BUILD}/${JDK_LICENSE}/${JDK_ARCHIVE}
+  JDK_HOME=jdk-${JDK_FEATURE}
+fi
+
+#
+# 11
+#
+if [ "${JDK_FEATURE}" == '11' ]; then
+  if [ "${JDK_BUILD}" == '?' ]; then
+    TMP=$(curl -L jdk.java.net/${JDK_FEATURE})
+    TMP="${TMP#*Most recent build: jdk-${JDK_FEATURE}-ea+}" # remove everything before the number
+    TMP="${TMP%%<*}"                                        # remove everything after the number
+    JDK_BUILD="$(echo -e "${TMP}" | tr -d '[:space:]')"     # remove all whitespace
+  fi
+
+  JDK_ARCHIVE=${JDK_BASENAME}-${JDK_FEATURE}-ea+${JDK_BUILD}_linux-x64_bin.tar.gz
+  JDK_URL=${JDK_DOWNLOAD}/early_access/jdk${JDK_FEATURE}/${JDK_BUILD}/${JDK_LICENSE}/${JDK_ARCHIVE}
   JDK_HOME=jdk-${JDK_FEATURE}
 fi
 
