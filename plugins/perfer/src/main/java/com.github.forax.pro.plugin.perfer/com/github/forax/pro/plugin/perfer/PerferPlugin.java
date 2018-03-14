@@ -2,6 +2,7 @@ package com.github.forax.pro.plugin.perfer;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toSet;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +15,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.BenchmarkListEntry;
@@ -62,20 +62,28 @@ public class PerferPlugin implements Plugin {
   @Override
   public int execute(Config config) throws IOException {
     Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
-    PerferConf jmher = config.getOrThrow(name(), PerferConf.class);
-    log.debug(config, conf -> "config " + jmher);
+    PerferConf perfer = config.getOrThrow(name(), PerferConf.class);
+    log.debug(config, conf -> "config " + perfer);
     
-    ModuleFinder finder = ModuleFinder.of(jmher.moduleArtifactTestPath());
-    int exitCode = finder.findAll().stream()
-        .flatMap(ref -> ref.location().map(Paths::get).stream())
-        .reduce(0, (acc, testPath) -> acc | execute(jmher, testPath), (r1, r2) -> r1 | r2);
+    List<Path> modulePath = StableList.<Path>of()
+        .append(perfer.moduleArtifactTestPath())
+        .appendAll(perfer.moduleDependencyPath());
+    Path javaCommand = perfer.javaCommand();
     
-    return exitCode;
+    ModuleFinder finder = ModuleFinder.of(perfer.moduleArtifactTestPath());
+    for(ModuleReference ref :finder.findAll()) {
+      int exitCode = ref.location().map(Paths::get).map(testPath -> execute(log, testPath, modulePath, javaCommand)).orElse(0);
+      if (exitCode != 0) {
+        return exitCode;
+      }
+    }
+    return 0;
   }
   
-  private static int execute(PerferConf perfer, Path testPath) {
+  private static int execute(Log log, Path testPath, List<Path> modulePath, Path javaCommand) {
     ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
     String moduleName = moduleReference.descriptor().name();
+    log.debug(moduleName, name -> "found test module " + name);
     
     try(ModuleReader reader = moduleReference.open()) {
       Optional<InputStream> input = reader.open("META-INF/BenchmarkList");
@@ -84,10 +92,11 @@ public class PerferPlugin implements Plugin {
       }
       
       Collection<BenchmarkListEntry> list = BenchmarkList.readBenchmarkList(input.get());
-      Set<String> classNames = list.stream().map(BenchmarkListEntry::getUserClassQName).collect(Collectors.toSet());
+      Set<String> classNames = list.stream().map(BenchmarkListEntry::getUserClassQName).collect(toSet());
+      log.debug(classNames, names -> "benchmarks " + classNames);
       
       for(String className: classNames) {
-        int exitCode = executeClass(perfer, moduleName, className);
+        int exitCode = executeClass(moduleName, className, modulePath, javaCommand);
         if (exitCode != 0) {
           return exitCode;
         }
@@ -95,28 +104,23 @@ public class PerferPlugin implements Plugin {
       return 0;
       
     } catch (IOException e) {
-      e.printStackTrace(); // FIXME
+      log.error(e);
       return 1;
     }
   }
   
-  private static int executeClass(PerferConf perfer, String moduleName, String className) {
-      List<Path> modulePath = StableList.<Path>of()
-          .append(perfer.moduleArtifactTestPath())
-          .appendAll(perfer.moduleDependencyPath());
-      try {
-        Process process = new ProcessBuilder(StableList.of(perfer.javaCommand().toString())
-            .appendAll(StableList.of(
-                "--module-path", modulePath.stream().map(Path::toString).collect(joining(":")),
-                "-m", moduleName + '/' + className)))
-            .redirectErrorStream(true)
-            .start();
-          
-          process.getInputStream().transferTo(System.out);
-        
-        return process.waitFor();
-      } catch (InterruptedException | IOException e) {
-        return 1; // FIXME
-      }
+  private static int executeClass(String moduleName, String className, List<Path> modulePath, Path javaCommand) throws IOException {
+    Process process = new ProcessBuilder(
+        StableList.of(javaCommand.toString()).appendAll(StableList.of("--module-path",
+            modulePath.stream().map(Path::toString).collect(joining(":")), "-m", moduleName + '/' + className)))
+                .redirectErrorStream(true).start();
+
+    process.getInputStream().transferTo(System.out);
+
+    try {
+      return process.waitFor();
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
   }
 }
