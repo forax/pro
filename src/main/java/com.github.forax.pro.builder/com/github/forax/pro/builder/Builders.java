@@ -47,6 +47,7 @@ public class Builders {
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface DocerBuilder {
+    DocerBuilder link(java.net.URI link);
     DocerBuilder files(java.util.List<java.nio.file.Path> files);
     DocerBuilder upgradeModulePath(java.util.List<java.nio.file.Path> upgradeModulePath);
     DocerBuilder moduleSourcePath(java.util.List<java.nio.file.Path> moduleSourcePath);
@@ -122,6 +123,17 @@ public class Builders {
     PackagerBuilder moduleMetadata(java.util.List<java.lang.String> moduleMetadata);
   }
   
+  public static final PerferBuilder perfer =
+    Pro.getOrUpdate("perfer", PerferBuilder.class);
+  
+  @SuppressWarnings("exports")
+  @com.github.forax.pro.api.TypeCheckedConfig
+  public interface PerferBuilder {
+    PerferBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
+    PerferBuilder moduleArtifactTestPath(java.nio.file.Path moduleArtifactTestPath);
+    PerferBuilder javaCommand(java.nio.file.Path javaCommand);
+  }
+  
   public static final ResolverBuilder resolver =
     Pro.getOrUpdate("resolver", ResolverBuilder.class);
   
@@ -148,8 +160,8 @@ public class Builders {
     RunnerBuilder modulePath(java.util.List<java.nio.file.Path> modulePath);
     RunnerBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
     RunnerBuilder rootModules(java.util.List<java.lang.String> rootModules);
-    RunnerBuilder javaCommand(java.nio.file.Path javaCommand);
     RunnerBuilder mainArguments(java.util.List<java.lang.String> mainArguments);
+    RunnerBuilder javaCommand(java.nio.file.Path javaCommand);
   }
   
   public static final TesterBuilder tester =
