@@ -50,6 +50,7 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.linker@" + version,
         "com.github.forax.pro.plugin.runner@" + version,
         "com.github.forax.pro.plugin.tester@" + version,
+        "com.github.forax.pro.plugin.jmher@" + version,
         "com.github.forax.pro.plugin.uberpackager@" + version,
         "com.github.forax.pro.plugin.bootstrap@" + version + "/com.github.forax.pro.bootstrap.Bootstrap",
         "com.github.forax.pro.bootstrap.genbuilder@" + version + "/com.github.forax.pro.bootstrap.genbuilder.GenBuilder",
@@ -117,14 +118,26 @@ public class Bootstrap {
           "org.junit.jupiter.engine=org.junit.jupiter:junit-jupiter-engine:" + junitJupiterVersion
       ));
     });
+    compileAndPackagePlugin("perfer", () -> {
+      String jmhVersion = "1.20";
+      String commonMath3Version = "3.6.1";
+      String joptSimpleVersion = "5.0.4";
+      set("resolver.dependencies", list(
+          // "JMH Core"
+          "org.openjdk.jmh=org.openjdk.jmh:jmh-core:" + jmhVersion,
+          "org.apache.commons.math3=org.apache.commons:commons-math3:" + commonMath3Version,
+          "net.sf.jopt-simple=net.sf.jopt-simple:jopt-simple:" + joptSimpleVersion
+      ));
+    });
 
     run("linker"/*, "uberpackager" */);
 
     copyPackagedPluginToTargetImage("runner");
     copyPackagedPluginToTargetImage("tester");
+    copyPackagedPluginToTargetImage("perfer");
 
     // re-generate builders
-    //update(java.nio.file.Paths.get("target/image/plugins"));
+    //com.github.forax.pro.Pro.update(java.nio.file.Paths.get("target/image/plugins"));
     //com.github.forax.pro.bootstrap.genbuilder.GenBuilder.generate();
 
     Vanity.postOperations();
