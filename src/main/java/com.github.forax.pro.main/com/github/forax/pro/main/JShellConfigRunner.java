@@ -15,11 +15,6 @@ public class JShellConfigRunner implements ConfigRunner {
   private static void run(Path configFile) {
     //System.out.println("run with jshell " + configFile);
     
-    // jshell use another process, so config is lost   FIXME
-    //Pro.set("pro.exitOnError", true);
-    
-    //Secret.jShellTool_main(configFile.toString());
-    
-    JShellWrapper.run(System.in, System.out, System.err, "--feedback", "verbose", configFile.toString());
+    JShellWrapper.run(System.in, System.out, System.err, "-R-Dpro.exitOnError=true", configFile.toString());
   }
 }

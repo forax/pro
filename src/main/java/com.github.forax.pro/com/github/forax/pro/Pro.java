@@ -52,7 +52,7 @@ public class Pro {
         .map(Log.Level::of)
         .orElse(Log.Level.INFO);
       proConf.loglevel(logLevel.name().toLowerCase());
-      proConf.exitOnError(false);
+      proConf.exitOnError(Boolean.valueOf(System.getProperty("pro.exitOnError", "false")));
       return config;
     }
   };
@@ -285,7 +285,6 @@ public class Pro {
     for(Plugin plugin: plugins) {
       errorCode = execute(plugin, config);
       if (errorCode != 0) {
-        exit(exitOnError, errorCode);
         break;
       }
     }
@@ -297,6 +296,10 @@ public class Pro {
       log.info(elapsed, time -> String.format("DONE !          elapsed time %,d ms", time));
     } else {
       log.error(elapsed, time -> String.format("FAILED !        elapsed time %,d ms", time));
+    }
+    
+    if (errorCode != 0) {
+      exit(exitOnError, errorCode);
     }
   }
   
