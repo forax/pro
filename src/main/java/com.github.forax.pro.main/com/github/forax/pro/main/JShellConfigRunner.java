@@ -20,6 +20,6 @@ public class JShellConfigRunner implements ConfigRunner {
     
     //Secret.jShellTool_main(configFile.toString());
     
-    JShellWrapper.run(System.in, System.out, System.err, configFile.toString());
+    JShellWrapper.run(System.in, System.out, System.err, "--feedback", "verbose", configFile.toString());
   }
 }

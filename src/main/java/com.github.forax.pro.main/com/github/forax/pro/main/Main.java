@@ -1,15 +1,16 @@
 package com.github.forax.pro.main;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor.Version;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
@@ -68,30 +69,105 @@ public class Main {
   }
   
   static void scaffold() {
-    List<String> lines = List.of(
-        "{                                                                             ",
-        "  resolver: {                                                                 ",
-        "    dependencies: [                                                           ",          
-        "//    \"org.junit=junit:junit:4.12\"                                          ",
-        "    ]                                                                         ",
-        "  },                                                                          ",
-        "  packager: {                                                                 ",
-        "    moduleMetadata: [                                                         ",
-        "//    \"my.module@1.0/com.foo.my.module.Main\"                                ",
-        "    ]                                                                         ",
-        "  },                                                                          ",
-        "//run: [\"resolver\", \"modulefixer\", \"compiler\", \"packager\", \"runner\"]",
-        "  run: [\"compiler\", \"packager\"]                                           ",
-        "}                                                                             "
-      );
+    String module = Optional.ofNullable(System.console())
+        .map(console -> console.readLine("module name: (like com.acme.foo.bar) "))
+        .orElse("com.acme.foo.bar");
+    
+    String content =
+        "import static com.github.forax.pro.Pro.*;\n" + 
+        "import static com.github.forax.pro.builder.Builders.*;\n" + 
+        "\n" + 
+        "resolver.\n" + 
+        "    dependencies(list(\n" + 
+        "        // JUnit 5\n" + 
+        "        \"org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.1.0\",\n" + 
+        "        \"org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.1.0\",\n" + 
+        "        \"org.apiguardian.api=org.apiguardian:apiguardian-api:1.0.0\",\n" + 
+        "        \"org.opentest4j=org.opentest4j:opentest4j:1.0.0\" /*,*/\n" +
+        "\n" +
+        "//        // JMH\n" + 
+        "//        \"org.openjdk.jmh=org.openjdk.jmh:jmh-core:1.20\",\n" + 
+        "//        \"org.apache.commons.math3=org.apache.commons:commons-math3:3.6.1\",\n" + 
+        "//        \"net.sf.jopt-simple=net.sf.jopt-simple:jopt-simple:5.0.4\",\n" + 
+        "//        \"org.openjdk.jmh.generator=org.openjdk.jmh:jmh-generator-annprocess:1.20\"\n" +
+        "    ))\n" + 
+        "\n" + 
+        "// compiler.\n" + 
+        "//     rawArguments(list(\n" + 
+        "//         \"--processor-module-path\", \"deps\"   // enable JMH annotation processor\n" + 
+        "//     ))\n" + 
+        "\n" + 
+        "docer.\n" + 
+        "    rawArguments(list(\n" + 
+        "        \"-quiet\",\n" + 
+        "        \"-link\", \"https://docs.oracle.com/javase/9/docs/api/\"))\n" + 
+        "   \n" + 
+        "packager.\n" + 
+        "    moduleMetadata(list(\n" + 
+        "        \"" + module + "@1.0/" + module + ".Main\"\n" + 
+        "    ))   \n" + 
+        "    \n" + 
+        "run(resolver, modulefixer, compiler, tester, docer, packager, runner /*, perfer */)\n" + 
+        "\n" + 
+        "/exit\n";
+    
+    String mainModule =
+        "module " + module + "{ \n" + 
+        "\n" + 
+        "}\n";
+    String mainClass =
+        "package " + module + ";\n" + 
+        "\n" + 
+        "public class Main {\n" + 
+        "  public static void main(String[] args) {\n" + 
+        "    System.out.println(\"Hello !\");\n" + 
+        "  }\n" + 
+        "}\n";
+    
+    String testModule =
+        "open module " + module + " {\n" + 
+        "  requires org.junit.jupiter.api;\n" + 
+        "  \n" + 
+        "  // requires org.openjdk.jmh;  // JMH support\n" + 
+        "  // requires org.openjdk.jmh.generator;\n" + 
+        "}";
+    String testClass =
+        "package " + module + ";\n" + 
+        "\n" + 
+        "import static org.junit.jupiter.api.Assertions.*;\n" + 
+        "\n" + 
+        "import org.junit.jupiter.api.Test;\n" +
+        "\n" + 
+        "@SuppressWarnings(\"static-method\")\n" + 
+        "class HelloTests {\n" + 
+        "  // pro requires the test class to finish with 'Tests'\n" + 
+        "  \n" + 
+        "  @Test\n" + 
+        "  void test() {\n" + 
+        "    System.out.println(\"Hello test !\");\n" +
+        "  }\n" + 
+        "}\n";
     
     try {
-      Files.write(Paths.get("build.json"),
-          (Iterable<String>)lines.stream().filter(l -> !l.startsWith("//"))::iterator,
-          StandardOpenOption.CREATE_NEW);
-      System.out.println(String.join("\n", lines));
+      Files.write(Paths.get("build.pro"), content.getBytes(UTF_8), CREATE_NEW);
+      System.out.println("build.pro generated");
       
-      Files.createDirectories(Paths.get("src", "main", "java"));
+      Path sourcePath = Paths.get("src", "main", "java", module);
+      Files.createDirectories(sourcePath);
+      Files.write(sourcePath.resolve("module-info.java"), mainModule.getBytes(UTF_8), CREATE_NEW);
+      Path sourcePackage = sourcePath.resolve(module.replace('.', '/'));
+      Files.createDirectories(sourcePackage);
+      Files.write(sourcePackage.resolve("Main.java"), mainClass.getBytes(UTF_8), CREATE_NEW);
+      System.out.println("Main.java generated");
+      
+      Path testPath = Paths.get("src", "test", "java", module);
+      Files.createDirectories(testPath);
+      Files.write(testPath.resolve("module-info.java"), testModule.getBytes(UTF_8), CREATE_NEW);
+      Path testPackage = testPath.resolve(module.replace('.', '/'));
+      Files.createDirectories(testPackage);
+      Files.write(testPackage.resolve("HelloTests.java"), testClass.getBytes(UTF_8), CREATE_NEW);
+      System.out.println("HelloTests generated");
+      
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
