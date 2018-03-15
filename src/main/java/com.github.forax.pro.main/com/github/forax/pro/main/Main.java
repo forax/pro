@@ -229,7 +229,7 @@ public class Main {
         "                       use build.json or build.pro if no buildfile is specified\n" +
         "    daemon subcommand  start the subcommand in daemon mode                     \n" +
         "    shell              start the interactive shell                             \n" +
-        "    scaffold           create a default build.json                             \n" +
+        "    scaffold           create a default build.pro                              \n" +
         "    version            print the current version                               \n" +
         "    help               this help                                               \n" +
         "                                                                               \n" +
