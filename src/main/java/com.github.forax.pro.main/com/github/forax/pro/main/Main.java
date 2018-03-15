@@ -103,7 +103,7 @@ public class Main {
         "        \"-link\", \"https://docs.oracle.com/javase/9/docs/api/\"))\n" + 
         "   \n" + 
         "packager.\n" + 
-        "    moduleMetadata(list(\n" + 
+        "    modules(list(\n" + 
         "        \"" + module + "@1.0/" + module + ".Main\"\n" + 
         "    ))   \n" + 
         "    \n" + 
