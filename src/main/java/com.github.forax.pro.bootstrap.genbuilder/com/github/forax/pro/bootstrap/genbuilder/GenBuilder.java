@@ -55,20 +55,41 @@ public class GenBuilder {
         "  @SuppressWarnings(\"exports\")\n",
         "  @com.github.forax.pro.api.TypeCheckedConfig\n",
         "  public interface ", className, " {\n",
-            stream(confType.getDeclaredMethods()).filter(m -> m.getParameterCount() != 0).flatMap(m -> methodTemplate(className, m)),
+            stream(confType.getDeclaredMethods()).flatMap(m -> {
+              switch(m.getParameterCount()) {
+              case 0:
+                return getterTemplate(m);
+              case 1:
+                return setterTemplate(className, m);
+              default:
+                return Stream.empty();
+              }
+            }),
         "  }\n",
         "  \n"
         );
   }
 
-  private static Stream<Object> methodTemplate(String className, Method method) {
+  private static Stream<Object> getterTemplate(Method method) {
+    String name = method.getName();
+    return Stream.concat(
+             Stream.of(
+               "    ", "@Deprecated", "\n").filter(__ -> method.isAnnotationPresent(Deprecated.class)),
+             Stream.of(
+               "    ", method.getGenericReturnType().getTypeName(), " ", name, "();\n"
+             )
+           );
+  }
+  
+  private static Stream<Object> setterTemplate(String className, Method method) {
     String name = method.getName();
     return Stream.concat(
              Stream.of(
                "    ", "@Deprecated", "\n").filter(__ -> method.isAnnotationPresent(Deprecated.class)),
              Stream.of(
                "    ", className, " ", name, "(", method.getGenericParameterTypes()[0].getTypeName(), " ", name, ");\n"
-             ));
+             )
+           );
   }
 
   private static Stream<String> toStream(Object o) {

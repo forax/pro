@@ -4,5 +4,5 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 public interface ConfigRunner {
-  public Optional<Runnable> accept(Path configFile);
+  public Optional<Runnable> accept(Path configFile, String[] arguments);
 }

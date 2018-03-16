@@ -1,6 +1,7 @@
 package com.github.forax.pro.api.helper;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import com.github.forax.pro.api.TypeCheckedConfig;
 
@@ -17,4 +18,7 @@ public interface ProConf {
   
   boolean exitOnError();
   void exitOnError(boolean exitOnError);
+  
+  List<String> arguments();
+  void arguments(List<String> arguments);
 }

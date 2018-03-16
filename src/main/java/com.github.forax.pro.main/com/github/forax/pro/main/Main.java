@@ -2,9 +2,9 @@ package com.github.forax.pro.main;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.util.function.Function.identity;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor.Version;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,23 +24,42 @@ public class Main {
     throw new AssertionError();
   }
   
+  static class InputException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    InputException(String message) {
+      super(message);
+    }
+    InputException(Throwable cause) {
+      super(cause);
+    }
+  }
+  
+  static class Configuration {
+    final Path configFile;
+    final Function<String[], String[]> arguments;
+    
+    Configuration(Path configFile, Function<String[], String[]> arguments) {
+      this.configFile = configFile;
+      this.arguments = arguments;
+    }
+  }
+  
   enum InputFile {
-    ARGUMENT(args -> (args.length == 1)? Optional.of(Paths.get(args[0])): Optional.empty()),
-    DEFAULT_PRO(args -> Optional.of(Paths.get("build.pro"))),
-    DEFAULT_JSON(args -> Optional.of(Paths.get("build.json")))
+    ARGUMENT(args -> (args.length >= 1)? Optional.of(new Configuration(Paths.get(args[0]), Main::shift)): Optional.empty()),
+    DEFAULT_PRO(args -> Optional.of(new Configuration(Paths.get("build.pro"), identity()))),
+    DEFAULT_JSON(args -> Optional.of(new Configuration(Paths.get("build.json"), identity())))
     ;
     
-    private final Function<String[], Optional<Path>> mapper;
+    private final Function<String[], Optional<Configuration>> mapper;
 
-    private InputFile(Function<String[], Optional<Path>> mapper) {
+    private InputFile(Function<String[], Optional<Configuration>> mapper) {
       this.mapper = mapper;
     }
     
-    static Optional<Path> find(String[] args) {
+    static Optional<Configuration> findConfiguration(String[] args) {
       return Arrays.stream(InputFile.values())
-          .map(input -> input.mapper.apply(args))
-          .map(p -> p.filter(Files::exists))
-          .flatMap(Optional::stream)
+          .flatMap(inputFile -> inputFile.mapper.apply(args).filter(conf -> Files.exists(conf.configFile)).stream())
           .findFirst();
     }
   }
@@ -64,7 +83,7 @@ public class Main {
       return Arrays.stream(values())
           .filter(command -> command.name().toLowerCase().equals(name))
           .findFirst()
-          .orElseThrow(() -> { throw new IllegalArgumentException("unknown sub command " + name); });
+          .orElseThrow(() -> { throw new InputException("unknown sub command '" + name + "'"); });
     }
   }
   
@@ -169,7 +188,7 @@ public class Main {
       System.out.println("HelloTests generated");
       
     } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      throw new InputException(e);
     }
   }
   
@@ -185,31 +204,33 @@ public class Main {
   
   static void shell() {
     if (getDaemon().filter(Daemon::isStarted).isPresent()) {
-      throw new IllegalStateException("shell doesn't currently support daemon mode :(");
+      throw new InputException("shell doesn't currently support daemon mode :(");
     }
     JShellWrapper.run(System.in, System.out, System.err);
   }
   
   static void build(String[] args) {
-    Path configFile = InputFile.find(args)
-        .orElseThrow(() -> new IllegalArgumentException("no existing input file specified"));
+    Configuration conf = InputFile.findConfiguration(args)
+        .orElseThrow(() -> new InputException("no existing input file specified"));
+    Path configFile = conf.configFile;
+    String[] arguments = conf.arguments.apply(args);
     
     ServiceLoader<ConfigRunner> loader = ServiceLoader.load(ConfigRunner.class, ConfigRunner.class.getClassLoader());
     ArrayList<ConfigRunner> configRunners = new ArrayList<>();
     loader.forEach(configRunners::add);
     
     configRunners.stream()
-        .flatMap(configRunner -> configRunner.accept(configFile).stream())
+        .flatMap(configRunner -> configRunner.accept(configFile, arguments).stream())
         .findFirst()
-        .orElseThrow(() -> new IllegalStateException("no config runner available for config file " + configFile))
+        .orElseThrow(() -> new InputException("no config runner available for config file " + configFile))
         .run();
   }
   
   static void daemon(String[] args) {
     Daemon service =
-        getDaemon().orElseThrow(() -> new IllegalStateException("daemon not found"));
+        getDaemon().orElseThrow(() -> new InputException("daemon not found"));
     if (service.isStarted()) {
-      throw new IllegalStateException("daemon already started");
+      throw new InputException("daemon already started");
     }
     service.start();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -237,16 +258,27 @@ public class Main {
     );
   }
   
+  static String[] shift(String[] args) {
+    return Arrays.stream(args).skip(1).toArray(String[]::new);
+  }
+  
   public static void main(String[] args) {
-    Command command;
-    String[] arguments;
-    if (args.length == 0) {
-      command = Command.BUILD;
-      arguments = args;
-    } else {
-      command = Command.command(args[0]);
-      arguments = Arrays.stream(args).skip(1).toArray(String[]::new);
+    try {
+      Command command;
+      String[] arguments;
+      if (args.length == 0) {
+        command = Command.BUILD;
+        arguments = args;
+      } else {
+        command = Command.command(args[0]);
+        arguments = shift(args);
+      }
+      command.consumer.accept(arguments);
+      
+    } catch(InputException e) {
+      System.err.println("error: " + e.getMessage() + "\n");
+      help();
+      System.exit(1);
     }
-    command.consumer.accept(arguments);
   }
 }

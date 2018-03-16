@@ -53,6 +53,10 @@ public class Pro {
         .orElse(Log.Level.INFO);
       proConf.loglevel(logLevel.name().toLowerCase());
       proConf.exitOnError(Boolean.valueOf(System.getProperty("pro.exitOnError", "false")));
+      List<String> arguments = Optional.ofNullable(System.getProperty("pro.arguments", null))
+          .map(value -> List.of(value.split(",")))
+          .orElse(List.of());
+      proConf.arguments(arguments);
       return config;
     }
   };
@@ -214,7 +218,7 @@ public class Pro {
   }*/
   
 
-  private static int checkPluginNames(Map<String, Plugin> allPlugins, String[] pluginNames, Config config, ArrayList<Plugin> plugins) {
+  private static int checkPluginNames(Map<String, Plugin> allPlugins, List<String> pluginNames, Config config, ArrayList<Plugin> plugins) {
     int exitCode = 0;
     for(String pluginName: pluginNames) {  
       Plugin plugin = allPlugins.get(pluginName);
@@ -256,6 +260,10 @@ public class Pro {
   }
   
   public static void run(String... pluginNames) {
+    run(List.of(pluginNames));
+  }
+  
+  public static void run(List<String> pluginNames) {
     DefaultConfig config = CONFIG.get();
     ProConf proConf = config.getOrThrow("pro", ProConf.class);
     

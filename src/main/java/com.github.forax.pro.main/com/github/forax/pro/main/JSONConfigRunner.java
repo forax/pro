@@ -18,8 +18,8 @@ import com.github.forax.pro.main.runner.ConfigRunner;
 
 public class JSONConfigRunner implements ConfigRunner {
   @Override
-  public Optional<Runnable> accept(Path config) {
-    return Optional.<Runnable>of(() -> run(config))
+  public Optional<Runnable> accept(Path config, String[] arguments) {
+    return Optional.<Runnable>of(() -> run(config, arguments))
              .filter(__ -> config.toString().endsWith(".json"));
   }
   
@@ -47,7 +47,7 @@ public class JSONConfigRunner implements ConfigRunner {
   }
   
  
-  private static void run(Path configFile) {
+  private static void run(Path configFile, String... arguments) {
     //System.out.println("run with json " + configFile);
     
     ArrayList<Object> pluginNames = new ArrayList<>();
@@ -62,6 +62,7 @@ public class JSONConfigRunner implements ConfigRunner {
     }
     
     Pro.set("pro.exitOnError", true);
+    Pro.set("pro.arguments", String.join(",", arguments));
     
     String[] plugins = pluginNames.stream().map(Object::toString).toArray(String[]::new);
     //System.out.println("run " + String.join(" -> ", plugins));
