@@ -105,14 +105,20 @@ public class Builders {
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface FormatterBuilder {
+    boolean replace();
+    FormatterBuilder replace(boolean replace);
     FormatterBuilder files(java.util.List<java.nio.file.Path> files);
     java.util.Optional<java.util.List<java.nio.file.Path>> files();
     java.util.List<java.nio.file.Path> moduleSourcePath();
     FormatterBuilder moduleSourcePath(java.util.List<java.nio.file.Path> moduleSourcePath);
-    FormatterBuilder moduleTestPath(java.util.List<java.nio.file.Path> moduleTestPath);
     java.util.List<java.nio.file.Path> moduleTestPath();
-    java.util.Optional<java.util.List<java.lang.String>> rawArguments();
+    FormatterBuilder moduleTestPath(java.util.List<java.nio.file.Path> moduleTestPath);
     FormatterBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
+    java.util.Optional<java.util.List<java.lang.String>> rawArguments();
+    boolean dryRun();
+    FormatterBuilder dryRun(boolean dryRun);
+    boolean setExitIfChanged();
+    FormatterBuilder setExitIfChanged(boolean setExitIfChanged);
   }
   
   public static final LinkerBuilder linker =
@@ -217,12 +223,12 @@ public class Builders {
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface PerferBuilder {
-    PerferBuilder javaCommand(java.nio.file.Path javaCommand);
-    java.nio.file.Path javaCommand();
     PerferBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
     java.util.List<java.nio.file.Path> moduleDependencyPath();
-    PerferBuilder moduleArtifactTestPath(java.nio.file.Path moduleArtifactTestPath);
     java.nio.file.Path moduleArtifactTestPath();
+    PerferBuilder moduleArtifactTestPath(java.nio.file.Path moduleArtifactTestPath);
+    java.nio.file.Path javaCommand();
+    PerferBuilder javaCommand(java.nio.file.Path javaCommand);
   }
   
   public static final ResolverBuilder resolver =
@@ -253,20 +259,20 @@ public class Builders {
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface RunnerBuilder {
-    java.util.Optional<java.lang.String> module();
     RunnerBuilder module(java.lang.String module);
+    java.util.Optional<java.lang.String> module();
     java.util.Optional<java.util.List<java.nio.file.Path>> upgradeModulePath();
     RunnerBuilder upgradeModulePath(java.util.List<java.nio.file.Path> upgradeModulePath);
-    java.nio.file.Path javaCommand();
-    RunnerBuilder javaCommand(java.nio.file.Path javaCommand);
     RunnerBuilder modulePath(java.util.List<java.nio.file.Path> modulePath);
     java.util.List<java.nio.file.Path> modulePath();
     RunnerBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
     java.util.Optional<java.util.List<java.lang.String>> rawArguments();
-    RunnerBuilder rootModules(java.util.List<java.lang.String> rootModules);
     java.util.Optional<java.util.List<java.lang.String>> rootModules();
-    RunnerBuilder mainArguments(java.util.List<java.lang.String> mainArguments);
+    RunnerBuilder rootModules(java.util.List<java.lang.String> rootModules);
     java.util.Optional<java.util.List<java.lang.String>> mainArguments();
+    RunnerBuilder mainArguments(java.util.List<java.lang.String> mainArguments);
+    RunnerBuilder javaCommand(java.nio.file.Path javaCommand);
+    java.nio.file.Path javaCommand();
   }
   
   public static final TesterBuilder tester =
