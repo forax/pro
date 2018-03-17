@@ -83,6 +83,7 @@ public class Bootstrap {
         "aether.connector.basic=aether.util"
         ));
 
+    set("docer.quiet", true);
     set("docer.link", uri("https://docs.oracle.com/javase/9/docs/api/"));
 
     set("linker.includeSystemJMODs", true);
