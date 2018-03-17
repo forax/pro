@@ -9,7 +9,7 @@ import static org.objectweb.asm.Opcodes.ACC_OPEN;
 import static org.objectweb.asm.Opcodes.ACC_STATIC_PHASE;
 import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
 import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
-import static org.objectweb.asm.Opcodes.V1_9;
+import static org.objectweb.asm.Opcodes.V9;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -427,7 +427,7 @@ public class ModuleHelper {
 
   public static byte[] moduleDescriptorToBinary(ModuleDescriptor descriptor) {
     ClassWriter classWriter = new ClassWriter(0);
-    classWriter.visit(V1_9, ACC_MODULE, "module-info", null, null, null);
+    classWriter.visit(V9, ACC_MODULE, "module-info", null, null, null);
     int moduleFlags = (descriptor.isOpen()? ACC_OPEN: 0) | ACC_SYNTHETIC;   // mark all generated module-info.class as synthetic
     String moduleVersion = descriptor.version().map(Version::toString).orElse(null);
     org.objectweb.asm.ModuleVisitor mv = classWriter.visitModule(descriptor.name(), moduleFlags, moduleVersion);
