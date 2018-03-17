@@ -19,6 +19,15 @@ public interface FormatterConf {
 
   // Formatter options
 
+  boolean replace();
+  void replace(boolean replace);
+  
+  boolean dryRun();
+  void dryRun(boolean dryRun);
+  
+  boolean setExitIfChanged();
+  void setExitIfChanged(boolean setExitIfChanged);
+  
   Optional<List<String>> rawArguments();
   void rawArguments(List<String> rawArguments);
 

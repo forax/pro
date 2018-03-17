@@ -12,10 +12,12 @@ import com.github.forax.pro.api.helper.CmdLine;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.Platform;
+import com.github.forax.pro.helper.util.StableList;
+
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class FormatterPlugin implements Plugin {
@@ -26,7 +28,10 @@ public class FormatterPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    config.getOrUpdate(name(), FormatterConf.class);
+    FormatterConf formatter = config.getOrUpdate(name(), FormatterConf.class);
+    formatter.replace(false);
+    formatter.dryRun(false);
+    formatter.setExitIfChanged(false);
   }
   
   @Override
@@ -39,10 +44,10 @@ public class FormatterPlugin implements Plugin {
   }
 
   private static List<Path> listAllJavaFiles(FormatterConf formatter) {
-    List<Path> pathList = new ArrayList<>();
-    pathList.addAll(formatter.moduleSourcePath());
-    pathList.addAll(formatter.moduleTestPath());
-    return walkIfNecessary(pathList, pathFilenameEndsWith(".java"));
+    StableList<Path> sourcePaths = StableList.<Path>of()
+        .appendAll(formatter.moduleSourcePath())
+        .appendAll(formatter.moduleTestPath());
+    return walkIfNecessary(sourcePaths, pathFilenameEndsWith(".java"));
   }
   
   @Override
@@ -63,11 +68,16 @@ public class FormatterPlugin implements Plugin {
     cmdLine.add(convention.javaHome().resolve("bin").resolve(Platform.current().javaExecutableName()));
     cmdLine.add("--module-path");
     cmdLine.add(convention.javaHome().resolve("plugins").resolve(name()).resolve("libs"));
-    cmdLine.add("--module");
-    cmdLine.add("google.java.format");
-    // no (raw) arguments will trigger default "format files to stdout" mode
+    cmdLine.add("--module").add("google.java.format");
+    
+    Optional.of("--replace").filter(__ -> formatter.replace()).ifPresent(cmdLine::add);
+    Optional.of("--dry-run").filter(__ -> formatter.dryRun()).ifPresent(cmdLine::add);
+    Optional.of("--set-exit-if-changed").filter(__ -> formatter.setExitIfChanged()).ifPresent(cmdLine::add);
+    
+    // no arguments will trigger default "format files to stdout" mode
     formatter.rawArguments().ifPresent(args -> args.forEach(cmdLine::add));
     log.verbose(cmdLine, CmdLine::toString);
+    
     // files
     List<Path> files = formatter.files().orElseGet(() -> listAllJavaFiles(formatter));
     log.debug(files, fs -> "files:\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
