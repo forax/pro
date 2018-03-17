@@ -38,7 +38,7 @@ public class FormatterPlugin implements Plugin {
     derive(formatter, FormatterConf::moduleTestPath, convention, ConventionFacade::javaModuleTestPath);
   }
 
-  private List<Path> listAllJavaFiles(FormatterConf formatter) {
+  private static List<Path> listAllJavaFiles(FormatterConf formatter) {
     List<Path> pathList = new ArrayList<>();
     pathList.addAll(formatter.moduleSourcePath());
     pathList.addAll(formatter.moduleTestPath());
@@ -78,8 +78,7 @@ public class FormatterPlugin implements Plugin {
     try {
       return process.waitFor();
     } catch (InterruptedException e) {
-      // fall-through
+      throw new IOException(e);
     }
-    return 1; // FIXME
   }
 }
