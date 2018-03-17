@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import com.github.forax.pro.helper.ModuleHelper;
@@ -108,8 +109,8 @@ public class Bootstrap {
 
     run("modulefixer", "compiler", "docer", "packager");
 
-    compileAndPackagePlugin("runner", () -> { /* empty */});
-    compileAndPackagePlugin("tester", () -> {
+    compileAndPackagePlugin("runner", list("resolver", "modulefixer", "compiler", "packager"), () -> { /* empty */});
+    compileAndPackagePlugin("tester", list("resolver", "modulefixer", "compiler", "packager"), () -> {
       String junitPlatformVersion = "1.1.0";
       String junitJupiterVersion = "5.1.0";
       String opentest4jVersion = "1.0.0";
@@ -126,7 +127,7 @@ public class Bootstrap {
           "org.junit.jupiter.engine=org.junit.jupiter:junit-jupiter-engine:" + junitJupiterVersion
       ));
     });
-    compileAndPackagePlugin("perfer", () -> {
+    compileAndPackagePlugin("perfer", list("resolver", "modulefixer", "compiler", "packager"), () -> {
       String jmhVersion = "1.20";
       String commonMath3Version = "3.6.1";
       String joptSimpleVersion = "5.0.4";
@@ -155,18 +156,14 @@ public class Bootstrap {
     // "org.codehaus.animal.sniffer.annotations=org.codehaus.mojo:animal-sniffer-annotations:1.14"
     //      ));
     //    });
-    compileAndPackagePlugin(
-        "formatter", //
-        () -> {
-          String gjfVersion = "1.5";
-          String base =
-              "https://github.com/google/google-java-format/releases/download/google-java-format";
-          download(
-              uri(base + "-" + gjfVersion + "/google-java-format-" + gjfVersion + "-all-deps.jar"),
-              location("plugins/formatter/libs"));
-        },
-        "compiler",
-        "packager");
+    compileAndPackagePlugin("formatter", list("compiler", "packager"), () -> {
+      String gjfVersion = "1.5";
+      String base =
+          "https://github.com/google/google-java-format/releases/download/google-java-format";
+      download(
+          uri(base + "-" + gjfVersion + "/google-java-format-" + gjfVersion + "-all-deps.jar"),
+          location("plugins/formatter/libs"));
+    });
 
     run("linker" /*, "uberpackager" */);
 
@@ -182,28 +179,20 @@ public class Bootstrap {
     Vanity.postOperations();
   }
 
-  private static void compileAndPackagePlugin(String name, Runnable extras) throws IOException {
-    compileAndPackagePlugin(name, extras, "resolver", "modulefixer", "compiler", "packager");
-  }
-
-  private static void compileAndPackagePlugin(String name, Runnable extras, String... plugins)
+  private static void compileAndPackagePlugin(String name, List<String> plugins, Runnable extras)
       throws IOException {
     deleteAllFiles(location("plugins/" + name + "/target"), false);
 
-    local(
-        "plugins/" + name,
-        () -> {
-          set(
-              "resolver.moduleDependencyPath",
-              path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
-          set(
-              "compiler.moduleDependencyPath",
-              path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
+    local("plugins/" + name, () -> {
+      set("resolver.moduleDependencyPath",
+          path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
+      set("compiler.moduleDependencyPath",
+          path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
 
-          extras.run();
+      extras.run();
 
-          run(plugins);
-        });
+      run(plugins);
+    });
   }
 
   private static void copyPackagedPluginToTargetImage(String name) throws IOException {
