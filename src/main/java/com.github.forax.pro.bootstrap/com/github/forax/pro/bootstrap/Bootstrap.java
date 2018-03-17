@@ -11,23 +11,30 @@ import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
 import static java.nio.file.Files.createDirectories;
 
+import com.github.forax.pro.helper.ModuleHelper;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
-import com.github.forax.pro.helper.ModuleHelper;
-
 public class Bootstrap {
+
   @SuppressWarnings("deprecation")
   private static int jdkVersion() {
     return Runtime.version().major();
   }
-  
+
   public static void main(String[] args) throws IOException {
     set("pro.loglevel", "verbose");
     set("pro.exitOnError", true);
 
-    //set("compiler.lint", "exports,module");
+    // set("compiler.lint", "exports,module");
     set("compiler.lint", "all,-varargs,-overloads");
     set("compiler.release", jdkVersion());
 
@@ -73,7 +80,7 @@ public class Bootstrap {
         ));
 
     set("docer.link", uri("https://docs.oracle.com/javase/9/docs/api/"));
-    
+
     set("linker.includeSystemJMODs", true);
     set("linker.launchers", list(
         "pro=com.github.forax.pro.main/com.github.forax.pro.main.Main"
@@ -99,9 +106,6 @@ public class Bootstrap {
 
     compileAndPackagePlugin("runner", () -> { /* empty */});
     compileAndPackagePlugin("tester", () -> {
-      set("resolver.remoteRepositories", list(
-        uri("https://oss.sonatype.org/content/repositories/snapshots")
-      ));
       String junitPlatformVersion = "1.1.0";
       String junitJupiterVersion = "5.1.0";
       String opentest4jVersion = "1.0.0";
@@ -130,11 +134,42 @@ public class Bootstrap {
       ));
     });
 
-    run("linker"/*, "uberpackager" */);
+    //    compileAndPackagePlugin("formatter", () -> {
+    //      set(
+    //        "resolver.remoteRepositories",
+    //        list(uri("https://oss.sonatype.org/content/repositories/snapshots")));
+    //      String gjfVersion = "1.5";
+    //      String guavaVersion = "24.1";
+    //      String javacShadedVersion = "9+181-r4173-1";
+    //      set("resolver.dependencies", list(
+    //          // "Google Java Format"
+    //          "com.google.googlejavaformat=com.google.googlejavaformat:google-java-format:" +
+    // gjfVersion,
+    //          "com.google.guava=com.google.guava:guava:" + guavaVersion,
+    //          "com.google.errorprone=com.google.errorprone:javac-shaded:" + javacShadedVersion,
+    //          "com.google.j2objc=com.google.j2objc:j2objc-annotations:1.1",
+    // "org.codehaus.animal.sniffer.annotations=org.codehaus.mojo:animal-sniffer-annotations:1.14"
+    //      ));
+    //    });
+    compileAndPackagePlugin(
+        "formatter", //
+        () -> {
+          String gjfVersion = "1.5";
+          String base =
+              "https://github.com/google/google-java-format/releases/download/google-java-format";
+          download(
+              base + "-" + gjfVersion + "/google-java-format-" + gjfVersion + "-all-deps.jar",
+              "plugins/formatter/libs");
+        },
+        "compiler",
+        "packager");
+
+    run("linker" /*, "uberpackager" */);
 
     copyPackagedPluginToTargetImage("runner");
     copyPackagedPluginToTargetImage("tester");
     copyPackagedPluginToTargetImage("perfer");
+    copyPackagedPluginToTargetImage("formatter");
 
     // re-generate builders
     //com.github.forax.pro.Pro.update(java.nio.file.Paths.get("target/image/plugins"));
@@ -144,29 +179,70 @@ public class Bootstrap {
   }
 
   private static void compileAndPackagePlugin(String name, Runnable extras) throws IOException {
+    compileAndPackagePlugin(name, extras, "resolver", "modulefixer", "compiler", "packager");
+  }
+
+  private static void compileAndPackagePlugin(String name, Runnable extras, String... plugins)
+      throws IOException {
     deleteAllFiles(location("plugins/" + name + "/target"), false);
 
-    local("plugins/" + name, () -> {
-      set("resolver.moduleDependencyPath",
-          path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
-      set("compiler.moduleDependencyPath",
-          path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
+    local(
+        "plugins/" + name,
+        () -> {
+          set(
+              "resolver.moduleDependencyPath",
+              path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
+          set(
+              "compiler.moduleDependencyPath",
+              path("plugins/" + name + "/deps", "target/main/artifact/", "deps"));
 
-      extras.run();
+          extras.run();
 
-      run("resolver", "modulefixer", "compiler", "packager");
-    });
+          run(plugins);
+        });
   }
 
   private static void copyPackagedPluginToTargetImage(String name) throws IOException {
     createDirectories(location("target/image/plugins/" + name));
     path("plugins/" + name + "/target/main/artifact", "plugins/" + name + "/deps")
-      .filter(Files::exists)
-      .forEach(srcPath ->
-        walkAndFindCounterpart(
-            srcPath,
-            location("target/image/plugins/" + name),
-            stream -> stream.filter(p -> p.toString().endsWith(".jar")),
-            Files::copy));
+        .filter(Files::exists)
+        .forEach(
+            srcPath ->
+                walkAndFindCounterpart(
+                    srcPath,
+                    location("target/image/plugins/" + name),
+                    stream -> stream.filter(p -> p.toString().endsWith(".jar")),
+                    Files::copy));
+    if (Files.exists(Paths.get("plugins/" + name + "/libs"))) {
+      createDirectories(location("target/image/plugins/" + name + "/libs"));
+      path("plugins/" + name + "/libs")
+          .filter(Files::exists)
+          .forEach(
+              srcPath ->
+                  walkAndFindCounterpart(
+                      srcPath,
+                      location("target/image/plugins/" + name + "/libs"),
+                      stream -> stream.filter(p -> p.toString().endsWith(".jar")),
+                      Files::copy));
+    }
+  }
+
+  private static void download(String urlSpec, String folder) {
+    try {
+      URL url = new URL(urlSpec);
+      String fileName = new File(url.toURI().getPath()).getName();
+      Path targetDirectory = Paths.get(folder);
+      Files.createDirectories(targetDirectory);
+      File targetFile = targetDirectory.resolve(fileName).toFile();
+      if (targetFile.exists()) {
+        return;
+      }
+      ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+      FileOutputStream fos = new FileOutputStream(targetFile);
+      fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+    } catch (Exception exception) {
+      throw new RuntimeException(
+          "download failed: url=" + urlSpec + " folder=" + folder, exception);
+    }
   }
 }

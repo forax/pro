@@ -1,7 +1,6 @@
 package com.github.forax.pro.api.impl;
 
 import java.util.Optional;
-//import java.util.function.BiConsumer;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
