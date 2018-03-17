@@ -10,18 +10,22 @@ import static com.github.forax.pro.Pro.uri;
 import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
 import static java.nio.file.Files.createDirectories;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.WRITE;
 
-import com.github.forax.pro.helper.ModuleHelper;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.UncheckedIOException;
+import java.net.URI;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.stream.Collectors;
+
+import com.github.forax.pro.helper.ModuleHelper;
 
 public class Bootstrap {
 
@@ -158,8 +162,8 @@ public class Bootstrap {
           String base =
               "https://github.com/google/google-java-format/releases/download/google-java-format";
           download(
-              base + "-" + gjfVersion + "/google-java-format-" + gjfVersion + "-all-deps.jar",
-              "plugins/formatter/libs");
+              uri(base + "-" + gjfVersion + "/google-java-format-" + gjfVersion + "-all-deps.jar"),
+              location("plugins/formatter/libs"));
         },
         "compiler",
         "packager");
@@ -227,22 +231,20 @@ public class Bootstrap {
     }
   }
 
-  private static void download(String urlSpec, String folder) {
+  private static void download(URI urlSpec, Path targetDirectory) {
     try {
-      URL url = new URL(urlSpec);
-      String fileName = new File(url.toURI().getPath()).getName();
-      Path targetDirectory = Paths.get(folder);
-      Files.createDirectories(targetDirectory);
-      File targetFile = targetDirectory.resolve(fileName).toFile();
-      if (targetFile.exists()) {
+      Path fileName = Paths.get(urlSpec.getPath()).getFileName();
+      Path targetFile = targetDirectory.resolve(fileName);
+      if (Files.exists(targetFile)) {
         return;
       }
-      ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-      FileOutputStream fos = new FileOutputStream(targetFile);
-      fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-    } catch (Exception exception) {
-      throw new RuntimeException(
-          "download failed: url=" + urlSpec + " folder=" + folder, exception);
+      Files.createDirectories(targetDirectory);
+      try(ReadableByteChannel input = Channels.newChannel(urlSpec.toURL().openStream());
+          FileChannel output = FileChannel.open(targetFile, CREATE_NEW, WRITE)) {
+        output.transferFrom(input, 0, Long.MAX_VALUE);
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException("download failed: url=" + urlSpec + " targetDirectory=" + targetDirectory, e);
     }
   }
 }
