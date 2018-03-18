@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.Task;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.impl.Configs.Query;
 import com.github.forax.pro.api.impl.DefaultConfig;
@@ -76,6 +77,7 @@ public class Pro {
     PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity(), (_1, _2) -> { throw new AssertionError(); }, HashMap::new));
   }
   
+  /*
   public static void update(Path dynamicPluginDir) {
     DefaultConfig config = CONFIG.get();
     List<Plugin> plugins = Plugins.getDynamicPlugins(dynamicPluginDir);
@@ -86,7 +88,7 @@ public class Pro {
         plugin.configure(config.asChecked(pluginName));
       }
     }
-  }
+  }*/
   
   public static void set(String key, Object value) {
     CONFIG.get().set(key, value);
@@ -218,20 +220,13 @@ public class Pro {
   }*/
   
 
-  private static int checkPluginNames(Map<String, Plugin> allPlugins, List<String> pluginNames, Config config, ArrayList<Plugin> plugins) {
-    int exitCode = 0;
-    for(String pluginName: pluginNames) {  
-      Plugin plugin = allPlugins.get(pluginName);
-      if (plugin == null) {
-        ProConf proConf = config.getOrThrow("pro", ProConf.class);
-        Log log = Log.create("pro", proConf.loglevel());
-        log.error(pluginName, name -> "unknown plugin " + name);
-        exitCode = 1;  // FIXME
-        continue;
-      }
-      plugins.add(plugin);
+  private static Optional<Plugin> findPluginByName(Map<String, Plugin> allPlugins, String pluginName, ProConf proConf) {
+    Optional<Plugin> plugin = Optional.ofNullable(allPlugins.get(pluginName));
+    if (!plugin.isPresent()) {
+      Log log = Log.create("pro", proConf.loglevel());
+      log.error(pluginName, name -> "unknown plugin " + name);  
     }
-    return exitCode;
+    return plugin;
   }
   
   public static void local(String localDir, Runnable action) { 
@@ -247,16 +242,27 @@ public class Pro {
     }
   }
   
-  public static void run(Object... plugins) {
-    run(Arrays.stream(plugins).map(o -> {
-      if (o instanceof Plugin) {
-        return ((Plugin)o).name();
+  public static void run(Object... tasks) {
+    DefaultConfig config = CONFIG.get();
+    ProConf proConf = config.getOrThrow("pro", ProConf.class);
+    
+    ArrayList<Task> taskList = new ArrayList<>();
+    for(Object task: tasks) {
+      if (task instanceof Task) {
+        taskList.add((Task)task);
+      } else {
+        String pluginName = (task instanceof Query)? ((Query)task)._id_(): task.toString();
+        Optional<Plugin> plugin = findPluginByName(PLUGINS, pluginName, proConf);
+        if (!plugin.isPresent()) {
+          // plugin not found
+          exit(proConf.exitOnError(), 1);  //FIXME
+          return;
+        }
+        taskList.add(plugin.get());
       }
-      if (o instanceof Query) {
-        return ((Query)o)._id_();
-      }
-      return o.toString();
-    }).toArray(String[]::new));
+    }
+    
+    runAll(config, taskList);
   }
   
   public static void run(String... pluginNames) {
@@ -267,31 +273,39 @@ public class Pro {
     DefaultConfig config = CONFIG.get();
     ProConf proConf = config.getOrThrow("pro", ProConf.class);
     
-    ArrayList<Plugin> plugins = new ArrayList<>();
-    int errorCode = checkPluginNames(PLUGINS, pluginNames, config, plugins);
-    if (errorCode != 0) {
-      exit(proConf.exitOnError(), errorCode);
-      return;
+    ArrayList<Task> plugins = new ArrayList<>();
+    for(String pluginName: pluginNames) {
+      Optional<Plugin> plugin = findPluginByName(PLUGINS, pluginName, proConf);  
+      if (!plugin.isPresent()) {
+        // plugin not found
+        exit(proConf.exitOnError(), 1);  //FIXME
+        return;
+      }
+      plugins.add(plugin.get());
     }
     
-    Config pluginConfig = config.duplicate().asConfig();
-    
-    Optional<Daemon> daemonService = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
-    BiConsumer<List<Plugin>, Config> consumer = daemonService
-        .filter(Daemon::isStarted)
-        .<BiConsumer<List<Plugin>, Config>>map(daemon -> daemon::run)
-        .orElse(Pro::runAll);
-    consumer.accept(plugins, pluginConfig);
+    runAll(config, plugins);
   }
   
-  private static void runAll(List<Plugin> plugins, Config config) {
+  private static void runAll(DefaultConfig config, List<Task> tasks) {
+    Config taskConfig = config.duplicate().asConfig();
+    
+    Optional<Daemon> daemonService = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
+    BiConsumer<List<Task>, Config> consumer = daemonService
+        .filter(Daemon::isStarted)
+        .<BiConsumer<List<Task>, Config>>map(daemon -> daemon::execute)
+        .orElse(Pro::executeAll);
+    consumer.accept(tasks, taskConfig);
+  }
+  
+  private static void executeAll(List<Task> tasks, Config config) {
     ProConf proConf = config.getOrThrow("pro", ProConf.class);
     boolean exitOnError = proConf.exitOnError();
     
     int errorCode = 0;
     long start = System.currentTimeMillis();
-    for(Plugin plugin: plugins) {
-      errorCode = execute(plugin, config);
+    for(Task task: tasks) {
+      errorCode = execute(task, config);
       if (errorCode != 0) {
         break;
       }
@@ -311,18 +325,16 @@ public class Pro {
     }
   }
   
-  private static int execute(Plugin plugin, Config config) {
-    int errorCode;
+  private static int execute(Task task, Config config) {
     try {
-      errorCode = plugin.execute(config);
+      return task.execute(config);
     } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
       e.printStackTrace();
       String logLevel = config.getOrThrow("pro", ProConf.class).loglevel();
-      Log log = Log.create(plugin.name(), logLevel);
+      Log log = Log.create((task instanceof Plugin)? ((Plugin)task).name(): "pro", logLevel);
       log.error(e);
-      errorCode = 1; // FIXME
+      return 1; // FIXME
     }
-    return errorCode;
   }
   
   private static void exit(boolean exitOnError, int errorCode) {

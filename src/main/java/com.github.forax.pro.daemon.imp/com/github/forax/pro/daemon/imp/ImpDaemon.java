@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.Task;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.Log;
@@ -75,7 +77,7 @@ public class ImpDaemon implements Daemon {
   
   // changed at each run, mutated only by the daemon thread
   private Thread watcherThread;
-  private List<Plugin> plugins = List.of();
+  private List<Task> tasks = List.of();
   private Config config;
   
   private void mainLoop() {
@@ -96,10 +98,10 @@ public class ImpDaemon implements Daemon {
         continue;
       }
       
-      // run plugins
+      // run tasks
       int errorCode = 0;
-      for(Plugin plugin: plugins) {
-        errorCode = execute(plugin, config);
+      for(Task task: tasks) {
+        errorCode = execute(task, config);
         if (errorCode != 0) {
           break;
         } 
@@ -111,18 +113,16 @@ public class ImpDaemon implements Daemon {
     }
   }
   
-  private static int execute(Plugin plugin, Config config) {
-    int errorCode;
+  private static int execute(Task task, Config config) {
     try {
-      errorCode = plugin.execute(config);
+      return task.execute(config);
     } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
       e.printStackTrace();
       String logLevel = config.get("loglevel", String.class).orElse("debug");
-      Log log = Log.create(plugin.name(), logLevel);
+      Log log = Log.create((task instanceof Plugin)? ((Plugin)task).name(): "pro", logLevel);
       log.error(e);
-      errorCode = 1; // FIXME
+      return 1; // FIXME
     }
-    return errorCode;
   }
   
   enum WatchKeyKind {
@@ -301,14 +301,17 @@ public class ImpDaemon implements Daemon {
   
   
   @Override
-  public void run(List<Plugin> plugins, Config config) {
+  public void execute(List<Task> tasks, Config config) {
     if (thread == null) {
       throw new IllegalStateException("no thread was started");
     }
     
-    if (plugins.isEmpty()) {  // do nothing
+    // find first plugin
+    Optional<Plugin> first = tasks.stream().filter(Plugin.class::isInstance).map(Plugin.class::cast).findFirst();
+    if (!first.isPresent()) {  // do nothing
       return;
     }
+    Plugin firstPlugin = first.get();
     
     send(() -> {
       // stop watcher thread
@@ -326,14 +329,14 @@ public class ImpDaemon implements Daemon {
       }
       
       HashSet<Path> roots = new HashSet<>();
-      plugins.get(0).watch(config, roots::add);
+      firstPlugin.watch(config, roots::add);
       
       // start a new watcher thread
       Log log = Log.create("daemon", config.getOrThrow("pro", ProConf.class).loglevel());
       Thread watcherThread = new Thread(() -> watcherLoop(watcher, refresher, log, roots));
       watcherThread.start();
       
-      this.plugins = plugins;
+      this.tasks = tasks;
       this.config = config;
       this.watcherThread = watcherThread;
     });

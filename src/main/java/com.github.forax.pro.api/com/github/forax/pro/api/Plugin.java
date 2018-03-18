@@ -1,7 +1,5 @@
 package com.github.forax.pro.api;
 
-import java.io.IOException;
-
 /**
  * Define a stateless plugin.
  * 
@@ -11,7 +9,7 @@ import java.io.IOException;
  * 
  * A class that implements this interface should *never* have fields !
  */
-public interface Plugin {
+public interface Plugin extends Task {
   /**
    * Name of the plugin.
    * The name is used when calling Pro.run() and it's the name of the node
@@ -67,13 +65,4 @@ public interface Plugin {
    * 
    */
   public void watch(Config config, WatcherRegistry registry);
-  
-  /**
-   * Execute the current plugin with a specific read only configuration
-   * 
-   * @param config a read only configuration
-   * @return an error code, 0 means OK, any other values means error.
-   * @throws IOException if an I/O error occurs
-   */
-  public int execute(Config config) throws IOException;
 }

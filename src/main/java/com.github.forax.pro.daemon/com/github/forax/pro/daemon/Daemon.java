@@ -3,11 +3,11 @@ package com.github.forax.pro.daemon;
 import java.util.List;
 
 import com.github.forax.pro.api.Config;
-import com.github.forax.pro.api.Plugin;
+import com.github.forax.pro.api.Task;
 
 /**
  * An interface to interact with a daemon that watch directories and
- * run a list of plugins if one of file the directories change.
+ * run a list of task if one of file the directories change.
  */
 public interface Daemon {
   /**
@@ -27,9 +27,9 @@ public interface Daemon {
   void stop();
 
   /**
-   * Ask the daemon to run a plugin list with a configuration
-   * @param plugins a list of plugin to execute if a file change
-   * @param config the configuration to use when running the plugins
+   * Ask the daemon to run a task list with a configuration
+   * @param tasks a list of task to execute if a file change
+   * @param config the configuration to use when running the task
    */
-  void run(List<Plugin> plugins, Config config);
+  void execute(List<Task> tasks, Config config);
 }
