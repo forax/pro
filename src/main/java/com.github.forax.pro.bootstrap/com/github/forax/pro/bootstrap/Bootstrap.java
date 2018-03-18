@@ -31,7 +31,8 @@ public class Bootstrap {
 
   @SuppressWarnings("deprecation")
   private static int jdkVersion() {
-    return Runtime.version().major();
+    int major = Runtime.version().major();
+    return Math.min(major, 10);  //FIXME --release doesn't work yet with the jdk 11
   }
 
   public static void main(String[] args) throws IOException {
