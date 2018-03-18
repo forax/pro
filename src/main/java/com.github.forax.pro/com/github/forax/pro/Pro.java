@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toMap;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.StackWalker.StackFrame;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -27,7 +28,9 @@ import java.util.stream.Stream;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.Task;
+import com.github.forax.pro.api.TypeCheckedConfig;
 import com.github.forax.pro.api.helper.ProConf;
+import com.github.forax.pro.api.impl.Configs.DuplicatableConfig;
 import com.github.forax.pro.api.impl.Configs.Query;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
@@ -40,9 +43,9 @@ public class Pro {
     throw new AssertionError();
   }
   
-  private static final ThreadLocal<DefaultConfig> CONFIG = new ThreadLocal<>() {
+  static final ThreadLocal<DuplicatableConfig> CONFIG = new ThreadLocal<>() {
     @Override
-    protected DefaultConfig initialValue() {
+    protected DuplicatableConfig initialValue() {
       DefaultConfig config = new DefaultConfig();
       ProConf proConf = config.getOrUpdate("pro", ProConf.class);
       proConf.currentDir(Paths.get("."));
@@ -64,7 +67,7 @@ public class Pro {
   static final HashMap<String, Plugin> PLUGINS;
   static {
     // initialization
-    DefaultConfig config = CONFIG.get();
+    DefaultConfig config = (DefaultConfig)CONFIG.get();
 
     ProConf proConf = config.getOrThrow("pro", ProConf.class);
     Log log = Log.create("pro", proConf.loglevel());
@@ -230,10 +233,10 @@ public class Pro {
   }
   
   public static void local(String localDir, Runnable action) { 
-    DefaultConfig oldConfig = CONFIG.get();
+    DuplicatableConfig oldConfig = CONFIG.get();
     Path currentDir = oldConfig.getOrThrow("pro", ProConf.class).currentDir();
     try {
-      DefaultConfig newConfig = oldConfig.duplicate();
+      DuplicatableConfig newConfig = oldConfig.duplicate();
       newConfig.getOrUpdate("pro", ProConf.class).currentDir(currentDir.resolve(localDir));
       CONFIG.set(newConfig);
       action.run();
@@ -242,8 +245,29 @@ public class Pro {
     }
   }
   
+  public static Task task(Runnable action) {
+    int line = StackWalker.getInstance().walk(s -> s.findFirst()).map(StackFrame::getLineNumber).orElse(-1);
+    return new Task() {
+      @Override
+      public String name() {
+        return "task at " + line;
+      }
+      @Override
+      public int execute(Config config) throws IOException {
+        DuplicatableConfig oldConfig = CONFIG.get();
+        try {
+          CONFIG.set(DefaultConfig.asNonMutable(config));
+          action.run();
+        } finally {
+          CONFIG.set(oldConfig);
+        }
+        return 0; // FIXME
+      }
+    };
+  }
+  
   public static void run(Object... tasks) {
-    DefaultConfig config = CONFIG.get();
+    DuplicatableConfig config = CONFIG.get();
     ProConf proConf = config.getOrThrow("pro", ProConf.class);
     
     ArrayList<Task> taskList = new ArrayList<>();
@@ -270,7 +294,7 @@ public class Pro {
   }
   
   public static void run(List<String> pluginNames) {
-    DefaultConfig config = CONFIG.get();
+    DuplicatableConfig config = CONFIG.get();
     ProConf proConf = config.getOrThrow("pro", ProConf.class);
     
     ArrayList<Task> plugins = new ArrayList<>();
@@ -287,7 +311,7 @@ public class Pro {
     runAll(config, plugins);
   }
   
-  private static void runAll(DefaultConfig config, List<Task> tasks) {
+  private static void runAll(DuplicatableConfig config, List<Task> tasks) {
     Config taskConfig = config.duplicate().asConfig();
     
     Optional<Daemon> daemonService = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();

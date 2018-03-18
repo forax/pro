@@ -4,9 +4,10 @@ import java.util.Optional;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
+import com.github.forax.pro.api.impl.Configs.DuplicatableConfig;
 import com.github.forax.pro.api.impl.Configs.EvalContext;
 
-public class DefaultConfig implements MutableConfig, EvalContext {
+public class DefaultConfig implements DuplicatableConfig, EvalContext {
   private final Object root;
   
   public DefaultConfig() {
@@ -42,8 +43,38 @@ public class DefaultConfig implements MutableConfig, EvalContext {
   //   Configs.forEach(root, key, consumer); 
   //}
   
-  public DefaultConfig duplicate() {
+  @Override
+  public DuplicatableConfig duplicate() {
     return new DefaultConfig(root);
+  }
+  
+  public static DuplicatableConfig asNonMutable(Config config) {
+    return new DuplicatableConfig() {
+      @Override
+      public <T> Optional<T> get(String key, Class<T> type) {
+        return config.get(key, type);
+      }
+
+      @Override
+      public DuplicatableConfig duplicate() {
+        return this;
+      }
+
+      @Override
+      public Config asConfig() {
+        return config;
+      }
+      
+      @Override
+      public <T> T getOrUpdate(String key, Class<T> type) {
+        throw new UnsupportedOperationException("getOrUpdate() can not be used on a non-mutable configuration");
+      }
+
+      @Override
+      public void set(String key, Object value) {
+        throw new UnsupportedOperationException("set() can not be used on a non-mutable configuration");
+      }
+    };
   }
   
   /*
@@ -93,6 +124,7 @@ public class DefaultConfig implements MutableConfig, EvalContext {
     };
   }
   
+  @Override
   public Config asConfig() {
     return new Config() {
       @Override

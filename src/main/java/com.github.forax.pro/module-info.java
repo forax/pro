@@ -1,5 +1,5 @@
 module com.github.forax.pro {
-  requires com.github.forax.pro.api;
+  requires transitive com.github.forax.pro.api;
   requires com.github.forax.pro.daemon;
   requires transitive com.github.forax.pro.helper;
   
