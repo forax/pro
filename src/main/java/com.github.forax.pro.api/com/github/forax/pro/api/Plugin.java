@@ -11,16 +11,6 @@ package com.github.forax.pro.api;
  */
 public interface Plugin extends Task {
   /**
-   * Name of the plugin.
-   * The name is used when calling Pro.run() and it's the name of the node
-   * in the configuration tree.
-   * The name should use the camel case convention.
-   * 
-   * @return the name of the plugin.
-   */
-  public String name();
-  
-  /**
    * Called to register the plugin properties with their default values
    * (with {@link MutableConfig#set(String, Object)}).
    * 

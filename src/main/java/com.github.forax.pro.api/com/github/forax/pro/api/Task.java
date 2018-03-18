@@ -9,8 +9,17 @@ import java.io.IOException;
  * 
  * A task should never do side effects.
  */
-@FunctionalInterface
 public interface Task {
+  /**
+   * Name of the task.
+   * The name is used when calling Pro.run() and it's the name of the node
+   * in the configuration tree.
+   * The name should use the camel case convention.
+   * 
+   * @return the name of the task.
+   */
+  public String name();
+  
   /**
    * Execute the current task with a specific read-only configuration
    * 

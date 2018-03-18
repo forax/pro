@@ -331,7 +331,7 @@ public class Pro {
     } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
       e.printStackTrace();
       String logLevel = config.getOrThrow("pro", ProConf.class).loglevel();
-      Log log = Log.create((task instanceof Plugin)? ((Plugin)task).name(): "pro", logLevel);
+      Log log = Log.create(task.name(), logLevel);
       log.error(e);
       return 1; // FIXME
     }

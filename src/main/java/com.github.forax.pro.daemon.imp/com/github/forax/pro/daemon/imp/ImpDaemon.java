@@ -119,7 +119,7 @@ public class ImpDaemon implements Daemon {
     } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
       e.printStackTrace();
       String logLevel = config.get("loglevel", String.class).orElse("debug");
-      Log log = Log.create((task instanceof Plugin)? ((Plugin)task).name(): "pro", logLevel);
+      Log log = Log.create(task.name(), logLevel);
       log.error(e);
       return 1; // FIXME
     }
