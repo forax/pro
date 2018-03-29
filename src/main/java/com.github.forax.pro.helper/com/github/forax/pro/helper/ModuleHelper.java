@@ -298,6 +298,7 @@ public class ModuleHelper {
       if (optRef.isPresent()) {
         optRef.get().descriptor().requires()
           .stream()
+          .filter(require -> !require.modifiers().contains(Requires.Modifier.STATIC))  // skip static requires
           .map(Requires::name)
           .filter(require -> !moduleFounds.contains(require))
           .forEach(require -> works.offer(new Work(() -> chain.get() + " -> " + require, require)));
