@@ -109,7 +109,6 @@ public class TesterPlugin implements Plugin {
     StableList<Path> moduleFinderRoots = StableList
         .of(testPath)                                // "target/test/exploded/[MODULE_NAME]
         .append(tester.pluginDir().resolve(name()))  // "[PRO_HOME]/plugins/tester"
-        .appendAll(tester.moduleExplodedTestPath())  // "target/test/exploded")
         .appendAll(tester.moduleDependencyPath());   // "deps"
 
     ModuleFinder finder = ModuleFinder.of(moduleFinderRoots.toArray(Path[]::new));
