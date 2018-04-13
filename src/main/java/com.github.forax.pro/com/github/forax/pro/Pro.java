@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.Task;
-import com.github.forax.pro.api.TypeCheckedConfig;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.impl.Configs.DuplicatableConfig;
 import com.github.forax.pro.api.impl.Configs.Query;
