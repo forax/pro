@@ -44,33 +44,33 @@ public class DocerPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    DocerConf docer = config.getOrUpdate(name(), DocerConf.class);
-    docer.generateTestDoc(false);
-    docer.quiet(false);
-    docer.html5(true);
+    var docerConf = config.getOrUpdate(name(), DocerConf.class);
+    docerConf.generateTestDoc(false);
+    docerConf.quiet(false);
+    docerConf.html5(true);
   }
   
   @Override
   public void configure(MutableConfig config) {
-    DocerConf compiler = config.getOrUpdate(name(), DocerConf.class);
-    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+    var docerConf = config.getOrUpdate(name(), DocerConf.class);
+    var convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
-    derive(compiler, DocerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
-    derive(compiler, DocerConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
-    derive(compiler, DocerConf::moduleMergedTestPath, convention, ConventionFacade::javaModuleMergedTestPath);
+    derive(docerConf, DocerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
+    derive(docerConf, DocerConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
+    derive(docerConf, DocerConf::moduleMergedTestPath, convention, ConventionFacade::javaModuleMergedTestPath);
     
     // outputs
-    derive(compiler, DocerConf::moduleDocSourcePath, convention, ConventionFacade::javaModuleDocSourcePath);
-    derive(compiler, DocerConf::moduleDocTestPath, convention, ConventionFacade::javaModuleDocTestPath);
+    derive(docerConf, DocerConf::moduleDocSourcePath, convention, ConventionFacade::javaModuleDocSourcePath);
+    derive(docerConf, DocerConf::moduleDocTestPath, convention, ConventionFacade::javaModuleDocTestPath);
   }
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    DocerConf docer = config.getOrThrow(name(), DocerConf.class);
-    docer.moduleDependencyPath().forEach(registry::watch);
-    docer.moduleSourcePath().forEach(registry::watch);
-    docer.moduleMergedTestPath().forEach(registry::watch);
+    var docerConf = config.getOrThrow(name(), DocerConf.class);
+    docerConf.moduleDependencyPath().forEach(registry::watch);
+    docerConf.moduleSourcePath().forEach(registry::watch);
+    docerConf.moduleMergedTestPath().forEach(registry::watch);
   }
   
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
@@ -102,28 +102,28 @@ public class DocerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
+    var log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
-    ToolProvider javadocTool = ToolProvider.findFirst("javadoc")
+    var javadocTool = ToolProvider.findFirst("javadoc")
         .orElseThrow(() -> new IllegalStateException("can not find javadoc"));
-    DocerConf docer = config.getOrThrow(name(), DocerConf.class);
+    var docerConf = config.getOrThrow(name(), DocerConf.class);
     
-    List<Path> moduleSourcePath = FileHelper.pathFromFilesThatExist(docer.moduleSourcePath());
-    ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(moduleSourcePath);
-    int errorCode = generateAll(moduleSourceFinder, docer.moduleDocSourcePath(),
-        (input, output) -> generateDoc(log, javadocTool, docer, input, output));
+    var moduleSourcePath = FileHelper.pathFromFilesThatExist(docerConf.moduleSourcePath());
+    var moduleSourceFinder = ModuleHelper.sourceModuleFinders(moduleSourcePath);
+    var errorCode = generateAll(moduleSourceFinder, docerConf.moduleDocSourcePath(),
+        (input, output) -> generateDoc(log, javadocTool, docerConf, input, output));
     if (errorCode != 0) {
       return errorCode;
     }
-    List<Path> moduleTestPath = FileHelper.pathFromFilesThatExist(docer.moduleMergedTestPath());
-    if (!docer.generateTestDoc() || moduleTestPath.isEmpty()) {
+    var moduleTestPath = FileHelper.pathFromFilesThatExist(docerConf.moduleMergedTestPath());
+    if (!docerConf.generateTestDoc() || moduleTestPath.isEmpty()) {
       return 0;
     }
     
-    ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(moduleTestPath);
-    return generateAll(moduleTestFinder, docer.moduleDocTestPath(),
-        (input, output) -> generateDoc(log, javadocTool, docer, input, output));
+    var moduleTestFinder = ModuleHelper.sourceModuleFinders(moduleTestPath);
+    return generateAll(moduleTestFinder, docerConf.moduleDocTestPath(),
+        (input, output) -> generateDoc(log, javadocTool, docerConf, input, output));
   }
 
   interface Action {
@@ -134,12 +134,12 @@ public class DocerPlugin implements Plugin {
     FileHelper.deleteAllFiles(output, false);
     Files.createDirectories(output);
     
-    for(ModuleReference module: finder.findAll()) {
-      Optional<URI> location = module.location();
+    for(var module: finder.findAll()) {
+      var location = module.location();
       if (!location.isPresent()) {
         continue;
       }
-      int exitCode = action.apply(Paths.get(location.get()), output);
+      var exitCode = action.apply(Paths.get(location.get()), output);
       if (exitCode != 0) {
         return exitCode;
       }
@@ -147,28 +147,28 @@ public class DocerPlugin implements Plugin {
     return 0;
   }
   
-  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docer, Path input, Path output) {
-    Javadoc javadoc = new Javadoc(output.resolve(input.getFileName().toString()), docer.moduleSourcePath());
-    docer.rawArguments().ifPresent(javadoc::rawArguments);
-    javadoc.modulePath(docer.moduleDependencyPath());
-    docer.upgradeModulePath().ifPresent(javadoc::upgradeModulePath);
-    docer.rootModules().ifPresent(javadoc::rootModules);
-    javadoc.quiet(docer.quiet());
-    javadoc.html5(docer.html5());
-    docer.link().filter(url -> isLinkHostOnline(log, url)).ifPresent(javadoc::link);
+  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docerConf, Path input, Path output) {
+    var javadoc = new Javadoc(output.resolve(input.getFileName().toString()), docerConf.moduleSourcePath());
+    docerConf.rawArguments().ifPresent(javadoc::rawArguments);
+    javadoc.modulePath(docerConf.moduleDependencyPath());
+    docerConf.upgradeModulePath().ifPresent(javadoc::upgradeModulePath);
+    docerConf.rootModules().ifPresent(javadoc::rootModules);
+    javadoc.quiet(docerConf.quiet());
+    javadoc.html5(docerConf.html5());
+    docerConf.link().filter(url -> isLinkHostOnline(log, url)).ifPresent(javadoc::link);
     
-    CmdLine cmdLine = gatherAll(JavadocOption.class, option -> option.action).apply(javadoc, new CmdLine());
-    List<Path> files = docer.files().orElseGet(
+    var cmdLine = gatherAll(JavadocOption.class, option -> option.action).apply(javadoc, new CmdLine());
+    var files = docerConf.files().orElseGet(
         () -> walkIfNecessary(List.of(input), pathFilenameEndsWith(".java")));  //FIXME, use rootNames ??
     files.forEach(cmdLine::add);
-    String[] arguments = cmdLine.toArguments();
+    var arguments = cmdLine.toArguments();
     log.verbose(files, fs -> OptionAction.toPrettyString(JavadocOption.class, option -> option.action).apply(javadoc, "javadoc") + "\n" + fs.stream().map(Path::toString).collect(Collectors.joining(" ")));
     
     return javadocTool.run(System.out, System.err, arguments);
   }
   
   private static boolean isLinkHostOnline(Log log, URI uri) {
-    String host = uri.getHost();
+    var host = uri.getHost();
     try {  
       InetAddress.getByName(host);
       return true;
