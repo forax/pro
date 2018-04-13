@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.github.forax.pro.api.Config;
@@ -41,22 +40,22 @@ public class RunnerPlugin implements Plugin {
   
   @Override
   public void configure(MutableConfig config) {
-    RunnerConf runner = config.getOrUpdate(name(), RunnerConf.class);
-    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class); 
+    var runnerConf = config.getOrUpdate(name(), RunnerConf.class);
+    var convention = config.getOrThrow("convention", ConventionFacade.class); 
     
     // inputs
-    derive(runner, RunnerConf::modulePath, convention,
+    derive(runnerConf, RunnerConf::modulePath, convention,
         c -> StableList.of(c.javaModuleArtifactSourcePath())
           .appendAll(c.javaModuleDependencyPath())
           .appendAll(c.javaModuleExplodedSourcePath()));
-    derive(runner, RunnerConf::javaCommand, convention,
+    derive(runnerConf, RunnerConf::javaCommand, convention,
         c -> c.javaHome().resolve("bin").resolve(Platform.current().javaExecutableName()));
   }
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    RunnerConf runner = config.getOrThrow(name(), RunnerConf.class);
-    runner.modulePath().forEach(registry::watch);
+    var runnerConf = config.getOrThrow(name(), RunnerConf.class);
+    runnerConf.modulePath().forEach(registry::watch);
   }
   
   enum RunnerOption {
@@ -76,57 +75,56 @@ public class RunnerPlugin implements Plugin {
   }
   
   private static Optional<String> findMainModule(List<Path> modulePath, Log log) {
-    for(Path path: modulePath) {
-      ModuleFinder finder = ModuleFinder.of(path);
+    for(var path: modulePath) {
+      var finder = ModuleFinder.of(path);
       
-      Set<String> set = finder.findAll().stream()
+      var mainClasses = finder.findAll().stream()
         .map(ModuleReference::descriptor)
         .flatMap(desc -> desc.mainClass().map(mainClass -> desc.name() + '/' + mainClass).stream())
         .collect(Collectors.toSet());
       
-      switch(set.size()) {
+      switch(mainClasses.size()) {
       case 0:
         break;
       case 1:
-        return Optional.of(set.iterator().next());
+        return Optional.of(mainClasses.iterator().next());
       default:
-        log.error(set, mainClasses -> "several main classes found " + String.join(", ", mainClasses));
+        log.error(mainClasses, _mainClasses -> "several main classes found " + String.join(", ", _mainClasses));
         return Optional.empty();
       }
     }
     
-    log.error(modulePath, _modulePath -> "no main class found in " + modulePath.stream().map(Path::toString).collect(joining(":")));
+    log.error(modulePath, _modulePath -> "no main class found in " + _modulePath.stream().map(Path::toString).collect(joining(":")));
     return Optional.empty();
   }
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
-    RunnerConf runner = config.getOrThrow(name(), RunnerConf.class);
-    log.debug(config, conf -> "config " + runner);
+    var log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
+    var runnerConf = config.getOrThrow(name(), RunnerConf.class);
+    log.debug(config, conf -> "config " + runnerConf);
     
-    Optional<String> moduleName = runner.module()
-        .or(() -> findMainModule(runner.modulePath(), log));
-    if (!moduleName.isPresent()) {
+    var moduleNameOpt = runnerConf.module().or(() -> findMainModule(runnerConf.modulePath(), log));
+    if (!moduleNameOpt.isPresent()) {
       return 1;  //FIXME
     }
     
-    Java java = new Java(runner.javaCommand(), runner.modulePath(), moduleName.get());
-    runner.upgradeModulePath().ifPresent(java::upgradeModulePath);
-    runner.rootModules().ifPresent(java::rootModules);
-    runner.rawArguments().ifPresent(java::rawArguments);
-    runner.mainArguments().ifPresent(java::mainArguments);
+    var java = new Java(runnerConf.javaCommand(), runnerConf.modulePath(), moduleNameOpt.get());
+    runnerConf.upgradeModulePath().ifPresent(java::upgradeModulePath);
+    runnerConf.rootModules().ifPresent(java::rootModules);
+    runnerConf.rawArguments().ifPresent(java::rawArguments);
+    runnerConf.mainArguments().ifPresent(java::mainArguments);
     
-    String[] arguments = OptionAction.gatherAll(RunnerOption.class, option -> option.action).apply(java, new CmdLine()).toArguments();
+    var arguments = OptionAction.gatherAll(RunnerOption.class, option -> option.action).apply(java, new CmdLine()).toArguments();
     log.verbose(java, _java -> OptionAction.toPrettyString(RunnerOption.class, option -> option.action).apply(_java, "java"));
     
-    Path javaCommand = java.getJavaCommand();
+    var javaCommand = java.getJavaCommand();
     if (!Files.exists(javaCommand)) {
       log.error(javaCommand, javaPath -> "command java " + javaPath + " not found");
       return 1; //FIXME
     }
     
-    Process process = new ProcessBuilder(StableList.of(javaCommand.toString()).appendAll(arguments))
+    var process = new ProcessBuilder(StableList.of(javaCommand.toString()).appendAll(arguments))
       .redirectErrorStream(true)
       .start();
     
