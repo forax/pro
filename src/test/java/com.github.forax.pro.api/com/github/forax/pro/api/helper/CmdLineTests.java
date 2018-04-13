@@ -8,20 +8,20 @@ import org.junit.jupiter.api.Test;
 class CmdLineTests {
   @Test
   void toStringWithoutArguments() {
-    CmdLine cmdLine = new CmdLine();
+    var cmdLine = new CmdLine();
     assertEquals("", cmdLine.toString());
   }
 
   @Test
   void toStringWithSingleArgument() {
-    CmdLine cmdLine = new CmdLine();
+    var cmdLine = new CmdLine();
     cmdLine.add("one");
     assertEquals("one", cmdLine.toString());
   }
 
   @Test
   void toStringWithMultipleArguments() {
-    CmdLine cmdLine = new CmdLine();
+    var cmdLine = new CmdLine();
     cmdLine.add("one");
     cmdLine.add("two");
     cmdLine.add("three");
