@@ -1,6 +1,5 @@
 package com.github.forax.pro.main;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -50,11 +49,11 @@ public class JSONConfigRunner implements ConfigRunner {
   private static void run(Path configFile, String... arguments) {
     //System.out.println("run with json " + configFile);
     
-    ArrayList<Object> pluginNames = new ArrayList<>();
+    var pluginNames = new ArrayList<>();
     try {
-      try(BufferedReader reader = Files.newBufferedReader(configFile)) {
-        JSONTokener tokener = new JSONTokener(reader);
-        JSONObject object = new JSONObject(tokener);
+      try(var reader = Files.newBufferedReader(configFile)) {
+        var tokener = new JSONTokener(reader);
+        var object = new JSONObject(tokener);
         decode("", object.toMap(), pluginNames);
       }
     } catch(IOException e) {
@@ -64,7 +63,7 @@ public class JSONConfigRunner implements ConfigRunner {
     Pro.set("pro.exitOnError", true);
     Pro.set("pro.arguments", String.join(",", arguments));
     
-    String[] plugins = pluginNames.stream().map(Object::toString).toArray(String[]::new);
+    var plugins = pluginNames.stream().map(Object::toString).toArray(String[]::new);
     //System.out.println("run " + String.join(" -> ", plugins));
     Pro.run(plugins);
   }

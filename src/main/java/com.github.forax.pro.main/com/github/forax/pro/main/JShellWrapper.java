@@ -8,8 +8,8 @@ import javax.tools.Tool;
 
 class JShellWrapper {
   static int run(InputStream in, OutputStream out, OutputStream err, String... arguments) {
-    ServiceLoader<Tool> loader = ServiceLoader.load(Tool.class, JShellConfigRunner.class.getClassLoader());
-    Tool jshell = loader.stream()
+    var loader = ServiceLoader.load(Tool.class, JShellConfigRunner.class.getClassLoader());
+    var jshell = loader.stream()
         .map(provider -> provider.get())
         .filter(tool -> tool.name().equals("jshell"))
         .findFirst()

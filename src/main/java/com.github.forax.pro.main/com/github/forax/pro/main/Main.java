@@ -88,11 +88,11 @@ public class Main {
   }
   
   static void scaffold() {
-    String module = Optional.ofNullable(System.console())
+    var module = Optional.ofNullable(System.console())
         .map(console -> console.readLine("module name: (like com.acme.foo.bar) "))
         .orElse("com.acme.foo.bar");
     
-    String content =
+    var content =
         "import static com.github.forax.pro.Pro.*;\n" + 
         "import static com.github.forax.pro.builder.Builders.*;\n" + 
         "\n" + 
@@ -130,11 +130,11 @@ public class Main {
         "\n" + 
         "/exit\n";
     
-    String mainModule =
+    var mainModule =
         "module " + module + "{ \n" + 
         "\n" + 
         "}\n";
-    String mainClass =
+    var mainClass =
         "package " + module + ";\n" + 
         "\n" + 
         "public class Main {\n" + 
@@ -143,14 +143,14 @@ public class Main {
         "  }\n" + 
         "}\n";
     
-    String testModule =
+    var testModule =
         "open module " + module + " {\n" + 
         "  requires org.junit.jupiter.api;\n" + 
         "  \n" + 
         "  // requires org.openjdk.jmh;  // JMH support\n" + 
         "  // requires org.openjdk.jmh.generator;\n" + 
         "}";
-    String testClass =
+    var testClass =
         "package " + module + ";\n" + 
         "\n" + 
         "import static org.junit.jupiter.api.Assertions.*;\n" + 
@@ -171,18 +171,18 @@ public class Main {
       Files.write(Paths.get("build.pro"), content.getBytes(UTF_8), CREATE_NEW);
       System.out.println("build.pro generated");
       
-      Path sourcePath = Paths.get("src", "main", "java", module);
+      var sourcePath = Paths.get("src", "main", "java", module);
       Files.createDirectories(sourcePath);
       Files.write(sourcePath.resolve("module-info.java"), mainModule.getBytes(UTF_8), CREATE_NEW);
-      Path sourcePackage = sourcePath.resolve(module.replace('.', '/'));
+      var sourcePackage = sourcePath.resolve(module.replace('.', '/'));
       Files.createDirectories(sourcePackage);
       Files.write(sourcePackage.resolve("Main.java"), mainClass.getBytes(UTF_8), CREATE_NEW);
       System.out.println("Main.java generated");
       
-      Path testPath = Paths.get("src", "test", "java", module);
+      var testPath = Paths.get("src", "test", "java", module);
       Files.createDirectories(testPath);
       Files.write(testPath.resolve("module-info.java"), testModule.getBytes(UTF_8), CREATE_NEW);
-      Path testPackage = testPath.resolve(module.replace('.', '/'));
+      var testPackage = testPath.resolve(module.replace('.', '/'));
       Files.createDirectories(testPackage);
       Files.write(testPackage.resolve("HelloTests.java"), testClass.getBytes(UTF_8), CREATE_NEW);
       System.out.println("HelloTests generated");
@@ -210,13 +210,13 @@ public class Main {
   }
   
   static void build(String[] args) {
-    Configuration conf = InputFile.findConfiguration(args)
+    var conf = InputFile.findConfiguration(args)
         .orElseThrow(() -> new InputException("no existing input file specified"));
-    Path configFile = conf.configFile;
-    String[] arguments = conf.arguments.apply(args);
+    var configFile = conf.configFile;
+    var arguments = conf.arguments.apply(args);
     
-    ServiceLoader<ConfigRunner> loader = ServiceLoader.load(ConfigRunner.class, ConfigRunner.class.getClassLoader());
-    ArrayList<ConfigRunner> configRunners = new ArrayList<>();
+    var loader = ServiceLoader.load(ConfigRunner.class, ConfigRunner.class.getClassLoader());
+    var configRunners = new ArrayList<ConfigRunner>();
     loader.forEach(configRunners::add);
     
     configRunners.stream()
@@ -227,15 +227,14 @@ public class Main {
   }
   
   static void daemon(String[] args) {
-    Daemon service =
-        getDaemon().orElseThrow(() -> new InputException("daemon not found"));
-    if (service.isStarted()) {
+    var daemon = getDaemon().orElseThrow(() -> new InputException("daemon not found"));
+    if (daemon.isStarted()) {
       throw new InputException("daemon already started");
     }
-    service.start();
+    daemon.start();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      if (service.isStarted()) {
-        service.stop();
+      if (daemon.isStarted()) {
+        daemon.stop();
       }
     }));
     main(args);

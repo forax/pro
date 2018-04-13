@@ -16,7 +16,7 @@ public class JShellConfigRunner implements ConfigRunner {
   private static void run(Path configFile, String... arguments) {
     //System.out.println("run with jshell " + configFile);
     
-    String[] args =
+    var args =
       Stream.of(
         Stream.of("-R-Dpro.exitOnError=true"),
         Stream.of(arguments).filter(a -> a.length() != 0).map(a -> "-R-Dpro.arguments=" + String.join(",", a)),
