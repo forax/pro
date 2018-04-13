@@ -7,12 +7,6 @@ before_install:
 
 matrix:
   include:
-# 9
-    - jdk: oraclejdk9
-      env: JDK_RELEASE='Oracle JDK 9'
-      install: true
-    - env: JDK_RELEASE='OpenJDK 9'
-      install: . ./install-jdk.sh -F 9 -L GPL
 # 10
     - env: oraclejdk10
       env: JDK_RELEASE='Oracle JDK 10'
