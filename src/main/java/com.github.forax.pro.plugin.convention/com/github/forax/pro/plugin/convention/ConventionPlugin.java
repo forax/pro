@@ -19,54 +19,54 @@ public class ConventionPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    ConventionConf convention = config.getOrUpdate(name(), ConventionConf.class);
-    ProConf pro = config.getOrThrow("pro", ProConf.class);
+    var convention = config.getOrUpdate(name(), ConventionConf.class);
+    var proConf = config.getOrThrow("pro", ProConf.class);
     convention.javaHome(Paths.get(System.getProperty("java.home")));
     
     derive(convention, ConventionConf::javaModuleSourcePath,
-           pro, c -> List.of(c.currentDir().resolve("src/main/java")));
+           proConf, c -> List.of(c.currentDir().resolve("src/main/java")));
     derive(convention, ConventionConf::javaModuleSourceResourcesPath,
-           pro, c -> List.of(c.currentDir().resolve("src/main/resources")));
+           proConf, c -> List.of(c.currentDir().resolve("src/main/resources")));
     derive(convention, ConventionConf::javaModuleExplodedSourcePath,
-           pro, c -> List.of(c.currentDir().resolve("target/main/exploded")));
+           proConf, c -> List.of(c.currentDir().resolve("target/main/exploded")));
     derive(convention, ConventionConf::javaModuleArtifactSourcePath,
-           pro, c -> c.currentDir().resolve("target/main/artifact"));
+           proConf, c -> c.currentDir().resolve("target/main/artifact"));
     derive(convention, ConventionConf::javaModuleDocSourcePath,
-        pro, c -> c.currentDir().resolve("target/main/doc"));
+        proConf, c -> c.currentDir().resolve("target/main/doc"));
     derive(convention, ConventionConf::javaModuleSrcArtifactSourcePath,
-        pro, c -> c.currentDir().resolve("target/main/artifact-src"));
+        proConf, c -> c.currentDir().resolve("target/main/artifact-src"));
     derive(convention, ConventionConf::javaModuleDocArtifactSourcePath,
-        pro, c -> c.currentDir().resolve("target/main/artifact-doc"));
+        proConf, c -> c.currentDir().resolve("target/main/artifact-doc"));
     
     derive(convention, ConventionConf::javaModuleTestPath,
-        pro, c -> List.of(c.currentDir().resolve("src/test/java")));
+        proConf, c -> List.of(c.currentDir().resolve("src/test/java")));
     derive(convention, ConventionConf::javaModuleTestResourcesPath,
-        pro, c -> List.of(c.currentDir().resolve("src/test/resources")));
+        proConf, c -> List.of(c.currentDir().resolve("src/test/resources")));
     derive(convention, ConventionConf::javaModuleMergedTestPath,
-        pro, c -> List.of(c.currentDir().resolve("target/test/merged")));
+        proConf, c -> List.of(c.currentDir().resolve("target/test/merged")));
     derive(convention, ConventionConf::javaModuleExplodedTestPath,
-        pro, c -> List.of(c.currentDir().resolve("target/test/exploded")));
+        proConf, c -> List.of(c.currentDir().resolve("target/test/exploded")));
     derive(convention, ConventionConf::javaModuleArtifactTestPath,
-        pro, c -> c.currentDir().resolve("target/test/artifact"));
+        proConf, c -> c.currentDir().resolve("target/test/artifact"));
     derive(convention, ConventionConf::javaModuleDocTestPath,
-        pro, c -> c.currentDir().resolve("target/test/doc"));
+        proConf, c -> c.currentDir().resolve("target/test/doc"));
     derive(convention, ConventionConf::javaModuleSrcArtifactTestPath,
-        pro, c -> c.currentDir().resolve("target/test/artifact-src"));
+        proConf, c -> c.currentDir().resolve("target/test/artifact-src"));
     derive(convention, ConventionConf::javaModuleDocArtifactTestPath,
-        pro, c -> c.currentDir().resolve("target/test/artifact-doc"));
+        proConf, c -> c.currentDir().resolve("target/test/artifact-doc"));
     
     derive(convention, ConventionConf::javaModuleDependencyPath,
-        pro, c -> List.of(c.currentDir().resolve("deps")));
+        proConf, c -> List.of(c.currentDir().resolve("deps")));
     derive(convention, ConventionConf::javaMavenLocalRepositoryPath,
-        pro, c -> c.currentDir().resolve("target/deps/maven-local"));
+        proConf, c -> c.currentDir().resolve("target/deps/maven-local"));
     derive(convention, ConventionConf::javaModuleDependencyFixerPath,
-        pro, c -> c.currentDir().resolve("target/deps/module-fixer"));
+        proConf, c -> c.currentDir().resolve("target/deps/module-fixer"));
     derive(convention, ConventionConf::javaModuleUberPath,
-        pro, c -> c.currentDir().resolve("target/uber"));
+        proConf, c -> c.currentDir().resolve("target/uber"));
     derive(convention, ConventionConf::javaModuleUberExplodedPath,
-        pro, c -> c.currentDir().resolve("target/uber/exploded"));
+        proConf, c -> c.currentDir().resolve("target/uber/exploded"));
     derive(convention, ConventionConf::javaLinkerImagePath,
-        pro, c -> c.currentDir().resolve("target/image"));
+        proConf, c -> c.currentDir().resolve("target/image"));
   }
   
   @Override
