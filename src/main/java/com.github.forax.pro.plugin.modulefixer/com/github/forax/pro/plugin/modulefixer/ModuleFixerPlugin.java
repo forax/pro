@@ -6,7 +6,6 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
@@ -64,18 +63,18 @@ public class ModuleFixerPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    ModuleFixerConf moduleFixer = config.getOrUpdate(name(), ModuleFixerConf.class);
-    moduleFixer.force(false);
+    var moduleFixerConf = config.getOrUpdate(name(), ModuleFixerConf.class);
+    moduleFixerConf.force(false);
   }
   
   @Override
   public void configure(MutableConfig config) {
-    ModuleFixerConf moduleFixer = config.getOrUpdate(name(), ModuleFixerConf.class);
-    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+    var moduleFixerConf = config.getOrUpdate(name(), ModuleFixerConf.class);
+    var convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
-    derive(moduleFixer, ModuleFixerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
-    derive(moduleFixer, ModuleFixerConf::moduleDependencyFixerPath, convention, ConventionFacade::javaModuleDependencyFixerPath);
+    derive(moduleFixerConf, ModuleFixerConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
+    derive(moduleFixerConf, ModuleFixerConf::moduleDependencyFixerPath, convention, ConventionFacade::javaModuleDependencyFixerPath);
     
     // outputs
     //TODO
@@ -83,8 +82,8 @@ public class ModuleFixerPlugin implements Plugin {
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    ModuleFixerConf moduleFixer = config.getOrThrow(name(), ModuleFixerConf.class);
-    List<Path> moduleDependencyPath = moduleFixer.moduleDependencyPath();
+    var moduleFixerConf = config.getOrThrow(name(), ModuleFixerConf.class);
+    var moduleDependencyPath = moduleFixerConf.moduleDependencyPath();
     moduleDependencyPath.forEach(registry::watch);
   }
   
@@ -98,12 +97,12 @@ public class ModuleFixerPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
+    var log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
-    ModuleFixerConf moduleFixer = config.getOrThrow(name(), ModuleFixerConf.class);
-    List<Path> moduleDependencyPath = moduleFixer.moduleDependencyPath();
-    Path moduleDependencyFixerPath = moduleFixer.moduleDependencyFixerPath();
+    var moduleFixerConf = config.getOrThrow(name(), ModuleFixerConf.class);
+    var moduleDependencyPath = moduleFixerConf.moduleDependencyPath();
+    var moduleDependencyFixerPath = moduleFixerConf.moduleDependencyFixerPath();
     
     class Info {
       final Set<String> requirePackages;
@@ -122,45 +121,45 @@ public class ModuleFixerPlugin implements Plugin {
     }
     
     // gather additional requires, uses and provides
-    boolean force = moduleFixer.force();
-    Map<String, Map<String, RequireModifier>> additionalRequireMap = parseAdditionalRequireMap(moduleFixer.additionalRequires());
-    Map<String, Set<String>> additionalUses = parseAdditionals(moduleFixer.additionalUses());
+    var force = moduleFixerConf.force();
+    var additionalRequireMap = parseAdditionalRequireMap(moduleFixerConf.additionalRequires());
+    var additionalUses = parseAdditionals(moduleFixerConf.additionalUses());
     
     //System.out.println("additionalRequireMap " + additionalRequireMap);
     //System.out.println("additionalUses " + additionalUses);
     
     // find dependencies (requires, exports and uses)
-    HashMap<ModuleReference, Info> moduleInfoMap = new HashMap<>();
-    HashMap<String, List<ModuleReference>> exportMap = new HashMap<>();
-    ModuleFinder moduleFinder = ModuleFinder.compose(
+    var moduleInfoMap = new HashMap<ModuleReference, Info>();
+    var exportMap = new HashMap<String, List<ModuleReference>>();
+    var moduleFinder = ModuleFinder.compose(
         ModuleFinder.of(moduleDependencyPath.toArray(new Path[0])),
         ModuleHelper.systemModulesFinder());
-    for(ModuleReference ref: moduleFinder.findAll()) {
+    for(var moduleRef: moduleFinder.findAll()) {
       Set<String> exports;
-      ModuleDescriptor descriptor = ref.descriptor();
-      String name = descriptor.name();
+      var descriptor = moduleRef.descriptor();
+      var name = descriptor.name();
       if (descriptor.isAutomatic() || /*descriptor.isSynthetic() ||*/
           (force && (additionalRequireMap.containsKey(name) || additionalUses.containsKey(name)))) {
-        HashSet<String> requires = new HashSet<>();
+        var requires = new HashSet<String>();
         exports = new HashSet<>();
-        Set<String> uses = Optional.ofNullable(additionalUses.get(name)).orElseGet(HashSet::new);
-        Map<String, Set<String>> provides = new HashMap<>();
-        findRequiresExportsUsesAndProvides(ref, requires, exports, uses, provides);
+        var uses = Optional.ofNullable(additionalUses.get(name)).orElseGet(HashSet::new);
+        var provides = new HashMap<String, Set<String>>();
+        findRequiresExportsUsesAndProvides(moduleRef, requires, exports, uses, provides);
         
-        Map<String, RequireModifier> additionalRequireModuleMap = Optional.ofNullable(additionalRequireMap.get(name)).orElseGet(HashMap::new);
-        moduleInfoMap.put(ref,
+        var additionalRequireModuleMap = Optional.ofNullable(additionalRequireMap.get(name)).orElseGet(HashMap::new);
+        moduleInfoMap.put(moduleRef,
             new Info(requires, exports, uses, provides, additionalRequireModuleMap));
       } else {
         exports = descriptor.exports().stream().map(export -> export.source().replace('.', '/')).collect(Collectors.toCollection(HashSet::new));
       }
-      exports.forEach(packageName -> exportMap.computeIfAbsent(packageName, __ -> new ArrayList<>()).add(ref));
+      exports.forEach(packageName -> exportMap.computeIfAbsent(packageName, __ -> new ArrayList<>()).add(moduleRef));
     }
     
     // verify split packages
-    int errorCode = 0;
-    for(Map.Entry<String, List<ModuleReference>> entry: exportMap.entrySet()) {
-      String packageName = entry.getKey();
-      List<String> refs = entry.getValue().stream().map(ref -> ref.descriptor().toNameAndVersion()).collect(toList());
+    var errorCode = 0;
+    for(var entry: exportMap.entrySet()) {
+      var packageName = entry.getKey();
+      var refs = entry.getValue().stream().map(ref -> ref.descriptor().toNameAndVersion()).collect(toList());
       if (refs.size() != 1) {
         System.err.println("[modulefixer] multiple modules " + refs + " contains package " + packageName);
         errorCode = 1;
@@ -175,11 +174,11 @@ public class ModuleFixerPlugin implements Plugin {
     //    .collect(Collectors.joining(", ", "{", "}")));
     
     // calculated module dependencies
-    HashMap<String, List<ModuleReference>> unknownRequiredPackages = new HashMap<>();
+    var unknownRequiredPackages = new HashMap<String, List<ModuleReference>>();
     moduleInfoMap.forEach((ref, info) -> {
-      Set<String> calculatedRequires = info.requirePackages.stream()
+      var calculatedRequires = info.requirePackages.stream()
           .flatMap(requireName -> {
-            List<ModuleReference> refs = exportMap.get(requireName);
+            var refs = exportMap.get(requireName);
             if (refs == null) {
               unknownRequiredPackages.computeIfAbsent(requireName, __ -> new ArrayList<>()).add(ref);
               return Stream.empty();
@@ -194,7 +193,7 @@ public class ModuleFixerPlugin implements Plugin {
       });
     });
     unknownRequiredPackages.forEach((unknownRequiredPackage, modules) -> {
-      String moduleNames = modules.stream().map(ref -> ref.descriptor().name()).collect(joining(", "));
+      var moduleNames = modules.stream().map(ref -> ref.descriptor().name()).collect(joining(", "));
       System.err.println("[modulefixer] package " + unknownRequiredPackage + " required by " + moduleNames + " not found");
     });
     //if (!unknownRequiredPackages.isEmpty()) {
@@ -206,15 +205,14 @@ public class ModuleFixerPlugin implements Plugin {
     
     // patch jars with calculated module-info
     errorCode = 0;
-    ToolProvider jarTool = ToolProvider.findFirst("jar")
-        .orElseThrow(() -> new IllegalStateException("can not find jar"));
+    var jarTool = ToolProvider.findFirst("jar").orElseThrow(() -> new IllegalStateException("can not find jar"));
     for(Map.Entry<ModuleReference, Info> entry: moduleInfoMap.entrySet()) {
-      ModuleReference ref = entry.getKey();
-      Info info = entry.getValue();
-      Path generatedModuleInfoPath = generateModuleInfo(ref, info.requireModuleMap, info.exports, info.uses, info.provides, moduleDependencyFixerPath);
+      var moduleRef = entry.getKey();
+      var info = entry.getValue();
+      var generatedModuleInfoPath = generateModuleInfo(moduleRef, info.requireModuleMap, info.exports, info.uses, info.provides, moduleDependencyFixerPath);
       
       if (errorCode == 0) { // stop to patch at the first error, but generate all module-info.class
-        errorCode = patchModularJar(jarTool, ref, generatedModuleInfoPath);
+        errorCode = patchModularJar(jarTool, moduleRef, generatedModuleInfoPath);
       }
     }
     return errorCode;
@@ -234,7 +232,7 @@ public class ModuleFixerPlugin implements Plugin {
                                          Set<String> exports, Set<String> uses,
                                          Map<String, Set<String>> provides,
                                          Path moduleDependencyFixerPath) throws IOException {
-    String moduleName = ref.descriptor().name();
+    var moduleName = ref.descriptor().name();
     
     //System.out.println(moduleName);
     //System.out.println("requires: " + requires);
@@ -242,25 +240,25 @@ public class ModuleFixerPlugin implements Plugin {
     //System.out.println("uses: " + uses);
     //System.out.println("provides: " + provides);
     
-    Path modulePatchPath = moduleDependencyFixerPath.resolve(moduleName);
+    var modulePatchPath = moduleDependencyFixerPath.resolve(moduleName);
     Files.createDirectories(modulePatchPath);
     
-    ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(moduleName, Set.of(Modifier.OPEN));
+    var builder = ModuleDescriptor.newModule(moduleName, Set.of(Modifier.OPEN));
     ref.descriptor().version().ifPresent(version -> builder.version(version.toString()));
     requires.forEach((require, requireModifier) -> builder.requires(requireModifier == RequireModifier.STATIC? EnumSet.of(Requires.Modifier.STATIC): Set.of(), require));
     exports.forEach(export -> builder.exports(export.replace('/', '.')));
     uses.forEach(use -> builder.uses(use.replace('/', '.')));
     provides.forEach((service, providers) -> builder.provides(service, new ArrayList<>(providers)));
     
-    Path generatedModuleInfoPath = modulePatchPath.resolve("module-info.class");
+    var generatedModuleInfoPath = modulePatchPath.resolve("module-info.class");
     Files.write(generatedModuleInfoPath, ModuleHelper.moduleDescriptorToBinary(builder.build()));
     return generatedModuleInfoPath;
   }
 
   private static void findRequiresExportsUsesAndProvides(ModuleReference ref, Set<String> requirePackages,
                                                          Set<String> exports, Set<String> uses, Map<String, Set<String>> provides) throws IOException {
-    try(ModuleReader reader = ref.open()) {
-      try(Stream<String> resources = reader.list()) {
+    try(var reader = ref.open()) {
+      try(var resources = reader.list()) {
         resources.forEach(resource -> {
           if (resource.endsWith(".class")) {
             scanJavaClass(resource, reader, requirePackages, exports, uses);  
@@ -282,12 +280,12 @@ public class ModuleFixerPlugin implements Plugin {
 
   // see ServiceLoader javadoc for the full format
   private static void scanServiceFile(String resource, ModuleReader reader, Map<String, Set<String>> provides) {
-    String service = resource.substring("META-INF/services/".length());
-    try(InputStream input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource));
-        InputStreamReader isr = new InputStreamReader(input, StandardCharsets.UTF_8);
-        BufferedReader lineReader = new BufferedReader(isr)) {
+    var service = resource.substring("META-INF/services/".length());
+    try(var input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource));
+        var isr = new InputStreamReader(input, StandardCharsets.UTF_8);
+        var lineReader = new BufferedReader(isr)) {
 
-      Set<String> providers = lineReader.lines()
+      var providers = lineReader.lines()
         .map(ModuleFixerPlugin::parseProviderLine)
         .filter(provider -> !provider.isEmpty())  // skip empty line
         .collect(Collectors.toSet());
@@ -299,7 +297,7 @@ public class ModuleFixerPlugin implements Plugin {
   }
   
   private static String parseProviderLine(String line) {
-    String serviceName = line;
+    var serviceName = line;
     int commentIndex = serviceName.indexOf('#');
     if (commentIndex != -1) {
       serviceName = line.substring(0, commentIndex);
@@ -309,13 +307,13 @@ public class ModuleFixerPlugin implements Plugin {
   }
   
   private static void scanJavaClass(String resource, ModuleReader reader, Set<String> requirePackages, Set<String> exports, Set<String> uses) {
-    try(InputStream input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource))) {
-      ClassReader classReader = new ClassReader(input);
-      String className = classReader.getClassName();
+    try(var input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource))) {
+      var classReader = new ClassReader(input);
+      var className = classReader.getClassName();
       if (className.equals("module-info")) {
         return;  // skip module-info
       }
-      String packageName = packageOf(className);
+      var packageName = packageOf(className);
       exports.add(packageName);
       
       classReader.accept(new ClassRemapper(EmptyClassVisitor.getInstance(), new Remapper() {
@@ -342,7 +340,7 @@ public class ModuleFixerPlugin implements Plugin {
         
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-          MethodVisitor delegate = super.visitMethod(access, name, desc, signature, exceptions);
+          var delegate = super.visitMethod(access, name, desc, signature, exceptions);
           if (delegate == null) {
             return null;
           }
@@ -369,7 +367,7 @@ public class ModuleFixerPlugin implements Plugin {
               
               if (!nodes.isEmpty()) {
                 // do the static analysis to find constant classes
-                Analyzer<ConstValue> analyzer = new Analyzer<>(new ConstInterpreter());
+                var analyzer = new Analyzer<>(new ConstInterpreter());
                 Frame<ConstValue>[] frames;
                 try {
                   frames = analyzer.analyze(owner, this);
@@ -377,15 +375,15 @@ public class ModuleFixerPlugin implements Plugin {
                   throw new UncheckedIOException(new IOException("error while analyzing " + owner, e));
                 }
                 
-                for(MethodInsnNode node: nodes) {
+                for(var node: nodes) {
                   // try to recognize
                   //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>, java.lang.ClassLoader);
                   //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>);
                   //   <S> java.util.ServiceLoader<S> loadInstalled(java.lang.Class<S>);
                   //   <S> java.util.ServiceLoader<S> load(java.lang.reflect.Layer, java.lang.Class<S>);
 
-                  int index = instructions.indexOf(node);
-                  Frame<ConstValue> frame = frames[index];
+                  var index = instructions.indexOf(node);
+                  var frame = frames[index];
                   ConstValue value;
                   switch(node.desc) {
                   case "(Ljava/lang/Class;)Ljava/util/ServiceLoader;":
@@ -403,7 +401,7 @@ public class ModuleFixerPlugin implements Plugin {
                     throw new IllegalStateException("unknown signature in java.util.ServiceLoader " + node.name + node.desc);
                   }
                   
-                  String constString = value.getConstString();
+                  var constString = value.getConstString();
                   if (constString != "") {
                     uses.add(constString);
                   }  
@@ -435,7 +433,7 @@ public class ModuleFixerPlugin implements Plugin {
   }
   
   static String packageOf(String typeName) {
-    int index = typeName.lastIndexOf('/');
+    var index = typeName.lastIndexOf('/');
     if (index == -1) {
       return "";
     }

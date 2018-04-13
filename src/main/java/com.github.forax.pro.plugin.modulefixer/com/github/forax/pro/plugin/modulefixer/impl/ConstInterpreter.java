@@ -95,11 +95,11 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
     case DCONST_1:
       return ConstValue.TWO_SLOT;
     case LDC:
-      Object cst = ((LdcInsnNode) insn).cst;
-      if (cst instanceof Type) {  // constant class
-        return ConstValue.string(((Type)cst).getInternalName());
+      var constant = ((LdcInsnNode) insn).cst;
+      if (constant instanceof Type) {  // constant class
+        return ConstValue.string(((Type)constant).getInternalName());
       }
-      return cst instanceof Long || cst instanceof Double ? ConstValue.TWO_SLOT: ConstValue.ONE_SLOT;
+      return constant instanceof Long || constant instanceof Double ? ConstValue.TWO_SLOT: ConstValue.ONE_SLOT;
     case GETSTATIC:
       return ConstValue.slot(Type.getType(((FieldInsnNode) insn).desc).getSize());
     default:
@@ -168,11 +168,10 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
     int opcode = insn.getOpcode();
     if (opcode == MULTIANEWARRAY) {
       return ConstValue.ONE_SLOT;
-    } else {
-      String desc = (opcode == INVOKEDYNAMIC) ? ((InvokeDynamicInsnNode) insn).desc
-          : ((MethodInsnNode) insn).desc;
-      return ConstValue.slot(Type.getReturnType(desc).getSize());
     }
+    var desc = (opcode == INVOKEDYNAMIC) ? ((InvokeDynamicInsnNode) insn).desc
+        : ((MethodInsnNode) insn).desc;
+    return ConstValue.slot(Type.getReturnType(desc).getSize());
   }
 
   @Override
