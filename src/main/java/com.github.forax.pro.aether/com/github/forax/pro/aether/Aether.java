@@ -46,7 +46,7 @@ public class Aether {
 
   public static Aether create(Path mavenLocalRepository, List<URI> remoteRepositories) {
     // respository system
-    DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
+    var locator = MavenRepositorySystemUtils.newServiceLocator();
     locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
     locator.addService(TransporterFactory.class, FileTransporterFactory.class);
     locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
@@ -60,16 +60,16 @@ public class Aether {
     RepositorySystem system = locator.getService(RepositorySystem.class);
 
     // session
-    DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
-    LocalRepository localRepo = new LocalRepository(mavenLocalRepository.toString());
-    session.setLocalRepositoryManager(system.newLocalRepositoryManager(session, localRepo));
+    var session = MavenRepositorySystemUtils.newSession();
+    var localRepository = new LocalRepository(mavenLocalRepository.toString());
+    session.setLocalRepositoryManager(system.newLocalRepositoryManager(session, localRepository));
 
     // central repository
-    RemoteRepository central = new RemoteRepository.Builder("central", "default",
+    var central = new RemoteRepository.Builder("central", "default",
         "http://central.maven.org/maven2/").build();
     
     // remote repositories
-    List<RemoteRepository> remotes = StableList.from(remoteRepositories)
+    var remotes = StableList.from(remoteRepositories)
       .map(uri -> new RemoteRepository.Builder(null, "default", uri.toString()).build())
       .append(central);
     
@@ -78,14 +78,14 @@ public class Aether {
   
   @SuppressWarnings("static-method")
   public ArtifactQuery createArtifactQuery(String artifactCoords) {
-    DefaultArtifact artifact = new DefaultArtifact(artifactCoords);
+    var artifact = new DefaultArtifact(artifactCoords);
     return new ArtifactQuery(artifact);
   }
 
   public Set<ArtifactInfo> dependencies(ArtifactQuery query)throws IOException {
-    Artifact artifact = query.artifact;
+    var artifact = query.artifact;
 
-    CollectRequest collectRequest = new CollectRequest();
+    var collectRequest = new CollectRequest();
     collectRequest.setRoot(new Dependency(artifact, ""));
     collectRequest.setRepositories(remoteRepositories);
 
@@ -96,7 +96,7 @@ public class Aether {
       throw new IOException(e);
     }
 
-    LinkedHashSet<ArtifactInfo> dependencies = new LinkedHashSet<>();
+    var dependencies = new LinkedHashSet<ArtifactInfo>();
     collectResult.getRoot().accept(new DependencyVisitor() {
       @Override
       public boolean visitLeave(DependencyNode node) {
@@ -118,8 +118,8 @@ public class Aether {
   }
    
   public List<ArtifactDescriptor> download(List<ArtifactInfo> unresolvedArtifacts) throws IOException {
-    List<RemoteRepository> repositories = this.remoteRepositories;
-    List<ArtifactRequest> artifactRequests = unresolvedArtifacts.stream()
+    var repositories = this.remoteRepositories;
+    var artifactRequests = unresolvedArtifacts.stream()
         .map(dependency -> {
           ArtifactRequest artifactRequest = new ArtifactRequest();
           artifactRequest.setArtifact(dependency.artifact);

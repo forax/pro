@@ -18,7 +18,7 @@ public class ArtifactInfo {
     if (!(o instanceof ArtifactInfo)) {
       return false;
     }
-    ArtifactInfo info = (ArtifactInfo)o;
+    var info = (ArtifactInfo)o;
     return artifact.getGroupId().equals(info.artifact.getGroupId()) &&
            artifact.getArtifactId().equals(info.artifact.getArtifactId());
   }

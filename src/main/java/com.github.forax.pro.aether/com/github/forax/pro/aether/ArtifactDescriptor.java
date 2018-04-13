@@ -33,7 +33,7 @@ public class ArtifactDescriptor {
     if (!(o instanceof ArtifactDescriptor)) {
       return false;
     }
-    ArtifactDescriptor descriptor = (ArtifactDescriptor)o;
+    var descriptor = (ArtifactDescriptor)o;
     return artifact.getGroupId().equals(descriptor.artifact.getGroupId()) &&
            artifact.getArtifactId().equals(descriptor.artifact.getArtifactId());
   }
