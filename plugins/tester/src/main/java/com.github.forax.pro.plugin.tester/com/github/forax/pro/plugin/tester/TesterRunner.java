@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.nio.file.Path;
 import java.util.List;
@@ -14,11 +13,9 @@ import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
 import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
-import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
 import com.github.forax.pro.helper.ModuleHelper;
 
@@ -33,12 +30,12 @@ public class TesterRunner implements IntSupplier {
 
   @Override
   public int getAsInt() {
-    ClassLoader oldContext = Thread.currentThread().getContextClassLoader();
+    var oldContext = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
-      ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
-      List<Class<?>> testClasses = findTestClasses(moduleReference);
-      Launcher launcher = LauncherFactory.create();
+      var moduleReference = ModuleHelper.getOnlyModule(testPath);
+      var testClasses = findTestClasses(moduleReference);
+      var launcher = LauncherFactory.create();
       return launch(moduleReference, launcher, testClasses);
     } finally {
       Thread.currentThread().setContextClassLoader(oldContext);
@@ -46,23 +43,23 @@ public class TesterRunner implements IntSupplier {
   }
 
   private static int launch(ModuleReference moduleReference, Launcher launcher, List<Class<?>> testClasses) {
-    LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request();
+    var builder = LauncherDiscoveryRequestBuilder.request();
     testClasses.forEach(testClass -> builder.selectors(selectClass(testClass)));
 
-    long startTimeMillis = System.currentTimeMillis();
-    LauncherDiscoveryRequest launcherDiscoveryRequest = builder.build();
-    SummaryGeneratingListener summaryGeneratingListener = new SummaryGeneratingListener();
+    var startTimeMillis = System.currentTimeMillis();
+    var launcherDiscoveryRequest = builder.build();
+    var summaryGeneratingListener = new SummaryGeneratingListener();
     launcher.execute(launcherDiscoveryRequest, summaryGeneratingListener);
-    long duration = System.currentTimeMillis() - startTimeMillis;
+    var duration = System.currentTimeMillis() - startTimeMillis;
     
-    TestExecutionSummary summary = summaryGeneratingListener.getSummary();
+    var summary = summaryGeneratingListener.getSummary();
     int failures = (int) summary.getTestsFailedCount();
     if (failures == 0) {
-      long succeeded = summary.getTestsSucceededCount();
+      var succeeded = summary.getTestsSucceededCount();
       String moduleName = moduleReference.descriptor().toNameAndVersion();
       System.out.printf("[tester] Successfully tested %s: %d tests in %d ms%n", moduleName, succeeded, duration);
     } else {
-      StringWriter stringWriter = new StringWriter();
+      var stringWriter = new StringWriter();
       summary.printTo(new PrintWriter(stringWriter));
       summary.printFailuresTo(new PrintWriter(stringWriter));
       System.out.println(stringWriter);
@@ -71,7 +68,7 @@ public class TesterRunner implements IntSupplier {
   }
 
   private static List<Class<?>> findTestClasses(ModuleReference moduleReference) {
-    try (ModuleReader moduleReader = moduleReference.open()) {
+    try (var moduleReader = moduleReference.open()) {
       return moduleReader.list()
           .filter(name -> name.endsWith("Tests.class")) // TODO Make test class filter configurable
           .map(TesterRunner::loadTestClass)
@@ -82,9 +79,9 @@ public class TesterRunner implements IntSupplier {
   }
 
   private static Class<?> loadTestClass(String fileName) {
-    String className = fileName.substring(0, fileName.length() - ".class".length());
+    var className = fileName.substring(0, fileName.length() - ".class".length());
     className = className.replace('/','.');
-    ClassLoader classLoader = TesterRunner.class.getClassLoader();
+    var classLoader = TesterRunner.class.getClassLoader();
     try {
       return classLoader.loadClass(className);
     } catch (ClassNotFoundException e) {

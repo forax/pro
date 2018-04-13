@@ -3,15 +3,16 @@ package com.github.forax.pro.plugin.tester;
 import static com.github.forax.pro.api.MutableConfig.derive;
 
 import java.io.IOException;
-import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
@@ -32,25 +33,25 @@ public class TesterPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    TesterConf tester = config.getOrUpdate(name(), TesterConf.class);
-    tester.timeout(60);
+    var testerConf = config.getOrUpdate(name(), TesterConf.class);
+    testerConf.timeout(60);
   }
 
   @Override
   public void configure(MutableConfig config) {
-    TesterConf tester = config.getOrUpdate(name(), TesterConf.class);
-    ProConf pro = config.getOrThrow("pro", ProConf.class);
+    var testerConf = config.getOrUpdate(name(), TesterConf.class);
+    var proConf = config.getOrThrow("pro", ProConf.class);
     ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
 
     // inputs
-    derive(tester, TesterConf::pluginDir, pro, ProConf::pluginDir);
-    derive(tester, TesterConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
-    derive(tester, TesterConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
+    derive(testerConf, TesterConf::pluginDir, proConf, ProConf::pluginDir);
+    derive(testerConf, TesterConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
+    derive(testerConf, TesterConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
   }
 
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    TesterConf testerConf = config.getOrThrow(name(), TesterConf.class);
+    var testerConf = config.getOrThrow(name(), TesterConf.class);
     testerConf.moduleExplodedTestPath().forEach(registry::watch);
   }
 
@@ -66,30 +67,30 @@ public class TesterPlugin implements Plugin {
 
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
+    var log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
-    TesterConf tester = config.getOrThrow(name(), TesterConf.class);
+    var testerConf = config.getOrThrow(name(), TesterConf.class);
 
-    int exitCodeSum = 0;
-    for (Path path : directories(tester.moduleExplodedTestPath())) {
+    var exitCodeSum = 0;
+    for (var path : directories(testerConf.moduleExplodedTestPath())) {
       log.debug(path, p -> String.format("Testing %s...", p.toFile().getName()));
-      exitCodeSum += execute(tester, path.toAbsolutePath().normalize());
+      exitCodeSum += execute(testerConf, path.toAbsolutePath().normalize());
     }
     return exitCodeSum;
   }
 
   private int execute(TesterConf tester, Path testPath) throws IOException {
-    ExecutorService executor = Executors.newSingleThreadExecutor();
+    var executor = Executors.newSingleThreadExecutor();
 
-    ModuleReference moduleReference = ModuleHelper.getOnlyModule(testPath);
-    String moduleName = moduleReference.descriptor().name();
-    ClassLoader testClassLoader = createTestClassLoader(tester, testPath, moduleName);
+    var moduleReference = ModuleHelper.getOnlyModule(testPath);
+    var moduleName = moduleReference.descriptor().name();
+    var testClassLoader = createTestClassLoader(tester, testPath, moduleName);
 
     IntSupplier runner;
     try {
-      Class<?> runnerClass = testClassLoader.loadClass(TesterRunner.class.getName());
+      var runnerClass = testClassLoader.loadClass(TesterRunner.class.getName());
       runner = (IntSupplier) runnerClass.getConstructor(Path.class).newInstance(testPath);
-      Future<Integer> future = executor.submit(runner::getAsInt);
+      var future = executor.submit(runner::getAsInt);
       return future.get(tester.timeout(), TimeUnit.SECONDS);
 
     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InterruptedException e) {
@@ -103,21 +104,21 @@ public class TesterPlugin implements Plugin {
   }
 
   private ClassLoader createTestClassLoader(TesterConf tester, Path testPath, String testModuleName) {
-    String pluginModuleName = TesterPlugin.class.getModule().getName(); // "com.github.forax.pro.plugin.tester"
-    List<String> rootNames = List.of(pluginModuleName, testModuleName);
+    var pluginModuleName = TesterPlugin.class.getModule().getName(); // "com.github.forax.pro.plugin.tester"
+    var rootNames = List.of(pluginModuleName, testModuleName);
 
-    StableList<Path> moduleFinderRoots = StableList
+    var moduleFinderRoots = StableList
         .of(testPath)                                // "target/test/exploded/[MODULE_NAME]
         .append(tester.pluginDir().resolve(name()))  // "[PRO_HOME]/plugins/tester"
         .appendAll(tester.moduleExplodedTestPath())  // "target/test/exploded")
         .appendAll(tester.moduleDependencyPath());   // "deps"
 
-    ModuleFinder finder = ModuleFinder.of(moduleFinderRoots.toArray(Path[]::new));
-    ModuleLayer bootModuleLayer = ModuleLayer.boot();
-    Configuration configuration = bootModuleLayer.configuration().resolve(finder, ModuleFinder.of(), rootNames);
-    ClassLoader parentLoader = ClassLoader.getSystemClassLoader();
-    ModuleLayer configuredLayer = bootModuleLayer.defineModulesWithOneLoader(configuration, parentLoader);
-    ClassLoader classLoader = configuredLayer.findLoader(pluginModuleName);
+    var finder = ModuleFinder.of(moduleFinderRoots.toArray(Path[]::new));
+    var bootModuleLayer = ModuleLayer.boot();
+    var configuration = bootModuleLayer.configuration().resolve(finder, ModuleFinder.of(), rootNames);
+    var parentLoader = ClassLoader.getSystemClassLoader();
+    var configuredLayer = bootModuleLayer.defineModulesWithOneLoader(configuration, parentLoader);
+    var classLoader = configuredLayer.findLoader(pluginModuleName);
     classLoader.setDefaultAssertionStatus(true); // -ea
     return classLoader;
   }
