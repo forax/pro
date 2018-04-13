@@ -8,7 +8,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.WatchEvent;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -16,11 +15,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
@@ -99,15 +96,15 @@ public class ImpDaemon implements Daemon {
       }
       
       // run tasks
-      int errorCode = 0;
-      for(Task task: tasks) {
+      var errorCode = 0;
+      for(var task: tasks) {
         errorCode = execute(task, config);
         if (errorCode != 0) {
           break;
         } 
       }
       if (errorCode == 0) {
-        Log log = Log.create("daemon", config.getOrThrow("pro", ProConf.class).loglevel());
+        var log = Log.create("daemon", config.getOrThrow("pro", ProConf.class).loglevel());
         log.info(null, __ -> "DONE !");
       }
     }
@@ -118,8 +115,8 @@ public class ImpDaemon implements Daemon {
       return task.execute(config);
     } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
       e.printStackTrace();
-      String logLevel = config.get("loglevel", String.class).orElse("debug");
-      Log log = Log.create(task.name(), logLevel);
+      var logLevel = config.get("loglevel", String.class).orElse("debug");
+      var log = Log.create(task.name(), logLevel);
       log.error(e);
       return 1; // FIXME
     }
@@ -138,9 +135,9 @@ public class ImpDaemon implements Daemon {
   
   private static void watcherLoop(WatchService watcher, Refresher refresher, Log log, Set<Path> roots) {
     // scan roots
-    HashMap<Path, Boolean> rootMap = new HashMap<>();
-    for(Path root: roots) {
-      boolean exists = Files.exists(root);
+    var rootMap = new HashMap<Path, Boolean>();
+    for(var root: roots) {
+      var exists = Files.exists(root);
       if (exists) {
         registerSubDirectories(root, watcher, log);
       }
@@ -160,18 +157,18 @@ public class ImpDaemon implements Daemon {
         return;
       }
       
-      boolean modified = false;
+      var modified = false;
       if (key != null) {
 
         do {
-          for(WatchEvent<?> event: key.pollEvents()) {
-            WatchKeyKind kind = WatchKeyKind.KIND_MAP.get(event.kind());
+          for(var event: key.pollEvents()) {
+            var kind = WatchKeyKind.KIND_MAP.get(event.kind());
             switch(kind) {
             case DIRECTORY_CREATE:
-            case DIRECTORY_MODIFY:
-              Path localPath = (Path)event.context();
-              Path directory = (Path)key.watchable();
-              Path path = directory.resolve(localPath);
+            case DIRECTORY_MODIFY: {
+              var localPath = (Path)event.context();
+              var directory = (Path)key.watchable();
+              var path = directory.resolve(localPath);
               log.verbose(path, p -> "create/modify path " + p);
               switch(kind) {
               case DIRECTORY_CREATE:
@@ -186,6 +183,7 @@ public class ImpDaemon implements Daemon {
               default:
                 throw new AssertionError("invalid kind " + kind);
               }
+            }
             default:
               throw new AssertionError("invalid kind " + kind);
             }
@@ -208,10 +206,10 @@ public class ImpDaemon implements Daemon {
       }
       
       // scan roots
-      for(Map.Entry<Path, Boolean> entry: rootMap.entrySet()) {
-        Path root = entry.getKey();
-        boolean available = entry.getValue();
-        boolean exists = Files.exists(root);
+      for(var entry: rootMap.entrySet()) {
+        var root = entry.getKey();
+        var available = entry.getValue();
+        var exists = Files.exists(root);
         if (!available && exists) {
           registerSubDirectories(root, watcher, log);
           modified = true;
@@ -226,7 +224,7 @@ public class ImpDaemon implements Daemon {
   }
   
   private static void registerSubDirectories(Path path, WatchService watcher, Log log) {
-    try(Stream<Path> stream = Files.walk(path)) {
+    try(var stream = Files.walk(path)) {
       stream
         .filter(Files::isDirectory)
         .forEach(directory -> {
@@ -307,11 +305,11 @@ public class ImpDaemon implements Daemon {
     }
     
     // find first plugin
-    Optional<Plugin> first = tasks.stream().filter(Plugin.class::isInstance).map(Plugin.class::cast).findFirst();
-    if (!first.isPresent()) {  // do nothing
+    var firstOpt = tasks.stream().filter(Plugin.class::isInstance).map(Plugin.class::cast).findFirst();
+    if (!firstOpt.isPresent()) {  // do nothing
       return;
     }
-    Plugin firstPlugin = first.get();
+    var firstPlugin = firstOpt.get();
     
     send(() -> {
       // stop watcher thread
@@ -328,11 +326,11 @@ public class ImpDaemon implements Daemon {
         throw new UncheckedIOException(e);
       }
       
-      HashSet<Path> roots = new HashSet<>();
+      var roots = new HashSet<Path>();
       firstPlugin.watch(config, roots::add);
       
       // start a new watcher thread
-      Log log = Log.create("daemon", config.getOrThrow("pro", ProConf.class).loglevel());
+      var log = Log.create("daemon", config.getOrThrow("pro", ProConf.class).loglevel());
       Thread watcherThread = new Thread(() -> watcherLoop(watcher, refresher, log, roots));
       watcherThread.start();
       
