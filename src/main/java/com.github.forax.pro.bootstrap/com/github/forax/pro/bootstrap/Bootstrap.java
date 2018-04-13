@@ -18,7 +18,6 @@ import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +30,7 @@ public class Bootstrap {
 
   @SuppressWarnings("deprecation")
   private static int jdkVersion() {
-    int major = Runtime.version().major();
+    var major = Runtime.version().major();
     return Math.min(major, 10);  //FIXME --release doesn't work yet with the jdk 11
   }
 
@@ -43,7 +42,7 @@ public class Bootstrap {
     set("compiler.lint", "all,-varargs,-overloads");
     set("compiler.release", jdkVersion());
 
-    String version = "0." + jdkVersion();
+    var version = "0." + jdkVersion();
     set("packager.modules", list(
         "com.github.forax.pro@" + version,
         "com.github.forax.pro.aether@" + version,
@@ -112,10 +111,10 @@ public class Bootstrap {
 
     compileAndPackagePlugin("runner", list("resolver", "modulefixer", "compiler", "packager"), () -> { /* empty */});
     compileAndPackagePlugin("tester", list("resolver", "modulefixer", "compiler", "packager"), () -> {
-      String junitPlatformVersion = "1.1.0";
-      String junitJupiterVersion = "5.1.0";
-      String opentest4jVersion = "1.0.0";
-      String apiGuardianVersion = "1.0.0";
+      var junitPlatformVersion = "1.1.0";
+      var junitJupiterVersion = "5.1.0";
+      var opentest4jVersion = "1.0.0";
+      var apiGuardianVersion = "1.0.0";
       set("resolver.dependencies", list(
           // "API"
           "org.opentest4j=org.opentest4j:opentest4j:" + opentest4jVersion,
@@ -129,9 +128,9 @@ public class Bootstrap {
       ));
     });
     compileAndPackagePlugin("perfer", list("resolver", "modulefixer", "compiler", "packager"), () -> {
-      String jmhVersion = "1.20";
-      String commonMath3Version = "3.6.1";
-      String joptSimpleVersion = "5.0.4";
+      var jmhVersion = "1.20";
+      var commonMath3Version = "3.6.1";
+      var joptSimpleVersion = "5.0.4";
       set("resolver.dependencies", list(
           // "JMH Core"
           "org.openjdk.jmh=org.openjdk.jmh:jmh-core:" + jmhVersion,
@@ -158,9 +157,8 @@ public class Bootstrap {
     //      ));
     //    });
     compileAndPackagePlugin("formatter", list("compiler", "packager"), () -> {
-      String gjfVersion = "1.5";
-      String base =
-          "https://github.com/google/google-java-format/releases/download/google-java-format";
+      var gjfVersion = "1.5";
+      var base = "https://github.com/google/google-java-format/releases/download/google-java-format";
       download(
           uri(base + "-" + gjfVersion + "/google-java-format-" + gjfVersion + "-all-deps.jar"),
           location("plugins/formatter/libs"));
@@ -180,8 +178,7 @@ public class Bootstrap {
     Vanity.postOperations();
   }
 
-  private static void compileAndPackagePlugin(String name, List<String> plugins, Runnable extras)
-      throws IOException {
+  private static void compileAndPackagePlugin(String name, List<String> plugins, Runnable extras) throws IOException {
     deleteAllFiles(location("plugins/" + name + "/target"), false);
 
     local("plugins/" + name, () -> {
@@ -222,15 +219,15 @@ public class Bootstrap {
   }
 
   private static void download(URI urlSpec, Path targetDirectory) {
-    try {
-      Path fileName = Paths.get(urlSpec.getPath()).getFileName();
-      Path targetFile = targetDirectory.resolve(fileName);
-      if (Files.exists(targetFile)) {
-        return;
-      }
+    var fileName = Paths.get(urlSpec.getPath()).getFileName();
+    var targetFile = targetDirectory.resolve(fileName);
+    if (Files.exists(targetFile)) {
+      return;
+    }
+    try { 
       Files.createDirectories(targetDirectory);
-      try(ReadableByteChannel input = Channels.newChannel(urlSpec.toURL().openStream());
-          FileChannel output = FileChannel.open(targetFile, CREATE_NEW, WRITE)) {
+      try(var input = Channels.newChannel(urlSpec.toURL().openStream());
+          var output = FileChannel.open(targetFile, CREATE_NEW, WRITE)) {
         output.transferFrom(input, 0, Long.MAX_VALUE);
       }
     } catch (IOException e) {

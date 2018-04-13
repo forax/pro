@@ -6,7 +6,6 @@ import static com.github.forax.pro.helper.FileHelper.unchecked;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
 
 import com.github.forax.pro.helper.FileHelper;
 
@@ -16,7 +15,7 @@ class Vanity {
   }
 
   private static boolean keep(Path path) {
-    String fileName = path.getFileName().toString();
+    var fileName = path.getFileName().toString();
     return fileName.equals("pro") || fileName.equals("pro.bat") ||
            fileName.equals("java") || fileName.equals("java.exe") ||
            fileName.equals("javac") || fileName.equals("javac.exe") ||
@@ -25,16 +24,16 @@ class Vanity {
   }
   
   static void postOperations() throws IOException {
-    Path imagePath = getOrElseThrow("convention.javaLinkerImagePath", Path.class);
+    var imagePath = getOrElseThrow("convention.javaLinkerImagePath", Path.class);
     
     // remove unnecessary commands
-    try(Stream<Path> stream = Files.list(imagePath.resolve("bin"))) {
+    try(var stream = Files.list(imagePath.resolve("bin"))) {
       stream.filter(path -> !keep(path))
             .forEach(unchecked(Files::delete));
     }
     
     // change image directory
-    Path proDirectory = imagePath.resolveSibling("pro");
+    var proDirectory = imagePath.resolveSibling("pro");
     FileHelper.deleteAllFiles(proDirectory, true);
     Files.move(imagePath, proDirectory);
   }
