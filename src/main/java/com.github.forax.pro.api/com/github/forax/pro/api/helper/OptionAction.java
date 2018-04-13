@@ -51,7 +51,7 @@ public interface OptionAction<C> {
   }
   private static <C> BiFunction<C, String, String> toPrettyString(Stream<OptionAction<? super C>> actions) {
     return (config, command) -> {
-      String spaces = IntStream.range(0, 1 + command.length()).mapToObj(__ -> " ").collect(joining());
+      var spaces = IntStream.range(0, 1 + command.length()).mapToObj(__ -> " ").collect(joining());
       return actions.flatMap(action -> action.apply(config).stream()).map(op -> op.apply(new CmdLine()).toString()).collect(joining('\n' + spaces, command + ' ', ""));
     };
   }

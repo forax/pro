@@ -14,7 +14,7 @@ public class CmdLine {
   }
   
   public CmdLine addAll(Object... values) {
-    for(Object value: values) {
+    for(var value: values) {
       add(value);
     }
     return this;

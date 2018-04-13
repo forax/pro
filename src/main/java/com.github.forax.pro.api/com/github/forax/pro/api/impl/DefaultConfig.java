@@ -79,8 +79,8 @@ public class DefaultConfig implements DuplicatableConfig, EvalContext {
   
   /*
   public void enter(Runnable runnable) {
-    Object oldRoot = root;
-    Object newRoot = Configs.duplicate(oldRoot);
+    var oldRoot = root;
+    var newRoot = Configs.duplicate(oldRoot);
     root = newRoot;
     try {
       runnable.run();

@@ -62,19 +62,19 @@ public class Configs {
   
   @SuppressWarnings("unchecked")
   public static <T, U, V> void derive(T to, BiConsumer<? super T, ? super V> setter, U from, Function<? super U, ? extends V> eval) {
-    Query fromQuery = asQuery(from);
-    String fromId = fromQuery._id_();
-    Class<U> fromType = (Class<U>)fromQuery._type_();
-    Eval value = Eval.of(context -> eval.apply(context.get(fromId, fromType).get()));
-    Query toQuery = asQuery(to);
-    String key = findKeyOf((Class<T>)toQuery._type_(), setter);
+    var fromQuery = asQuery(from);
+    var fromId = fromQuery._id_();
+    var fromType = (Class<U>)fromQuery._type_();
+    var value = Eval.of(context -> eval.apply(context.get(fromId, fromType).get()));
+    var toQuery = asQuery(to);
+    var key = findKeyOf((Class<T>)toQuery._type_(), setter);
     toQuery._derive_(key, value);
   }
 
   private static Object traverse(Object proxy, String[] properties, int count, String key) {
-    Object result = proxy;
-    for(int i = 0; i < count; i++) {
-      String property = properties[i];
+    var result = proxy;
+    for(var i = 0; i < count; i++) {
+      var property = properties[i];
       result = getProperty(result, property, Object.class, true)
           .orElseThrow(() -> new IllegalArgumentException("property " + property + " in '" + key + "' is not defined"));
     }
@@ -82,7 +82,7 @@ public class Configs {
   }
   
   private static String[] splitAsProperties(String key) {
-    String[] properties = key.split("\\.");
+    var properties = key.split("\\.");
     if (properties.length == 0) {
       throw new IllegalArgumentException("invalid key " + key);
     }
@@ -90,20 +90,20 @@ public class Configs {
   }
   
   static void set(Object proxy, String key, Object value) {
-    String[] properties = splitAsProperties(key);
-    Object result = traverse(proxy, properties, properties.length - 1, key);
+    var properties = splitAsProperties(key);
+    var result = traverse(proxy, properties, properties.length - 1, key);
     setProperty(result, properties[properties.length - 1], value);
   }
   
   static <T> Optional<T> get(Object proxy, String key, Class<T> type, boolean readOnly) {
-    String[] properties = splitAsProperties(key);
-    Object result = traverse(proxy, properties, properties.length - 1, key);
+    var properties = splitAsProperties(key);
+    var result = traverse(proxy, properties, properties.length - 1, key);
     return getProperty(result, properties[properties.length - 1], type, readOnly);
   }
   
   //static void forEach(Object proxy, String key, BiConsumer<? super String, Object> consumer) {
-  //  String[] properties = splitAsProperties(key);
-  //  Object result = traverse(proxy, properties, properties.length, key);
+  //  var properties = splitAsProperties(key);
+  //  var result = traverse(proxy, properties, properties.length, key);
   //  forEachProperty(result, consumer);
   //}
 
@@ -111,7 +111,7 @@ public class Configs {
     if (!(value instanceof Query)) {
       return Stream.of(prefix + " = " + value);
     }
-    Map<String, Object> map = ((Query)value)._map_();
+    var map = ((Query)value)._map_();
     return map.entrySet()
        .stream()
        .flatMap(entry -> toStringStream(prefix.isEmpty()? entry.getKey(): prefix + "." + entry.getKey(), eval(entry.getValue(), context), context));
@@ -160,7 +160,7 @@ public class Configs {
     }
     // auto-wrapping, or wrap if readOnly
     if (value instanceof Query && type.isAnnotationPresent(TypeCheckedConfig.class)) {
-      Query query = (Query)value;
+      var query = (Query)value;
       return proxy(type, context, query._id_(), query._map_(), readOnly, frozen);
     }
     return type.cast(value);
@@ -179,7 +179,7 @@ public class Configs {
   private static final int GETTER = 0, SETTER = 1;
   static final MethodHandle GET_HASH, SET_HASH;
   static {
-    Lookup lookup = MethodHandles.lookup();
+    var lookup = MethodHandles.lookup();
     try {
       GET_HASH = lookup.findStatic(Configs.class, "getFromMap", methodType(Object.class, EvalContext.class, String.class, Map.class, Class.class, boolean.class, boolean.class, String.class));
       SET_HASH = lookup.findStatic(Configs.class, "setFromMap", methodType(void.class, Map.class, Object.class, String.class, Class.class));
@@ -192,24 +192,24 @@ public class Configs {
       new ClassValue<>() {
         @Override
         protected HashMap<String, MethodHandle>[] computeValue(Class<?> type) {
-          HashMap<String, MethodHandle> getterMap = new HashMap<>();
-          HashMap<String, MethodHandle> setterMap = new HashMap<>();
-          for(Method method: type.getMethods()) {
-            Class<?> declaringClass = method.getDeclaringClass();
+          var getterMap = new HashMap<String, MethodHandle>();
+          var setterMap = new HashMap<String, MethodHandle>();
+          for(var method: type.getMethods()) {
+            var declaringClass = method.getDeclaringClass();
             if (declaringClass == Object.class) {
               continue;
             }
             //FIXME support default method
             
-            String name = method.getName();
+            var name = method.getName();
             switch(method.getParameterCount()) {
             case 0: {
-              MethodHandle mh = MethodHandles.insertArguments(GET_HASH, 6, name);
+              var mh = MethodHandles.insertArguments(GET_HASH, 6, name);
               getterMap.put(name, mh);
               continue;
             }
             case 1: {
-              MethodHandle mh = MethodHandles.insertArguments(SET_HASH, 2, name, method.getParameterTypes()[0]);
+              var mh = MethodHandles.insertArguments(SET_HASH, 2, name, method.getParameterTypes()[0]);
               setterMap.put(name, mh);
               continue;
             }
@@ -218,7 +218,7 @@ public class Configs {
             }
           }
           @SuppressWarnings("unchecked")
-          HashMap<String, MethodHandle>[] accessors =
+          var accessors =
             (HashMap<String, MethodHandle>[])new HashMap<?,?>[] { getterMap, setterMap};
           return accessors;
         }
@@ -255,21 +255,21 @@ public class Configs {
     }
     Configs.class.getModule().addReads(proxyClass.getModule());
     
-    HashMap<String, MethodHandle>[] accessors = ACCESSORS.get(proxyClass);
-    HashMap<String, MethodHandle> getterMap = accessors[GETTER];
-    HashMap<String, MethodHandle> setterMap = accessors[SETTER];
+    var accessors = ACCESSORS.get(proxyClass);
+    var getterMap = accessors[GETTER];
+    var setterMap = accessors[SETTER];
     return proxyClass.cast(Proxy.newProxyInstance(proxyClass.getClassLoader(),
         new Class<?>[] { proxyClass, Query.class },
         (Object proxy, Method method, Object[] args) -> {
           Class<?> declaringClass = method.getDeclaringClass();
-          String name = method.getName();
+          var name = method.getName();
           if (declaringClass == Query.class) {
             switch(name) {
             case "_get_": {
-              String key = (String)args[0];
-              Class<?> type = (Class<?>)args[1];
-              boolean readOnly = (Boolean)args[2];
-              MethodHandle mh = getterMap.get(key);
+              var key = (String)args[0];
+              var type = (Class<?>)args[1];
+              var readOnly = (Boolean)args[2];
+              var mh = getterMap.get(key);
               Object result;
               if (mh == null) {
                 result = getFromMap(context, id, map, type, proxyReadOnly | readOnly, proxyFrozen, key);
@@ -282,12 +282,12 @@ public class Configs {
               return result;
             }
             case "_set_": {
-              String key = (String)args[0];
-              Object value = args[1];
+              var key = (String)args[0];
+              var value = args[1];
               if (proxyReadOnly) {
                 throw readOnly(proxyClass, key);
               }
-              MethodHandle mh = setterMap.get(key);
+              var mh = setterMap.get(key);
               if (mh == null) {
                 if (proxyFrozen) {
                   throw frozen(proxyClass, key);
@@ -299,8 +299,8 @@ public class Configs {
               return null;
             }
             case "_derive_": {
-              String key = (String)args[0];
-              Eval eval = (Eval)args[1];
+              var key = (String)args[0];
+              var eval = (Eval)args[1];
               if (proxyReadOnly) {
                 throw readOnly(proxyClass, key);
               }
@@ -317,8 +317,8 @@ public class Configs {
             case "_type_":
               return proxyClass;
             case "_duplicate_": {
-              EvalContext ctx = (EvalContext)args[0];
-              HashMap<String, Object> newMap = new HashMap<>();
+              var ctx = (EvalContext)args[0];
+              var newMap = new HashMap<String, Object>();
               map.forEach((key, value) -> {
                 Object newValue = (value instanceof Query)?((Query)value)._duplicate_(ctx): value;
                 newMap.put(key, newValue);
@@ -341,20 +341,20 @@ public class Configs {
               }
             } else {
               try {
-              
-              int parameterCount = method.getParameterCount();
-              if (parameterCount == 0) {
-                return getterMap.get(name).invokeExact(context, id, map, method.getReturnType(), proxyReadOnly, proxyFrozen);
-              }
-              if (parameterCount == 1) {
-                if (proxyReadOnly) {
-                  throw readOnly(proxyClass, method.getName());
+
+                var parameterCount = method.getParameterCount();
+                if (parameterCount == 0) {
+                  return getterMap.get(name).invokeExact(context, id, map, method.getReturnType(), proxyReadOnly, proxyFrozen);
                 }
-                Object value = args[0];
-                setterMap.get(name).invokeExact(map, value);
-                return proxy; // acts as a builder;
-              }
-              
+                if (parameterCount == 1) {
+                  if (proxyReadOnly) {
+                    throw readOnly(proxyClass, method.getName());
+                  }
+                  var value = args[0];
+                  setterMap.get(name).invokeExact(map, value);
+                  return proxy; // acts as a builder;
+                }
+
               } catch(RuntimeException e) {
                 e.printStackTrace();
                 throw e;
@@ -368,7 +368,7 @@ public class Configs {
   
   
   private static <T> String findKeyOf(Class<T> type, BiConsumer<? super T, ?> setter) {
-    StringBuilder builder = new StringBuilder();
+    var builder = new StringBuilder();
     Configs.class.getModule().addReads(type.getModule());
     T proxy = type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[] { type },
         (proxyObject, method, args) -> {

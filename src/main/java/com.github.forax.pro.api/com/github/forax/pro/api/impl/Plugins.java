@@ -5,13 +5,11 @@ import static java.util.stream.Collectors.toSet;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -28,22 +26,22 @@ public class Plugins {
   }
   
   private static Stream<Provider<Plugin>> findDynamicPlugins(Path path) {
-    ModuleFinder finder = ModuleFinder.of(path);
-    Collection<String> moduleNames = finder.findAll().stream().map(ref -> ref.descriptor().name()).collect(toSet());
+    var finder = ModuleFinder.of(path);
+    var moduleNames = finder.findAll().stream().map(ref -> ref.descriptor().name()).collect(toSet());
     
-    ModuleLayer boot = ModuleLayer.boot();
-    Configuration cf = boot.configuration().resolve(finder, ModuleFinder.of(), moduleNames);
+    var boot = ModuleLayer.boot();
+    var cf = boot.configuration().resolve(finder, ModuleFinder.of(), moduleNames);
 
-    ClassLoader classLoader = new ClassLoader(Plugins.class.getClassLoader()) { /* empty */ };
-    ModuleLayer layer = boot.defineModulesWithOneLoader(cf, classLoader);
+    var classLoader = new ClassLoader(Plugins.class.getClassLoader()) { /* empty */ };
+    var layer = boot.defineModulesWithOneLoader(cf, classLoader);
 
-    ServiceLoader<Plugin> serviceLoader = ServiceLoader.load(layer, Plugin.class);
+    var serviceLoader = ServiceLoader.load(layer, Plugin.class);
     return serviceLoader.stream();
   }
   
   private static void loadDynamicPlugins(Path dynamicPluginDir, Consumer<? super Provider<Plugin>> consumer) {
     if (Files.isDirectory(dynamicPluginDir)) { 
-      try(Stream<Path> stream = Files.list(dynamicPluginDir)) {
+      try(var stream = Files.list(dynamicPluginDir)) {
         stream.flatMap(Plugins::findDynamicPlugins).forEach(consumer);
       } catch(IOException e) {
         throw new UncheckedIOException(e);
@@ -52,14 +50,14 @@ public class Plugins {
   } 
   
   public static List<Plugin> getDynamicPlugins(Path dynamicPluginDir) {
-    ArrayList<Plugin> plugins = new ArrayList<>();
+    var plugins = new ArrayList<Plugin>();
     loadDynamicPlugins(dynamicPluginDir, provider -> plugins.add(provider.get()));
     plugins.sort(Comparator.comparing(Plugin::name));   // have a stable order
     return plugins;
   }
   
   public static List<Plugin> getAllPlugins(Path dynamicPluginDir) {
-    HashMap<Class<?>, Plugin> pluginMap = new HashMap<>();
+    var pluginMap = new HashMap<Class<?>, Plugin>();
     Consumer<Provider<Plugin>> addToMap = provider -> pluginMap.computeIfAbsent(provider.type(), __ -> provider.get());
     
     // load core plugins
