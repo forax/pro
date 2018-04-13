@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -26,7 +25,7 @@ public class GenBuilder {
   }
 
   private static Class<?> getConfType(Plugin plugin) {
-    DefaultConfig config = new DefaultConfig();
+    var config = new DefaultConfig();
     plugin.init(config);
 
     return ((Query)config.getOrThrow(plugin.name(), Object.class))._type_();
@@ -48,7 +47,7 @@ public class GenBuilder {
   }
 
   private static Stream<Object> classTemplate(String name, Class<?> confType) {
-    String className = builderName(name);
+    var className = builderName(name);
     return Stream.of(
         "  public static final ", className, " ", name, " =\n",
         "    Pro.getOrUpdate(\"", name, "\", ", className ,".class);\n",
@@ -74,7 +73,7 @@ public class GenBuilder {
   }
 
   private static Stream<Object> getterTemplate(Method method) {
-    String name = method.getName();
+    var name = method.getName();
     return Stream.concat(
              Stream.of(
                "    ", "@Deprecated", "\n").filter(__ -> method.isAnnotationPresent(Deprecated.class)),
@@ -85,7 +84,7 @@ public class GenBuilder {
   }
   
   private static Stream<Object> setterTemplate(String className, Method method) {
-    String name = method.getName();
+    var name = method.getName();
     return Stream.concat(
              Stream.of(
                "    ", "@Deprecated", "\n").filter(__ -> method.isAnnotationPresent(Deprecated.class)),
@@ -103,17 +102,17 @@ public class GenBuilder {
   }
 
   private static void template(Path directory, Stream<Plugin> plugins) throws IOException {
-    Stream<Object> template = builderClass(plugins);
-    String text = template.flatMap(GenBuilder::toStream).collect(joining());
+    var template = builderClass(plugins);
+    var text = template.flatMap(GenBuilder::toStream).collect(joining());
     Files.write(directory.resolve("Builders.java"), text.getBytes(UTF_8));
   }
 
   public static void generate() throws IOException {
-    Path pluginDir = Paths.get("target/image/plugins");
-    Set<String> invalidPlugins = Set.of("convention", "uberpackager");
-    Path directory = Paths.get("src/main/java/com.github.forax.pro.builder/com/github/forax/pro/builder");
+    var pluginDir = Paths.get("target/image/plugins");
+    var invalidPlugins = Set.of("convention", "uberpackager");
+    var directory = Paths.get("src/main/java/com.github.forax.pro.builder/com/github/forax/pro/builder");
 
-    List<Plugin> plugins = Plugins.getAllPlugins(pluginDir);
+    var plugins = Plugins.getAllPlugins(pluginDir);
 
     System.out.println("generate builders to " + directory);
     template(directory,
