@@ -28,9 +28,8 @@ import com.github.forax.pro.helper.ModuleHelper;
 
 public class Bootstrap {
 
-  @SuppressWarnings("deprecation")
   private static int jdkVersion() {
-    var major = Runtime.version().major();
+    var major = Runtime.version().feature();
     return Math.min(major, 10);  //FIXME --release doesn't work yet with the jdk 11
   }
 
