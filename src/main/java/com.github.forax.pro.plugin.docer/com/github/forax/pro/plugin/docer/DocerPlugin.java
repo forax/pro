@@ -13,7 +13,6 @@ import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 import java.io.File;
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
 import java.net.InetAddress;
 import java.net.URI;
 import java.nio.file.Files;
