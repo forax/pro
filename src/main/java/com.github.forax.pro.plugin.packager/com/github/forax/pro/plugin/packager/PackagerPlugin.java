@@ -6,14 +6,11 @@ import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.spi.ToolProvider;
 
 import com.github.forax.pro.api.Config;
