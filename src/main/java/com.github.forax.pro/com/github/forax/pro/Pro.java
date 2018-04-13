@@ -45,18 +45,18 @@ public class Pro {
   static final ThreadLocal<DuplicatableConfig> CONFIG = new ThreadLocal<>() {
     @Override
     protected DuplicatableConfig initialValue() {
-      DefaultConfig config = new DefaultConfig();
-      ProConf proConf = config.getOrUpdate("pro", ProConf.class);
+      var config = new DefaultConfig();
+      var proConf = config.getOrUpdate("pro", ProConf.class);
       proConf.currentDir(Paths.get("."));
       proConf.pluginDir(Optional.ofNullable(System.getenv("PRO_PLUGIN_DIR"))
           .map(Paths::get)
           .orElseGet(Plugins::defaultPluginDir));
-      Log.Level logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
+      var logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
         .map(Log.Level::of)
         .orElse(Log.Level.INFO);
       proConf.loglevel(logLevel.name().toLowerCase());
       proConf.exitOnError(Boolean.valueOf(System.getProperty("pro.exitOnError", "false")));
-      List<String> arguments = Optional.ofNullable(System.getProperty("pro.arguments", null))
+      var arguments = Optional.ofNullable(System.getProperty("pro.arguments", null))
           .map(value -> List.of(value.split(",")))
           .orElse(List.of());
       proConf.arguments(arguments);
@@ -66,11 +66,11 @@ public class Pro {
   static final HashMap<String, Plugin> PLUGINS;
   static {
     // initialization
-    DefaultConfig config = (DefaultConfig)CONFIG.get();
+    var config = (DefaultConfig)CONFIG.get();
 
-    ProConf proConf = config.getOrThrow("pro", ProConf.class);
-    Log log = Log.create("pro", proConf.loglevel());
-    List<Plugin> plugins = Plugins.getAllPlugins(proConf.pluginDir());
+    var proConf = config.getOrThrow("pro", ProConf.class);
+    var log = Log.create("pro", proConf.loglevel());
+    var plugins = Plugins.getAllPlugins(proConf.pluginDir());
     log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
 
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
@@ -81,10 +81,10 @@ public class Pro {
   
   /*
   public static void update(Path dynamicPluginDir) {
-    DefaultConfig config = CONFIG.get();
-    List<Plugin> plugins = Plugins.getDynamicPlugins(dynamicPluginDir);
-    for(Plugin plugin : plugins) {
-      String pluginName = plugin.name();
+    var config = CONFIG.get();
+    var plugins = Plugins.getDynamicPlugins(dynamicPluginDir);
+    for(var plugin : plugins) {
+      var pluginName = plugin.name();
       if (PLUGINS.putIfAbsent(pluginName, plugin) == null) {
         plugin.init(config.asChecked(pluginName));
         plugin.configure(config.asChecked(pluginName));
@@ -207,11 +207,11 @@ public class Pro {
   
   /*
   public static void exec(String... commands) {
-    ProcessBuilder processBuilder = new ProcessBuilder(commands);
+    var processBuilder = new ProcessBuilder(commands);
     processBuilder.inheritIO();
     int errorCode;
     try {
-      Process process = processBuilder.start();
+      var process = processBuilder.start();
       errorCode = process.waitFor();
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -223,19 +223,19 @@ public class Pro {
   
 
   private static Optional<Plugin> findPluginByName(Map<String, Plugin> allPlugins, String pluginName, ProConf proConf) {
-    Optional<Plugin> plugin = Optional.ofNullable(allPlugins.get(pluginName));
-    if (!plugin.isPresent()) {
-      Log log = Log.create("pro", proConf.loglevel());
+    var pluginOpt = Optional.ofNullable(allPlugins.get(pluginName));
+    if (!pluginOpt.isPresent()) {
+      var log = Log.create("pro", proConf.loglevel());
       log.error(pluginName, name -> "unknown plugin " + name);  
     }
-    return plugin;
+    return pluginOpt;
   }
   
   public static void local(String localDir, Runnable action) { 
-    DuplicatableConfig oldConfig = CONFIG.get();
-    Path currentDir = oldConfig.getOrThrow("pro", ProConf.class).currentDir();
+    var oldConfig = CONFIG.get();
+    var currentDir = oldConfig.getOrThrow("pro", ProConf.class).currentDir();
     try {
-      DuplicatableConfig newConfig = oldConfig.duplicate();
+      var newConfig = oldConfig.duplicate();
       newConfig.getOrUpdate("pro", ProConf.class).currentDir(currentDir.resolve(localDir));
       CONFIG.set(newConfig);
       action.run();
@@ -245,7 +245,7 @@ public class Pro {
   }
   
   public static Task task(Runnable action) {
-    int line = StackWalker.getInstance().walk(s -> s.findFirst()).map(StackFrame::getLineNumber).orElse(-1);
+    var line = StackWalker.getInstance().walk(s -> s.findFirst()).map(StackFrame::getLineNumber).orElse(-1);
     return new Task() {
       @Override
       public String name() {
@@ -253,7 +253,7 @@ public class Pro {
       }
       @Override
       public int execute(Config config) throws IOException {
-        DuplicatableConfig oldConfig = CONFIG.get();
+        var oldConfig = CONFIG.get();
         try {
           CONFIG.set(DefaultConfig.asNonMutable(config));
           action.run();
@@ -266,22 +266,22 @@ public class Pro {
   }
   
   public static void run(Object... tasks) {
-    DuplicatableConfig config = CONFIG.get();
-    ProConf proConf = config.getOrThrow("pro", ProConf.class);
+    var config = CONFIG.get();
+    var proConf = config.getOrThrow("pro", ProConf.class);
     
-    ArrayList<Task> taskList = new ArrayList<>();
+    var taskList = new ArrayList<Task>();
     for(Object task: tasks) {
       if (task instanceof Task) {
         taskList.add((Task)task);
       } else {
-        String pluginName = (task instanceof Query)? ((Query)task)._id_(): task.toString();
-        Optional<Plugin> plugin = findPluginByName(PLUGINS, pluginName, proConf);
-        if (!plugin.isPresent()) {
+        var pluginName = (task instanceof Query)? ((Query)task)._id_(): task.toString();
+        var pluginOpt = findPluginByName(PLUGINS, pluginName, proConf);
+        if (!pluginOpt.isPresent()) {
           // plugin not found
           exit(proConf.exitOnError(), 1);  //FIXME
           return;
         }
-        taskList.add(plugin.get());
+        taskList.add(pluginOpt.get());
       }
     }
     
@@ -293,28 +293,28 @@ public class Pro {
   }
   
   public static void run(List<String> pluginNames) {
-    DuplicatableConfig config = CONFIG.get();
-    ProConf proConf = config.getOrThrow("pro", ProConf.class);
+    var config = CONFIG.get();
+    var proConf = config.getOrThrow("pro", ProConf.class);
     
-    ArrayList<Task> plugins = new ArrayList<>();
-    for(String pluginName: pluginNames) {
-      Optional<Plugin> plugin = findPluginByName(PLUGINS, pluginName, proConf);  
-      if (!plugin.isPresent()) {
+    var plugins = new ArrayList<Task>();
+    for(var pluginName: pluginNames) {
+      var pluginOpt = findPluginByName(PLUGINS, pluginName, proConf);  
+      if (!pluginOpt.isPresent()) {
         // plugin not found
         exit(proConf.exitOnError(), 1);  //FIXME
         return;
       }
-      plugins.add(plugin.get());
+      plugins.add(pluginOpt.get());
     }
     
     runAll(config, plugins);
   }
   
   private static void runAll(DuplicatableConfig config, List<Task> tasks) {
-    Config taskConfig = config.duplicate().asConfig();
+    var taskConfig = config.duplicate().asConfig();
     
-    Optional<Daemon> daemonService = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
-    BiConsumer<List<Task>, Config> consumer = daemonService
+    var daemonOpt = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
+    var consumer = daemonOpt
         .filter(Daemon::isStarted)
         .<BiConsumer<List<Task>, Config>>map(daemon -> daemon::execute)
         .orElse(Pro::executeAll);
@@ -322,21 +322,21 @@ public class Pro {
   }
   
   private static void executeAll(List<Task> tasks, Config config) {
-    ProConf proConf = config.getOrThrow("pro", ProConf.class);
-    boolean exitOnError = proConf.exitOnError();
+    var proConf = config.getOrThrow("pro", ProConf.class);
+    var exitOnError = proConf.exitOnError();
     
-    int errorCode = 0;
-    long start = System.currentTimeMillis();
-    for(Task task: tasks) {
+    var errorCode = 0;
+    var start = System.currentTimeMillis();
+    for(var task: tasks) {
       errorCode = execute(task, config);
       if (errorCode != 0) {
         break;
       }
     }
-    long end = System.currentTimeMillis();
-    long elapsed = end - start;
+    var end = System.currentTimeMillis();
+    var elapsed = end - start;
     
-    Log log = Log.create("pro", proConf.loglevel());
+    var log = Log.create("pro", proConf.loglevel());
     if (errorCode == 0) {
       log.info(elapsed, time -> String.format("DONE !          elapsed time %,d ms", time));
     } else {
@@ -353,8 +353,8 @@ public class Pro {
       return task.execute(config);
     } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
       e.printStackTrace();
-      String logLevel = config.getOrThrow("pro", ProConf.class).loglevel();
-      Log log = Log.create(task.name(), logLevel);
+      var logLevel = config.getOrThrow("pro", ProConf.class).loglevel();
+      var log = Log.create(task.name(), logLevel);
       log.error(e);
       return 1; // FIXME
     }
