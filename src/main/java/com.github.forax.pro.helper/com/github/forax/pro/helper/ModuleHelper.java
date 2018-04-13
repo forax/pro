@@ -14,7 +14,6 @@ import static org.objectweb.asm.Opcodes.V9;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.module.ModuleDescriptor.Opens;
@@ -78,13 +77,13 @@ public class ModuleHelper {
    * @return the single module contained in {@code path}.
    */
   public static ModuleReference getOnlyModule(Path path) {
-    Set<ModuleReference> all = ModuleFinder.of(path).findAll();
-    Optional<ModuleReference> first = all.stream().findFirst();
+    var all = ModuleFinder.of(path).findAll();
+    var firstOpt = all.stream().findFirst();
     switch(all.size()) {
     case 0:
       throw new IllegalArgumentException("expected one module in " + path + " but found none");
     case 1:
-      return first.get();
+      return firstOpt.get();
     default:
       throw new IllegalArgumentException(
           "expected one module in " + path + " but found: " + all.stream().map(ModuleReference::toString).collect(joining(", ", "<", ">")));
@@ -122,9 +121,9 @@ public class ModuleHelper {
       }
     }
 
-    Visitor visitor = new Visitor();
+    var visitor = new Visitor();
     parseModule(moduleInfoPath, visitor);
-    ModuleNode moduleNode = visitor.moduleNode;
+    var moduleNode = visitor.moduleNode;
     if (moduleNode == null) {
       return Optional.empty();
     }
@@ -144,7 +143,7 @@ public class ModuleHelper {
   }
 
   private static Set<String> findJavaPackages(Path moduleDirectory) {
-    try(Stream<Path> stream = Files.walk(moduleDirectory)) {
+    try(var stream = Files.walk(moduleDirectory)) {
       return stream
           .filter(path -> path.getFileName().toString().endsWith(".java"))
           .map(path -> moduleDirectory.relativize(path))
@@ -161,8 +160,8 @@ public class ModuleHelper {
   }
 
   private static ModuleDescriptor createModuleDescriptor(ModuleNode moduleNode, Path moduleInfoPath) {
-    Set<Modifier> modifiers = (moduleNode.access & ACC_OPEN) != 0? Set.of(Modifier.OPEN): Set.of();
-    ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(moduleNode.name, modifiers);
+    var modifiers = (moduleNode.access & ACC_OPEN) != 0? Set.of(Modifier.OPEN): Set.<Modifier>of();
+    var builder = ModuleDescriptor.newModule(moduleNode.name, modifiers);
 
     moduleNode.requires.forEach(require -> builder.requires(requireModifiers(require.access), require.module));
     moduleNode.exports.forEach(export -> {
@@ -182,8 +181,8 @@ public class ModuleHelper {
     moduleNode.uses.forEach(builder::uses);
     moduleNode.provides.forEach(provide -> builder.provides(provide.service, provide.providers));
 
-    Path moduleDirectory = moduleInfoPath.getParent();
-    Set<String> javaPackages = findJavaPackages(moduleDirectory);
+    var moduleDirectory = moduleInfoPath.getParent();
+    var javaPackages = findJavaPackages(moduleDirectory);
     javaPackages.removeAll(moduleNode.exports.stream().map(export -> export.packaze).collect(Collectors.toList()));
     javaPackages.removeAll(moduleNode.opens.stream().map(export -> export.packaze).collect(Collectors.toList()));
     builder.packages(javaPackages);
@@ -198,7 +197,7 @@ public class ModuleHelper {
     return new ModuleFinder() {
       @Override
       public Set<ModuleReference> findAll() {
-        try(Stream<Path> stream = Files.list(directory)) {
+        try(var stream = Files.list(directory)) {
           return stream.flatMap(path -> find(path.getFileName().toString()).stream())
               .collect(Collectors.toSet());
         } catch (IOException e) {
@@ -241,8 +240,8 @@ public class ModuleHelper {
    */
   public static ModuleFinder systemModulesFinder() {
     return filter(ModuleFinder.ofSystem(), ref -> {
-      String name = ref.descriptor().name();
-      return name.startsWith("java.") || name.startsWith("jdk.");
+      var moduleName = ref.descriptor().name();
+      return moduleName.startsWith("java.") || moduleName.startsWith("jdk.");
     });
   }
 
@@ -281,22 +280,22 @@ public class ModuleHelper {
       }
     }
 
-    HashSet<String> moduleFounds = new HashSet<>(rootNames);
-    ArrayDeque<Work> works = new ArrayDeque<>();
+    var moduleFounds = new HashSet<>(rootNames);
+    var works = new ArrayDeque<Work>();
     rootNames.forEach(root -> works.offer(new Work(() -> root, root)));
 
-    boolean resolved = true;
+    var resolved = true;
     for(;;) {
-      Work work = works.poll();
+      var work = works.poll();
       if (work == null) {
         return resolved;
       }
-      String name = work.moduleName;
-      Supplier<String> chain = work.chain;
+      var name = work.moduleName;
+      var chain = work.chain;
       moduleFounds.add(name);
-      Optional<ModuleReference> optRef = finder.find(name);
-      if (optRef.isPresent()) {
-        optRef.get().descriptor().requires()
+      var refOpt = finder.find(name);
+      if (refOpt.isPresent()) {
+        refOpt.get().descriptor().requires()
           .stream()
           .filter(require -> !require.modifiers().contains(Requires.Modifier.STATIC))  // skip static requires
           .map(Requires::name)
@@ -311,22 +310,22 @@ public class ModuleHelper {
 
 
   public static ModuleDescriptor mergeModuleDescriptor(ModuleDescriptor sourceModule, ModuleDescriptor testModule) {
-    boolean open = sourceModule.isOpen() || testModule.isOpen();
+    var open = sourceModule.isOpen() || testModule.isOpen();
 
-    Set<Modifier> moduleModifiers = open? Set.of(Modifier.OPEN): Set.of();
-    Builder builder = ModuleDescriptor.newModule(testModule.name(), moduleModifiers);
+    var moduleModifiers = open? Set.of(Modifier.OPEN): Set.<Modifier>of();
+    var builder = ModuleDescriptor.newModule(testModule.name(), moduleModifiers);
 
-    HashMap<String, Set<Requires.Modifier>> requires = merge(ModuleDescriptor::requires,
+    var requires = merge(ModuleDescriptor::requires,
         Requires::name, Requires::modifiers, ModuleHelper::mergeRequiresModifiers, sourceModule, testModule);
-    HashMap<String, Set<String>> exports = merge(ModuleDescriptor::exports,
+    var exports = merge(ModuleDescriptor::exports,
         Exports::source, Exports::targets, ModuleHelper::mergeRestrictions, sourceModule, testModule);
-    HashMap<String, Boolean> packages = merge(ModuleDescriptor::packages,
+    var packages = merge(ModuleDescriptor::packages,
         x -> x, x -> true, (_1, _2) -> true, sourceModule, testModule);
-    HashMap<String, Set<String>> opens = merge(ModuleDescriptor::opens,
+    var opens = merge(ModuleDescriptor::opens,
         Opens::source, Opens::targets, ModuleHelper::mergeRestrictions, sourceModule, testModule);
-    HashMap<String, Boolean> uses = merge(ModuleDescriptor::uses,
+    var uses = merge(ModuleDescriptor::uses,
         x -> x, x -> true, (_1, _2) -> true, sourceModule, testModule);
-    HashMap<String, Set<String>> provides = merge(ModuleDescriptor::provides,
+    var provides = merge(ModuleDescriptor::provides,
         Provides::service, p -> new HashSet<>(p.providers()), ModuleHelper::mergeAll, sourceModule, testModule);
 
     requires.forEach((name, modifiers) -> builder.requires(modifiers, name));
@@ -353,7 +352,7 @@ public class ModuleHelper {
   }
 
   private static <T, V> HashMap<String, V> merge(Function<ModuleDescriptor, Set<? extends T>> propertyExtractor, Function<? super T, String> keyMapper, Function<? super T, ? extends V> valueMapper, BiFunction<? super V, ? super V, ? extends V> valueMerger, ModuleDescriptor sourceDescriptor, ModuleDescriptor testDescriptor) {
-    LinkedHashMap<String, V> map = new LinkedHashMap<>();
+    var map = new LinkedHashMap<String, V>();
     Consumer<T> consumer = element -> map.merge(keyMapper.apply(element), valueMapper.apply(element), valueMerger);
     propertyExtractor.apply(sourceDescriptor).forEach(consumer);
     propertyExtractor.apply(testDescriptor).forEach(consumer);
@@ -361,7 +360,7 @@ public class ModuleHelper {
   }
 
   private static Set<String> mergeAll(Set<String> s1, Set<String> s2) {
-    LinkedHashSet<String> set = new LinkedHashSet<>();
+    var set = new LinkedHashSet<String>();
     set.addAll(s1);
     set.addAll(s2);
     return set;
@@ -378,8 +377,8 @@ public class ModuleHelper {
   }
 
   private static Set<Requires.Modifier> mergeRequiresModifiers(Set<Requires.Modifier> s1, Set<Requires.Modifier> s2) {
-    boolean transitive = s1.contains(Requires.Modifier.TRANSITIVE) || s2.contains(Requires.Modifier.TRANSITIVE);
-    boolean staticz = s1.contains(Requires.Modifier.STATIC) && s2.contains(Requires.Modifier.STATIC);
+    var transitive = s1.contains(Requires.Modifier.TRANSITIVE) || s2.contains(Requires.Modifier.TRANSITIVE);
+    var staticz = s1.contains(Requires.Modifier.STATIC) && s2.contains(Requires.Modifier.STATIC);
     return Stream.of(
           Optional.of(Requires.Modifier.TRANSITIVE).filter(__ -> transitive),
           Optional.of(Requires.Modifier.STATIC).filter(__ -> staticz)
@@ -427,11 +426,11 @@ public class ModuleHelper {
   }
 
   public static byte[] moduleDescriptorToBinary(ModuleDescriptor descriptor) {
-    ClassWriter classWriter = new ClassWriter(0);
+    var classWriter = new ClassWriter(0);
     classWriter.visit(V9, ACC_MODULE, "module-info", null, null, null);
-    int moduleFlags = (descriptor.isOpen()? ACC_OPEN: 0) | ACC_SYNTHETIC;   // mark all generated module-info.class as synthetic
-    String moduleVersion = descriptor.version().map(Version::toString).orElse(null);
-    org.objectweb.asm.ModuleVisitor mv = classWriter.visitModule(descriptor.name(), moduleFlags, moduleVersion);
+    var moduleFlags = (descriptor.isOpen()? ACC_OPEN: 0) | ACC_SYNTHETIC;   // mark all generated module-info.class as synthetic
+    var moduleVersion = descriptor.version().map(Version::toString).orElse(null);
+    var mv = classWriter.visitModule(descriptor.name(), moduleFlags, moduleVersion);
     descriptor.packages().forEach(packaze -> mv.visitPackage(packaze.replace('.', '/')));
 
     descriptor.mainClass().ifPresent(mainClass -> mv.visitMainClass(mainClass.replace('.', '/')));

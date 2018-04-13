@@ -60,11 +60,11 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    */
   public StableList<E> append(E element) {
     Objects.requireNonNull(element);
-    E[] array = this.array;
-    int size = this.size;
-    boolean shared = this.shared;
-    int length = array.length;
-    E[] newArray = (length == size)? Arrays.copyOf(array, Math.max(1, length) << 1): shared? Arrays.copyOf(array, length): array;
+    var array = this.array;
+    var size = this.size;
+    var shared = this.shared;
+    var length = array.length;
+    var newArray = (length == size)? Arrays.copyOf(array, Math.max(1, length) << 1): shared? Arrays.copyOf(array, length): array;
     newArray[size] = element;
     this.shared = shared | array == newArray;
     return new StableList<>(size + 1, newArray);
@@ -78,8 +78,8 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    */
   public StableList<E> appendAll(Collection<? extends E> list) {
     // TODO optimize !
-    StableList<E> result = this;
-    for(E element: list) {
+    var result = this;
+    for(var element: list) {
       result = result.append(element);
     }
     return result;
@@ -94,8 +94,8 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   @SafeVarargs
   public final StableList<E> appendAll(E... elements) {
     // TODO optimize !
-    StableList<E> result = this;
-    for(E element: elements) {
+    var result = this;
+    for(var element: elements) {
       result = result.append(element);
     }
     return result;
@@ -161,7 +161,7 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    * @return the array created by the factory populated with the values
    */
   public <T> T[] toArray(IntFunction<T[]> factory) {
-    T[] array = factory.apply(size);
+    var array = factory.apply(size);
     System.arraycopy(this.array, 0, array, 0, size);
     return array;
   }
@@ -191,8 +191,8 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   }
   
   private static <E> StableList<E> fromTrustedArray(E[] array) {
-    for(E e: array) {
-      Objects.requireNonNull(e);
+    for(var element: array) {
+      Objects.requireNonNull(element);
     }
     return new StableList<>(array.length, array);
   }
@@ -236,11 +236,11 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
   
   /*
   public static void main(String[] args) {
-    StableList<String> list = new StableList<>();
-    StableList<String> list2 = list.append("foo").append("bar");
+    var list = new StableList<String>();
+    var list2 = list.append("foo").append("bar");
     System.out.println(list2);
-    StableList<String> list3 = list2.append("baz");
-    StableList<String> list4 = list2.append("bang");
+    var list3 = list2.append("baz");
+    var list4 = list2.append("bang");
     System.out.println(list3);
     System.out.println(list4);
   }*/

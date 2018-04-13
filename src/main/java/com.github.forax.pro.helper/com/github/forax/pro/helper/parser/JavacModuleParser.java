@@ -16,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.tools.JavaCompiler;
-import javax.tools.JavaCompiler.CompilationTask;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 import org.objectweb.asm.ModuleVisitor;
@@ -60,7 +56,7 @@ public class JavacModuleParser {
       case IDENTIFIER:
           return ((IdentifierTree) tree).getName().toString();
       case MEMBER_SELECT:
-        MemberSelectTree select = (MemberSelectTree) tree;
+        var select = (MemberSelectTree) tree;
         return qualifiedString(select.getExpression()) + '.' + select.getIdentifier().toString();
       default:
           throw new AssertionError(tree.toString());
@@ -76,17 +72,17 @@ public class JavacModuleParser {
     
     @SuppressWarnings("static-method")
     public void visitCompilationUnit(CompilationUnitTree node, TreeVisitor<?, ?> visitor) {
-      for(Tree decl: node.getTypeDecls()) {
-        if (!(decl instanceof ModuleTree)) {  // skip unnecessary nodes: imports, etc
+      for(var directive: node.getTypeDecls()) {
+        if (!(directive instanceof ModuleTree)) {  // skip unnecessary nodes: imports, etc
           continue;
         }
-        accept(visitor, decl);
+        accept(visitor, directive);
       }
     }
     
     public void visitModule(ModuleTree node, TreeVisitor<?, ?> visitor) {
-      String name = qualifiedString(node.getName());
-      int flags = node.getModuleType() == ModuleKind.OPEN? ACC_OPEN: 0;
+      var name = qualifiedString(node.getName());
+      var flags = node.getModuleType() == ModuleKind.OPEN? ACC_OPEN: 0;
       
       mv = moduleClassVisitor.visitModule(name, flags, null);
       
@@ -94,7 +90,7 @@ public class JavacModuleParser {
     }
 
     public void visitRequires(RequiresTree node, @SuppressWarnings("unused") TreeVisitor<?, ?> __) {
-      int modifiers = (node.isStatic()? ACC_STATIC: 0) | (node.isTransitive()? ACC_TRANSITIVE: 0);
+      var modifiers = (node.isStatic()? ACC_STATIC: 0) | (node.isTransitive()? ACC_TRANSITIVE: 0);
       mv.visitRequire(qualifiedString(node.getModuleName()), modifiers, null);
     }
     
@@ -125,7 +121,7 @@ public class JavacModuleParser {
           } catch (IllegalAccessException e) {
             throw new AssertionError(e);
           } catch(InvocationTargetException e) {
-            Throwable cause = e.getCause();
+            var cause = e.getCause();
             if (cause instanceof RuntimeException) {
               throw (RuntimeException)cause;
             }
@@ -148,16 +144,16 @@ public class JavacModuleParser {
   }
   
   public static void parse(Path moduleInfoPath, ModuleClassVisitor moduleClassVisitor) throws IOException {
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    try(StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null)) {
-      Iterable<? extends JavaFileObject> compilationUnits = fileManager.getJavaFileObjects(moduleInfoPath);
-      CompilationTask task = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
-      JavacTask javacTask = (JavacTask)task;
-      Iterable<? extends CompilationUnitTree> units= javacTask.parse();
-      CompilationUnitTree unit = units.iterator().next();
+    var compiler = ToolProvider.getSystemJavaCompiler();
+    try(var fileManager = compiler.getStandardFileManager(null, null, null)) {
+      var compilationUnits = fileManager.getJavaFileObjects(moduleInfoPath);
+      var task = compiler.getTask(null, fileManager, null, null, null, compilationUnits);
+      var javacTask = (JavacTask)task;
+      var units = javacTask.parse();
+      var unit = units.iterator().next();
 
-      ModuleHandler moduleHandler = new ModuleHandler(moduleClassVisitor);
-      TreeVisitor<?,?> visitor = (TreeVisitor<?,?>)Proxy.newProxyInstance(TreeVisitor.class.getClassLoader(), new Class<?>[]{ TreeVisitor.class},
+      var moduleHandler = new ModuleHandler(moduleClassVisitor);
+      var visitor = (TreeVisitor<?,?>)Proxy.newProxyInstance(TreeVisitor.class.getClassLoader(), new Class<?>[]{ TreeVisitor.class},
           (proxy, method, args) -> {
             ModuleHandler.METHOD_MAP
             .getOrDefault(method.getName(), (handler, node, v) -> { 
