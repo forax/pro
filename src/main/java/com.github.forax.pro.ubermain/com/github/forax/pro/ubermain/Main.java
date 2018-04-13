@@ -2,14 +2,9 @@ package com.github.forax.pro.ubermain;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
-import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Modifier;
@@ -20,64 +15,60 @@ import java.lang.module.ModuleReference;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Main {
   private static URI baseURI(URI uri) {
-    String uriName = uri.toString();
-    int index = uriName.indexOf('!');
+    var uriName = uri.toString();
+    var index = uriName.indexOf('!');
     return URI.create(uriName.substring(0, index));
   }
   
   static String packageOf(String className) {
-    int index = className.lastIndexOf('.');
+    var index = className.lastIndexOf('.');
     return className.substring(0, index);
   }
   
   public static void main(String[] args) throws IOException, URISyntaxException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException {
     List<String> lines;
-    try(InputStream input = Main.class.getResourceAsStream("/modules.txt");
-        Reader reader = new InputStreamReader(input);
-        BufferedReader bufferedReader = new BufferedReader(reader);
-        Stream<String> stream = bufferedReader.lines()) {
-      
+    try(var input = Main.class.getResourceAsStream("/modules.txt");
+        var reader = new InputStreamReader(input);
+        var bufferedReader = new BufferedReader(reader);
+        var stream = bufferedReader.lines()) {
       lines = stream.collect(Collectors.toList());
     }
     
-    String[] tokens = lines.get(0).split("/");
-    String mainModule = tokens[0];
-    String mainClassName = tokens[1];
-    List<String> moduleFileNames = lines.subList(1, lines.size());
+    var tokens = lines.get(0).split("/");
+    var mainModule = tokens[0];
+    var mainClassName = tokens[1];
+    var moduleFileNames = lines.subList(1, lines.size());
     
     //System.out.println(moduleFileNames);
-    String firstFileName = moduleFileNames.get(0);
-    URI baseURI = baseURI(Main.class.getResource("/" + firstFileName).toURI());
+    var firstFileName = moduleFileNames.get(0);
+    var baseURI = baseURI(Main.class.getResource("/" + firstFileName).toURI());
     
     System.out.println(baseURI);
     
     // uncompress into a temporary directory
-    Path tmp = Files.createTempDirectory("uberjar");
-    try(FileSystem zipfs = FileSystems.newFileSystem(baseURI, Map.of())) {
-      for(String moduleFileName: moduleFileNames) {
-        Path modulePath = zipfs.getPath("/" + moduleFileName);
+    var tmp = Files.createTempDirectory("uberjar");
+    try(var zipfs = FileSystems.newFileSystem(baseURI, Map.of())) {
+      for(var moduleFileName: moduleFileNames) {
+        var modulePath = zipfs.getPath("/" + moduleFileName);
         Files.copy(modulePath, tmp.resolve(modulePath.getFileName().toString()));
       }
     }
     
-    ModuleFinder finder = ModuleFinder.of(tmp);
+    var finder = ModuleFinder.of(tmp);
     //System.out.println(finder.findAll().stream().map(ref -> ref.descriptor().name()).collect(Collectors.toList()));
     
-    ModuleFinder patchedFinder = new ModuleFinder() {
+    var patchedFinder = new ModuleFinder() {
       private ModuleReference main;
       
       @Override
@@ -87,17 +78,17 @@ public class Main {
       
       @Override
       public Optional<ModuleReference> find(String name) {
-        Optional<ModuleReference> moduleOpt = finder.find(name);
+        var moduleOpt = finder.find(name);
         if (!moduleOpt.isPresent() || !name.equals(mainModule)) {
           return moduleOpt;
         }
         if (main == null) {
-          ModuleReference ref = moduleOpt.get();
-          ModuleDescriptor descriptor = ref.descriptor();
+          var ref = moduleOpt.get();
+          var descriptor = ref.descriptor();
           
-          Set<Modifier> modifiers = descriptor.isOpen()? Set.of(Modifier.OPEN):
-            descriptor.isAutomatic()? Set.of(Modifier.AUTOMATIC): Set.of();
-          ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(name, modifiers);
+          var modifiers = descriptor.isOpen()? Set.of(Modifier.OPEN):
+            descriptor.isAutomatic()? Set.of(Modifier.AUTOMATIC): Set.<Modifier>of();
+          var builder = ModuleDescriptor.newModule(name, modifiers);
           descriptor.version().ifPresent(builder::version);
           
           descriptor.requires().forEach(builder::requires);
@@ -108,7 +99,7 @@ public class Main {
           descriptor.uses().forEach(builder::uses);
           descriptor.provides().forEach(builder::provides);
           
-          HashSet<String> packages = new HashSet<>(descriptor.packages());
+          var packages = new HashSet<>(descriptor.packages());
           packages.removeAll(descriptor.exports().stream().map(Exports::source).collect(Collectors.toSet()));
           packages.removeAll(descriptor.opens().stream().map(Opens::source).collect(Collectors.toSet()));
           packages.remove(packageOf(mainClassName));
@@ -125,29 +116,25 @@ public class Main {
       }
     };
     
-    ModuleLayer parent = ModuleLayer.boot();
-    Configuration cf = parent.configuration().resolveAndBind(patchedFinder, ModuleFinder.of(), List.of("com.github.forax.pro.uberbooter", mainModule));
-    ModuleLayer layer = ModuleLayer.defineModulesWithOneLoader(cf, List.of(parent), ClassLoader.getSystemClassLoader()).layer();
+    var parent = ModuleLayer.boot();
+    var configuration = parent.configuration().resolveAndBind(patchedFinder, ModuleFinder.of(), List.of("com.github.forax.pro.uberbooter", mainModule));
+    var layer = ModuleLayer.defineModulesWithOneLoader(configuration, List.of(parent), ClassLoader.getSystemClassLoader()).layer();
     
-    ClassLoader loader = layer.findLoader("com.github.forax.pro.uberbooter");
-    Class<?> booterClass = loader.loadClass("com.github.forax.pro.uberbooter.Booter");
+    var loader = layer.findLoader("com.github.forax.pro.uberbooter");
+    var booterClass = loader.loadClass("com.github.forax.pro.uberbooter.Booter");
     
-    ClassLoader mainLoader = layer.findLoader(mainModule);
-    Class<?> mainClass = mainLoader.loadClass(mainClassName);
+    var mainLoader = layer.findLoader(mainModule);
+    var mainClass = mainLoader.loadClass(mainClassName);
     
-    Lookup lookup = MethodHandles.lookup();
+    var lookup = MethodHandles.lookup();
     try {
-      MethodHandle mh = lookup.findStatic(booterClass, "main", MethodType.methodType(void.class, Class.class, String[].class));
+      var mh = lookup.findStatic(booterClass, "main", MethodType.methodType(void.class, Class.class, String[].class));
       mh.invokeExact(mainClass, args);
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw e;
+    } catch (RuntimeException | Error e) {
+      throw e;
     } catch (Throwable e) {
-      if (e instanceof RuntimeException) {
-        throw (RuntimeException)e;
-      }
-      if (e instanceof Error) {
-        throw (Error)e;
-      }
       throw new UndeclaredThrowableException(e);
     }
   }
