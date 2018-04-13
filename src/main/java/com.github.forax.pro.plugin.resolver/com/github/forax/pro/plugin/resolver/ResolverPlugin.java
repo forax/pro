@@ -3,10 +3,7 @@ package com.github.forax.pro.plugin.resolver;
 import static com.github.forax.pro.api.MutableConfig.derive;
 
 import java.io.IOException;
-import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -44,23 +41,23 @@ public class ResolverPlugin implements Plugin {
   
   @Override
   public void configure(MutableConfig config) {
-    ResolverConf resolver = config.getOrUpdate(name(), ResolverConf.class);
-    ConventionFacade convention = config.getOrThrow("convention", ConventionFacade.class);
+    var resolverConf = config.getOrUpdate(name(), ResolverConf.class);
+    var convention = config.getOrThrow("convention", ConventionFacade.class);
     
     // inputs
-    derive(resolver, ResolverConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
-    derive(resolver, ResolverConf::moduleTestPath, convention, ConventionFacade::javaModuleTestPath);
+    derive(resolverConf, ResolverConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
+    derive(resolverConf, ResolverConf::moduleTestPath, convention, ConventionFacade::javaModuleTestPath);
     
     // outputs
-    derive(resolver, ResolverConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
-    derive(resolver, ResolverConf::mavenLocalRepositoryPath, convention, ConventionFacade::javaMavenLocalRepositoryPath);
+    derive(resolverConf, ResolverConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
+    derive(resolverConf, ResolverConf::mavenLocalRepositoryPath, convention, ConventionFacade::javaMavenLocalRepositoryPath);
   }
   
   @Override
   public void watch(Config config, WatcherRegistry registry) {
-    ResolverConf resolver = config.getOrThrow(name(), ResolverConf.class);
-    resolver.moduleSourcePath().forEach(registry::watch);
-    resolver.moduleTestPath().forEach(registry::watch);
+    var resolverConf = config.getOrThrow(name(), ResolverConf.class);
+    resolverConf.moduleSourcePath().forEach(registry::watch);
+    resolverConf.moduleTestPath().forEach(registry::watch);
   }
   
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
@@ -73,10 +70,10 @@ public class ResolverPlugin implements Plugin {
   
   
   private static boolean resolveModuleDependencies(ModuleFinder moduleFinder, ModuleFinder dependencyFinder, LinkedHashSet<String> unresolvedModules) {
-    List<String> rootSourceNames = moduleFinder.findAll().stream()
+    var rootSourceNames = moduleFinder.findAll().stream()
             .map(ref -> ref.descriptor().name())
             .collect(Collectors.toList());
-    ModuleFinder allFinder = ModuleFinder.compose(moduleFinder, dependencyFinder, ModuleHelper.systemModulesFinder());
+    var allFinder = ModuleFinder.compose(moduleFinder, dependencyFinder, ModuleHelper.systemModulesFinder());
     
     return ModuleHelper.resolveOnlyRequires(allFinder, rootSourceNames,
         (moduleName, __) -> unresolvedModules.add(moduleName));
@@ -84,17 +81,17 @@ public class ResolverPlugin implements Plugin {
   
   @Override
   public int execute(Config config) throws IOException {
-    Log log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
+    var log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
     log.debug(config, conf -> "config " + config);
     
-    ResolverConf resolver = config.getOrThrow(name(), ResolverConf.class);
+    var resolverConf = config.getOrThrow(name(), ResolverConf.class);
     
     // create finder for dependencies (or module path if specified)
-    Optional<List<Path>> modulePath = modulePathOrDependencyPath(resolver.modulePath(),
-        resolver.moduleDependencyPath(), List.of());
+    var modulePathOpt = modulePathOrDependencyPath(resolverConf.modulePath(),
+        resolverConf.moduleDependencyPath(), List.of());
     
-    ModuleFinder dependencyFinder = ModuleFinder.compose(
-        modulePath
+    var dependencyFinder = ModuleFinder.compose(
+        modulePathOpt
             .stream()
             .flatMap(List::stream)
             .map(ModuleFinder::of)
@@ -102,16 +99,16 @@ public class ResolverPlugin implements Plugin {
     
     
     // find unresolved modules in dependencies (for source and test)
-    LinkedHashSet<String> unresolvedModules = new LinkedHashSet<>();
+    var unresolvedModules = new LinkedHashSet<String>();
     
     // source module names
-    ModuleFinder moduleSourceFinder = ModuleHelper.sourceModuleFinders(resolver.moduleSourcePath());
-    boolean sourceResolved = resolveModuleDependencies(moduleSourceFinder, dependencyFinder, unresolvedModules);
+    var moduleSourceFinder = ModuleHelper.sourceModuleFinders(resolverConf.moduleSourcePath());
+    var sourceResolved = resolveModuleDependencies(moduleSourceFinder, dependencyFinder, unresolvedModules);
     
     // test module names
-    List<Path> moduleTestPath = FileHelper.pathFromFilesThatExist(resolver.moduleTestPath());
+    var moduleTestPath = FileHelper.pathFromFilesThatExist(resolverConf.moduleTestPath());
     if (!moduleTestPath.isEmpty()) {
-      ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(resolver.moduleTestPath());
+      ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(resolverConf.moduleTestPath());
       sourceResolved &= resolveModuleDependencies(moduleTestFinder, dependencyFinder, unresolvedModules);
     }
     
@@ -122,37 +119,37 @@ public class ResolverPlugin implements Plugin {
     
     log.debug(unresolvedModules, unresolved -> "unresolvedModules " + unresolved);
     
-    List<URI> remoteRepositories = resolver.remoteRepositories().orElse(List.of());
+    var remoteRepositories = resolverConf.remoteRepositories().orElse(List.of());
     log.debug(remoteRepositories, remotes -> "remoteRepositories " + remotes);
     
-    Aether aether = Aether.create(resolver.mavenLocalRepositoryPath(), remoteRepositories);
+    var aether = Aether.create(resolverConf.mavenLocalRepositoryPath(), remoteRepositories);
     
     // mapping between module name and Maven artifact name
-    List<String> dependencies = resolver.dependencies();
-    LinkedHashMap<String, ArtifactQuery> moduleToArtifactMap = new LinkedHashMap<>();
-    LinkedHashMap<String, String> artifactKeyToModuleMap = new LinkedHashMap<>();
-    for(String dependency: dependencies) {
-      int index = dependency.indexOf('=');
+    var dependencies = resolverConf.dependencies();
+    var moduleToArtifactMap = new LinkedHashMap<String, ArtifactQuery>();
+    var artifactKeyToModuleMap = new LinkedHashMap<String, String>();
+    for(var dependency: dependencies) {
+      var index = dependency.indexOf('=');
       if (index == -1) {
         throw new IllegalStateException("invalid dependency format " + dependency);
       }
-      String module = dependency.substring(0, index);
-      String artifactCoords = dependency.substring(index + 1);
+      var module = dependency.substring(0, index);
+      var artifactCoords = dependency.substring(index + 1);
       
-      ArtifactQuery artifactQuery = aether.createArtifactQuery(artifactCoords);
+      var artifactQuery = aether.createArtifactQuery(artifactCoords);
       moduleToArtifactMap.put(module, artifactQuery);
       artifactKeyToModuleMap.put(artifactQuery.getArtifactKey(), module);
     }
     
     verifyDeclaration("modules", unresolvedModules, moduleToArtifactMap.keySet());
     
-    List<ArtifactQuery> unresolvedRootArtifacts = unresolvedModules.stream()
+    var unresolvedRootArtifacts = unresolvedModules.stream()
         .map(moduleToArtifactMap::get)
         .collect(Collectors.toList());
     log.debug(unresolvedRootArtifacts, unresolvedRoots -> "unresolved root artifacts " + unresolvedRoots);
     
-    LinkedHashSet<ArtifactInfo> unresolvedArtifacts = new LinkedHashSet<>();
-    for(ArtifactQuery unresolvedRootArtifact: unresolvedRootArtifacts) {
+    var unresolvedArtifacts = new LinkedHashSet<ArtifactInfo>();
+    for(var unresolvedRootArtifact: unresolvedRootArtifacts) {
       unresolvedArtifacts.addAll(aether.dependencies(unresolvedRootArtifact));  
     }
     log.debug(unresolvedArtifacts, unresolvedArtifactList -> "unresolved artifacts " + unresolvedArtifactList);
@@ -161,17 +158,16 @@ public class ResolverPlugin implements Plugin {
         unresolvedArtifacts.stream().map(ArtifactInfo::getArtifactKey).collect(Collectors.toSet()),
         artifactKeyToModuleMap.keySet());
     
-    List<ArtifactDescriptor> resolvedArtifacts =
-        aether.download(new ArrayList<>(unresolvedArtifacts));
+    var resolvedArtifacts = aether.download(new ArrayList<>(unresolvedArtifacts));
     
     log.info(resolvedArtifacts, resolvedArtifactList -> "resolved artifacts " + resolvedArtifactList);
     
-    Path moduleDependencyPath = resolver.moduleDependencyPath().get(0);
+    var moduleDependencyPath = resolverConf.moduleDependencyPath().get(0);
     Files.createDirectories(moduleDependencyPath);
     
-    ArrayList<ArtifactDescriptor> undeclaredArtifactIds = new ArrayList<>();
-    for(ArtifactDescriptor resolvedArtifact: resolvedArtifacts) {
-      String moduleName = artifactKeyToModuleMap.get(resolvedArtifact.getArtifactKey().toString());
+    var undeclaredArtifactIds = new ArrayList<ArtifactDescriptor>();
+    for(var resolvedArtifact: resolvedArtifacts) {
+      var moduleName = artifactKeyToModuleMap.get(resolvedArtifact.getArtifactKey().toString());
       if (moduleName == null) {
         undeclaredArtifactIds.add(resolvedArtifact);
       } else {
@@ -188,8 +184,8 @@ public class ResolverPlugin implements Plugin {
   }
 
   private static void verifyDeclaration(String kind, Set<String> unresolvedModules, Set<String> dependencySet) {
-    ArrayList<String> undeclaredModules = new ArrayList<>();
-    for(String module: unresolvedModules) {
+    var undeclaredModules = new ArrayList<String>();
+    for(var module: unresolvedModules) {
       if (!dependencySet.contains(module)) {
         undeclaredModules.add(module);
       }
@@ -200,17 +196,17 @@ public class ResolverPlugin implements Plugin {
   }
   
   private static void checkArtifactModuleName(Log log, String moduleName, ArtifactDescriptor resolvedArtifact) {
-    ModuleFinder finder = ModuleFinder.of(resolvedArtifact.getPath());
-    Optional<ModuleReference> reference = finder.findAll().stream().findFirst();
-    if (!reference.isPresent()) {
+    var finder = ModuleFinder.of(resolvedArtifact.getPath());
+    var referenceOpt = finder.findAll().stream().findFirst();
+    if (!referenceOpt.isPresent()) {
       log.info(null, __ -> "WARNING! artifact " + resolvedArtifact + " is not a valide jar");
       return;
     }
-    ModuleDescriptor descriptor = reference.get().descriptor();
+    var descriptor = referenceOpt.get().descriptor();
     if (descriptor.isAutomatic()) {
       return;
     }
-    String artifactModuleName = descriptor.name();
+    var artifactModuleName = descriptor.name();
     if (!artifactModuleName.equals(moduleName)) {
       log.info(null, __ -> "WARNING! artifact module name " + artifactModuleName + " (" + resolvedArtifact + ") declared in the module-info is different from declared module name " + moduleName);
     }
