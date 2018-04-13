@@ -1,11 +1,14 @@
 package com.github.forax.pro.helper;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.Assertions;
+
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -14,7 +17,7 @@ import org.junit.jupiter.api.TestFactory;
 class PlatformTests {
   @Test
   void currentPlatformIsNotNull() {
-    Assertions.assertNotNull(Platform.current());
+    assertNotNull(Platform.current());
   }
 
   @TestFactory
@@ -23,17 +26,17 @@ class PlatformTests {
         Arrays.asList(Platform.values()).iterator(),
         Object::toString,
         platform -> {
-          Assertions.assertNotNull(platform.javaExecutableName());
-          Assertions.assertFalse(platform.javaExecutableName().isEmpty());
+          assertNotNull(platform.javaExecutableName());
+          assertFalse(platform.javaExecutableName().isEmpty());
         }
     );
   }
 
   @Test
   void javaExecutableNamePointsToExecutableFile() {
-    String name = Platform.current().javaExecutableName();
-    Path path = Paths.get(System.getProperty("java.home")).resolve("bin").resolve(name);
-    Assertions.assertTrue(Files.isExecutable(path), "executable? " + path);
+    var name = Platform.current().javaExecutableName();
+    var path = Paths.get(System.getProperty("java.home")).resolve("bin").resolve(name);
+    assertTrue(Files.isExecutable(path), "executable? " + path);
   }
 
 }

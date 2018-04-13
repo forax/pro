@@ -33,7 +33,7 @@ class StableListTests {
 
   @Test
   public void toStableList() {
-    List<Integer> list = List.of(1, 5, 8);
+    var list = List.of(1, 5, 8);
     assertAll(
       () -> assertEquals(StableList.of(1, 5, 8), list.stream().collect(StableList.toStableList())),
       () -> assertThrows(NullPointerException.class,
@@ -43,9 +43,9 @@ class StableListTests {
 
   @Test
   public void testToString() {
-    StableList<String> list1 = StableList.of("foo", "bar");
-    StableList<String> list2 = list1.append("baz");
-    StableList<String> list3 = list1.append("bang");
+    var list1 = StableList.of("foo", "bar");
+    var list2 = list1.append("baz");
+    var list3 = list1.append("bang");
     assertAll(
       () -> assertEquals("[foo, bar]", list1.toString()),
       () -> assertEquals("[foo, bar, baz]", list2.toString()),
@@ -55,7 +55,7 @@ class StableListTests {
 
   @Test
   public void append() {
-    StableList<String> list = StableList.<String>of().append("foo").append("bar");
+    var list = StableList.<String>of().append("foo").append("bar");
     assertAll(
       () -> assertEquals(List.of("foo", "bar"), list),
       () -> assertEquals(List.of("foo", "bar", "baz"), list.append("baz")),
@@ -66,7 +66,7 @@ class StableListTests {
 
   @Test
   public void appendAllVarargs() {
-    StableList<String> list = StableList.of("bob");
+    var list = StableList.of("bob");
     assertAll(
       () -> assertEquals(List.of(), StableList.of().appendAll()),
       () -> assertEquals(List.of("zoo"), StableList.of().appendAll("zoo")),
@@ -80,7 +80,7 @@ class StableListTests {
 
   @Test
   public void appendAllCollection() {
-    StableList<String> list = StableList.of("bob");
+    var list = StableList.of("bob");
     assertAll(
       () -> assertEquals(List.of(), StableList.of().appendAll(List.of())),
       () -> assertEquals(List.of("zoo"), StableList.of().appendAll(List.of("zoo"))),
