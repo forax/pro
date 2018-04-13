@@ -15,7 +15,7 @@ class MetadataParser {
     
     static Metadata parse(String data) {
       String module, mainClass;
-      int slashIndex = data.lastIndexOf('/');
+      var slashIndex = data.lastIndexOf('/');
       if (slashIndex != -1) {
         mainClass = data.substring(slashIndex + 1);
         module = data.substring(0, slashIndex);
@@ -24,7 +24,7 @@ class MetadataParser {
         mainClass = null;
       }
       String moduleName, version;
-      int dashIndex = module.lastIndexOf('@');
+      var dashIndex = module.lastIndexOf('@');
       if (dashIndex != -1) {
         version = module.substring(dashIndex + 1);
         moduleName = module.substring(0, dashIndex);
