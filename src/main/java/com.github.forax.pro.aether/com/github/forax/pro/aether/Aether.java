@@ -30,6 +30,7 @@ import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
+import org.eclipse.aether.util.artifact.JavaScopes;
 
 import com.github.forax.pro.helper.util.StableList;
 
@@ -105,11 +106,18 @@ public class Aether {
 
       @Override
       public boolean visitEnter(DependencyNode node) {
-        if (node.getDependency().isOptional()) {  
-          // skip optional dependency    !! TODO revisit
+        var dependency = node.getDependency();
+        var scope = dependency.getScope();
+        //System.out.println("dependency node: " + dependency.getArtifact() + " optional " + dependency.isOptional() + " scope " + scope);
+        if (dependency.isOptional()) {  
+          // skip optional dependency
           return false;
         }
-        Artifact artifact = node.getArtifact();
+        if (!scope.isEmpty() && !scope.equals(JavaScopes.COMPILE) && !scope.equals(JavaScopes.RUNTIME)) {
+          // skip test, provided and system dependency
+          return false;
+        }
+        var artifact = node.getArtifact();
         dependencies.add(new ArtifactInfo(artifact));
         return true;
       }
