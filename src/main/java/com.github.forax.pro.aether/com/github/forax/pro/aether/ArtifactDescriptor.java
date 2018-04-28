@@ -20,7 +20,7 @@ public class ArtifactDescriptor {
   public String getVersion() {
     return artifact.getVersion();
   }
-  public Object getArtifactKey() {
+  public String getArtifactKey() {
     return artifact.getGroupId() + ':' + artifact.getArtifactId();
   }
   public Path getPath() {
