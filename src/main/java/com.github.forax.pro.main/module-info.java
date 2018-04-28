@@ -2,6 +2,7 @@ module com.github.forax.pro.main {
   requires java.compiler;
   requires org.json;
   requires com.github.forax.pro;
+  requires com.github.forax.pro.aether;
   requires com.github.forax.pro.builder;
   requires com.github.forax.pro.helper;
   requires com.github.forax.pro.daemon;

@@ -68,7 +68,8 @@ public class Main {
     SHELL(__ -> shell()),
     BUILD(Main::build),
     DAEMON(Main::daemon),
-    SCAFFOLD(__ -> scaffold()), 
+    RESOLVE(Main::resolve),
+    SCAFFOLD(__ -> scaffold()),
     HELP(__ -> help()),
     VERSION(__ -> version())
     ;
@@ -240,20 +241,32 @@ public class Main {
     main(args);
   }
   
+  static void resolve(String[] args) {
+    if (args.length == 0) {
+      throw new InputException("no Maven id specified");
+    }
+    try {
+      MavenArtifactResolver.resolve(args[0]);
+    } catch (IOException e) {
+      throw new InputException(e);
+    }
+  }
+  
   static void help() {
     System.err.println(
-        "usage: pro [subcommand] args                                                   \n" +
-        "                                                                               \n" +
-        "  subcommands                                                                  \n" +
-        "    build [buildfile]  execute the build file                                  \n" +
-        "                       use build.json or build.pro if no buildfile is specified\n" +
-        "    daemon subcommand  start the subcommand in daemon mode                     \n" +
-        "    shell              start the interactive shell                             \n" +
-        "    scaffold           create a default build.pro                              \n" +
-        "    version            print the current version                               \n" +
-        "    help               this help                                               \n" +
-        "                                                                               \n" +
-        "  if no subcommand is specified, 'build' is used                               \n"
+        "usage: pro [subcommand] args                                                       \n" +
+        "                                                                                   \n" +
+        "  subcommands                                                                      \n" +
+        "    build [buildfile]      execute the build file                                  \n" +
+        "                           use build.json or build.pro if no buildfile is specified\n" +
+        "    daemon subcommand      start the subcommand in daemon mode                     \n" +
+        "    resolve maven:id:[0,]  display Java module name and its dependencies           \n" +
+        "    shell                  start the interactive shell                             \n" +
+        "    scaffold               create a default build.pro                              \n" +
+        "    version                print the current version                               \n" +
+        "    help                   this help                                               \n" +
+        "                                                                                   \n" +
+        "  if no subcommand is specified, 'build' is used                                   \n"
     );
   }
   
