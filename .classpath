@@ -99,17 +99,17 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/junit-jupiter-api-5.2.0-RC1.jar">
+	<classpathentry kind="lib" path="deps/junit-jupiter-api-5.2.0.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/junit-platform-commons-1.2.0-RC1.jar">
+	<classpathentry kind="lib" path="deps/junit-platform-commons-1.2.0.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/org.opentest4j.jar">
+	<classpathentry kind="lib" path="deps/opentest4j-1.1.0.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>

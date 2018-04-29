@@ -110,9 +110,9 @@ public class Bootstrap {
 
     compileAndPackagePlugin("runner", list("resolver", "modulefixer", "compiler", "packager"), () -> { /* empty */});
     compileAndPackagePlugin("tester", list("resolver", "modulefixer", "compiler", "packager"), () -> {
-      var junitPlatformVersion = "1.2.0-RC1";
-      var junitJupiterVersion = "5.2.0-RC1";
-      var opentest4jVersion = "1.0.0";
+      var junitPlatformVersion = "1.2.0";
+      var junitJupiterVersion = "5.2.0";
+      var opentest4jVersion = "1.1.0";
       var apiGuardianVersion = "1.0.0";
       set("resolver.dependencies", list(
           // "API"
