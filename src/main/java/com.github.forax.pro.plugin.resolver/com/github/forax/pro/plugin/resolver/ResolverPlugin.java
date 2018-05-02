@@ -6,12 +6,17 @@ import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
 
 import com.github.forax.pro.aether.Aether;
@@ -126,27 +131,34 @@ public class ResolverPlugin implements Plugin {
     
     // mapping between module name and Maven artifact name
     var dependencies = resolverConf.dependencies();
-    var moduleToArtifactMap = new LinkedHashMap<String, ArtifactQuery>();
+    var moduleToArtifactMap = new LinkedHashMap<String, List<ArtifactQuery>>();
     var artifactKeyToModuleMap = new LinkedHashMap<String, String>();
     for(var dependency: dependencies) {
       var index = dependency.indexOf('=');
       if (index == -1) {
-        throw new IllegalStateException("invalid dependency format " + dependency);
+        throw new IllegalStateException("invalid dependency format " + dependency + ", = not found");
       }
       var module = dependency.substring(0, index);
-      var artifactCoords = dependency.substring(index + 1);
+      var artifactNames = dependency.substring(index + 1);
       
-      var artifactQuery = aether.createArtifactQuery(artifactCoords);
-      moduleToArtifactMap.put(module, artifactQuery);
-      artifactKeyToModuleMap.put(artifactQuery.getArtifactKey(), module);
+      var artifactsCoords = artifactNames.split(",");
+      if (artifactsCoords.length == 0) {
+        throw new IllegalStateException("invalid dependency format " + dependency + ", empty Maven coords");
+      }
+      
+      for(var artifactCoords: artifactsCoords) {
+        var artifactQuery = aether.createArtifactQuery(artifactCoords);
+        moduleToArtifactMap.computeIfAbsent(module, __ -> new ArrayList<>()).add(artifactQuery);
+        artifactKeyToModuleMap.put(artifactQuery.getArtifactKey(), module);
+      }
     }
     
     verifyDeclaration("modules", unresolvedModules, moduleToArtifactMap.keySet());
     
     var unresolvedRootArtifacts = unresolvedModules.stream()
-        .map(moduleToArtifactMap::get)
+        .flatMap(unresolveModule -> moduleToArtifactMap.get(unresolveModule).stream())
         .collect(Collectors.toList());
-    log.debug(unresolvedRootArtifacts, unresolvedRoots -> "unresolved root artifacts " + unresolvedRoots);
+    log.debug(unresolvedRootArtifacts, unresolvedRootArtifactList -> "unresolved root artifacts " + unresolvedRootArtifactList);
     
     var unresolvedArtifacts = new LinkedHashSet<ArtifactInfo>();
     for(var unresolvedRootArtifact: unresolvedRootArtifacts) {
@@ -162,22 +174,34 @@ public class ResolverPlugin implements Plugin {
     
     log.info(resolvedArtifacts, resolvedArtifactList -> "resolved artifacts " + resolvedArtifactList);
     
+    var resolvedModuleMap = resolvedArtifacts.stream()
+        .peek(resolvedArtifact -> log.info(resolvedArtifact, _resolvedArtifact -> _resolvedArtifact + " downloaded from repositories"))
+        .collect(Collectors.groupingBy(resolvedArtifact -> artifactKeyToModuleMap.get(resolvedArtifact.getArtifactKey().toString())));
+    
+    var undeclaredArtifactIds = resolvedModuleMap.get(null);
+    if (undeclaredArtifactIds != null) {  // resolved artifacts with no module name
+      throw new IllegalStateException("no dependency declared for Maven artifacts " + undeclaredArtifactIds);
+    }
+    
+    // copy the jars in the dependency folder, merge them if there is more than one jar for a module
     var moduleDependencyPath = resolverConf.moduleDependencyPath().get(0);
     Files.createDirectories(moduleDependencyPath);
     
-    var undeclaredArtifactIds = new ArrayList<ArtifactDescriptor>();
-    for(var resolvedArtifact: resolvedArtifacts) {
-      var moduleName = artifactKeyToModuleMap.get(resolvedArtifact.getArtifactKey().toString());
-      if (moduleName == null) {
-        undeclaredArtifactIds.add(resolvedArtifact);
-      } else {
-        log.info(null, __ -> moduleName + " (" + resolvedArtifact + ") downloaded from repositories");
+    for(var entry: resolvedModuleMap.entrySet()) {
+      var moduleName = entry.getKey();
+      var resolvedArtifactList = entry.getValue();
+      
+      var jarPath = moduleDependencyPath.resolve(moduleName + ".jar");
+      switch(resolvedArtifactList.size()) {
+      case 1: {
+        var resolvedArtifact = resolvedArtifactList.get(0);
         checkArtifactModuleName(log, moduleName, resolvedArtifact);
-        Files.copy(resolvedArtifact.getPath(), moduleDependencyPath.resolve(moduleName + ".jar"));
+        Files.copy(resolvedArtifact.getPath(), jarPath);
+        break;
       }
-    }
-    if (!undeclaredArtifactIds.isEmpty()) {
-      throw new IllegalStateException("no dependency declared for Maven artifacts " + undeclaredArtifactIds);
+      default: 
+        mergeInOneJar(resolvedArtifactList.stream().map(ArtifactDescriptor::getPath).collect(Collectors.toList()), jarPath, log);
+      }
     }
     
     return 0;
@@ -209,6 +233,34 @@ public class ResolverPlugin implements Plugin {
     var artifactModuleName = descriptor.name();
     if (!artifactModuleName.equals(moduleName)) {
       log.info(null, __ -> "WARNING! artifact module name " + artifactModuleName + " (" + resolvedArtifact + ") declared in the module-info is different from declared module name " + moduleName);
+    }
+  }
+  
+  private static void mergeInOneJar(List<Path> artifactJars, Path jarPath, Log log) throws IOException {
+    var duplicateEntryNames = new HashSet<String>();
+    
+    try(var fileOutput = Files.newOutputStream(jarPath, StandardOpenOption.CREATE_NEW);
+        var jarOutput = new JarOutputStream(fileOutput)) { 
+      for(var artifactJar: artifactJars) {
+        try(var jarFile = new JarFile(artifactJar.toFile())) {
+          for(var entry: (Iterable<JarEntry>)jarFile.entries()::asIterator) {
+            var name = entry.getName();
+            if (name.endsWith("module-info.class")) {
+              throw new IOException("invalid jar " + artifactJar + ", only non modular jar can be merged");
+            }
+            if (duplicateEntryNames.add(name) == false) { // duplicate file
+              if (!entry.isDirectory()) {
+                log.info(name, _name -> jarPath + ": duplicate entry " + name + " skipped");
+              }
+              continue;
+            }
+            
+            jarOutput.putNextEntry(new JarEntry(entry));
+            jarFile.getInputStream(entry).transferTo(jarOutput);
+            jarOutput.closeEntry();
+          }
+        }
+      }
     }
   }
 }
