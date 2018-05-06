@@ -11,6 +11,7 @@ import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.module.ModuleDescriptor.Requires;
+import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
@@ -109,13 +110,16 @@ public class ModuleFixerPlugin implements Plugin {
       final Set<String> exports;
       final Set<String> uses;
       final Map<String, Set<String>> provides;
+      final Optional<Version> versionOpt;
       final Map<String, RequireModifier> requireModuleMap;
       
-      Info(Set<String> requirePackages, Set<String> exports, Set<String> uses, Map<String, Set<String>> provides, Map<String, RequireModifier> requireModuleMap) {
+      Info(Set<String> requirePackages, Set<String> exports, Set<String> uses, Map<String, Set<String>> provides, Optional<Version> versionOpt,
+           Map<String, RequireModifier> requireModuleMap) {
         this.requirePackages = requirePackages;
         this.exports = exports;
         this.uses = uses;
         this.provides = provides;
+        this.versionOpt = versionOpt;
         this.requireModuleMap = requireModuleMap;
       }
     }
@@ -144,11 +148,13 @@ public class ModuleFixerPlugin implements Plugin {
         exports = new HashSet<>();
         var uses = Optional.ofNullable(additionalUses.get(name)).orElseGet(HashSet::new);
         var provides = new HashMap<String, Set<String>>();
-        findRequiresExportsUsesAndProvides(moduleRef, requires, exports, uses, provides);
+        var propertyMap = new HashMap<String, Object>();
+        findModuleData(moduleRef, requires, exports, uses, provides, propertyMap);
+        var versionOpt = Optional.ofNullable((Version)propertyMap.get("Implementation-Version"));
         
         var additionalRequireModuleMap = Optional.ofNullable(additionalRequireMap.get(name)).orElseGet(HashMap::new);
         moduleInfoMap.put(moduleRef,
-            new Info(requires, exports, uses, provides, additionalRequireModuleMap));
+            new Info(requires, exports, uses, provides, versionOpt, additionalRequireModuleMap));
       } else {
         exports = descriptor.exports().stream().map(export -> export.source().replace('.', '/')).collect(Collectors.toCollection(HashSet::new));
       }
@@ -209,7 +215,7 @@ public class ModuleFixerPlugin implements Plugin {
     for(Map.Entry<ModuleReference, Info> entry: moduleInfoMap.entrySet()) {
       var moduleRef = entry.getKey();
       var info = entry.getValue();
-      var generatedModuleInfoPath = generateModuleInfo(moduleRef, info.requireModuleMap, info.exports, info.uses, info.provides, moduleDependencyFixerPath);
+      var generatedModuleInfoPath = generateModuleInfo(moduleRef, info.requireModuleMap, info.exports, info.uses, info.provides, info.versionOpt, moduleDependencyFixerPath);
       
       if (errorCode == 0) { // stop to patch at the first error, but generate all module-info.class
         errorCode = patchModularJar(jarTool, moduleRef, generatedModuleInfoPath);
@@ -231,6 +237,7 @@ public class ModuleFixerPlugin implements Plugin {
                                          Map<String, RequireModifier> requires,
                                          Set<String> exports, Set<String> uses,
                                          Map<String, Set<String>> provides,
+                                         Optional<Version> versionOpt,
                                          Path moduleDependencyFixerPath) throws IOException {
     var moduleName = ref.descriptor().name();
     
@@ -249,14 +256,16 @@ public class ModuleFixerPlugin implements Plugin {
     exports.forEach(export -> builder.exports(export.replace('/', '.')));
     uses.forEach(use -> builder.uses(use.replace('/', '.')));
     provides.forEach((service, providers) -> builder.provides(service, new ArrayList<>(providers)));
+    versionOpt.ifPresent(version -> builder.version(version));
     
     var generatedModuleInfoPath = modulePatchPath.resolve("module-info.class");
     Files.write(generatedModuleInfoPath, ModuleHelper.moduleDescriptorToBinary(builder.build()));
     return generatedModuleInfoPath;
   }
 
-  private static void findRequiresExportsUsesAndProvides(ModuleReference ref, Set<String> requirePackages,
-                                                         Set<String> exports, Set<String> uses, Map<String, Set<String>> provides) throws IOException {
+  private static void findModuleData(ModuleReference ref, Set<String> requirePackages,
+                                     Set<String> exports, Set<String> uses, Map<String, Set<String>> provides,
+                                     Map<String, Object> propertyMap) throws IOException {
     try(var reader = ref.open()) {
       try(var resources = reader.list()) {
         resources.forEach(resource -> {
@@ -268,8 +277,11 @@ public class ModuleFixerPlugin implements Plugin {
               if (resource.length() == "META-INF/services/".length()) {
                 return;
               }
-              
               scanServiceFile(resource, reader, provides);
+            } else {
+              if (resource.equals("META-INF/MANIFEST.MF")) {
+                scanManifest(resource, reader, propertyMap);
+              }
             }
           }
         }); 
@@ -304,6 +316,42 @@ public class ModuleFixerPlugin implements Plugin {
     }
     serviceName = serviceName.trim();
     return serviceName;
+  }
+  
+  // see Jar Manifest for the full documentation
+  private static void scanManifest(String resource, ModuleReader reader, Map<String, Object> propertyMap) {
+    try(var input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource));
+        var isr = new InputStreamReader(input, StandardCharsets.UTF_8);
+        var lineReader = new BufferedReader(isr)) {
+
+      lineReader.lines()
+        .flatMap(line -> {
+          int index = line.indexOf(':');
+          if (index == -1) {
+            return Stream.empty();
+          }
+          String key = line.substring(0, index);
+          String value = line.substring(index + 1).trim();
+          return extractManifestValue(key, value).map(object -> Map.entry(key, object)).stream();
+        })
+        .forEach(entry -> propertyMap.put(entry.getKey(), entry.getValue()));
+
+    } catch(IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+  
+  private static Optional<Object> extractManifestValue(String key, String value) {
+    switch(key) {
+    case "Implementation-Version":
+      try {
+        return Optional.of(Version.parse(value));
+      } catch(@SuppressWarnings("unused") IllegalArgumentException e) { // not a valid version
+        return Optional.empty();
+      }
+    default:
+      return Optional.empty();
+    }
   }
   
   private static void scanJavaClass(String resource, ModuleReader reader, Set<String> requirePackages, Set<String> exports, Set<String> uses) {
@@ -380,14 +428,14 @@ public class ModuleFixerPlugin implements Plugin {
                   //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>, java.lang.ClassLoader);
                   //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>);
                   //   <S> java.util.ServiceLoader<S> loadInstalled(java.lang.Class<S>);
-                  //   <S> java.util.ServiceLoader<S> load(java.lang.reflect.Layer, java.lang.Class<S>);
+                  //   <S> java.util.ServiceLoader<S> load(java.lang.ModuleLayer, java.lang.Class<S>);
 
                   var index = instructions.indexOf(node);
                   var frame = frames[index];
                   ConstValue value;
                   switch(node.desc) {
                   case "(Ljava/lang/Class;)Ljava/util/ServiceLoader;":
-                  case "(Ljava/lang/reflect/Layer;Ljava/lang/Class;)Ljava/util/ServiceLoader;": //FIXME when Layer will be java.lang.Layer
+                  case "(Ljava/lang/ModuleLayer;Ljava/lang/Class;)Ljava/util/ServiceLoader;":
                     // extract the top of the stack
                     value = frame.getStack(frame.getStackSize() - 1);
                     break;
