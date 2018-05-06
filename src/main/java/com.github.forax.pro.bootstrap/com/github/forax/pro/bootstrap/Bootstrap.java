@@ -37,7 +37,6 @@ public class Bootstrap {
     set("pro.loglevel", "verbose");
     set("pro.exitOnError", true);
 
-    // set("compiler.lint", "exports,module");
     set("compiler.lint", "all,-varargs,-overloads");
     set("compiler.release", jdkVersion());
 
@@ -70,6 +69,9 @@ public class Bootstrap {
         "com.github.forax.pro.daemon.imp@" + version
         ));
 
+    // ask the resolver to find new versions of the dependencies
+    set("resolver.checkForUpdate", true);
+    
     //set("modulefixer.force", true);
     set("modulefixer.additionalRequires", list(
         "maven.aether.provider=commons.lang",
