@@ -16,6 +16,7 @@ import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -33,6 +34,7 @@ import com.github.forax.pro.api.helper.OptionAction;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
+import com.github.forax.pro.helper.ModuleHelper.ResolverListener;
 import com.github.forax.pro.helper.util.StableList;
 
 public class CompilerPlugin implements Plugin {
@@ -183,8 +185,15 @@ public class CompilerPlugin implements Plugin {
     var resolved = ModuleHelper.resolveOnlyRequires(
         ModuleFinder.compose(moduleFinder, dependencyFinder, systemFinder),
         rootSourceNames,
-        (moduleName, dependencyChain) -> {
-          log.error(null, __ -> pass + " can not resolve " + moduleName + " from " + dependencyChain);
+        new ResolverListener() {
+          @Override
+          public void module(String moduleName) {
+            // empty
+          }
+          @Override
+          public void dependencyNotFound(String moduleName, String dependencyChain) {
+            log.error(null, __ -> pass + " can not resolve " + moduleName + " from " + dependencyChain);
+          }
         });
     if (!resolved) {
       return 1;  //FIXME

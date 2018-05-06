@@ -265,11 +265,12 @@ public class ModuleHelper {
     };
   }
 
-  public interface ResolverFailureListener {
+  public interface ResolverListener {
+    public void module(String moduleName);
     public void dependencyNotFound(String moduleName, String dependencyChain);
   }
 
-  public static boolean resolveOnlyRequires(ModuleFinder finder, List<String> rootNames, ResolverFailureListener listener) {
+  public static boolean resolveOnlyRequires(ModuleFinder finder, List<String> rootNames, ResolverListener listener) {
     class Work {
       final Supplier<String> chain;
       final String moduleName;
@@ -293,6 +294,8 @@ public class ModuleHelper {
       var name = work.moduleName;
       var chain = work.chain;
       moduleFounds.add(name);
+      listener.module(name);
+      
       var refOpt = finder.find(name);
       if (refOpt.isPresent()) {
         refOpt.get().descriptor().requires()

@@ -14,6 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -31,6 +32,7 @@ import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
+import com.github.forax.pro.helper.ModuleHelper.ResolverListener;
 import com.github.forax.pro.helper.util.StableList;
 
 public class ResolverPlugin implements Plugin {
@@ -41,7 +43,8 @@ public class ResolverPlugin implements Plugin {
 
   @Override
   public void init(MutableConfig config) {
-    config.getOrUpdate(name(), ResolverConf.class);
+    var resolverConf = config.getOrUpdate(name(), ResolverConf.class);
+    resolverConf.checkForUpdate(false);
   }
   
   @Override
@@ -74,14 +77,22 @@ public class ResolverPlugin implements Plugin {
   }
   
   
-  private static boolean resolveModuleDependencies(ModuleFinder moduleFinder, ModuleFinder dependencyFinder, LinkedHashSet<String> unresolvedModules) {
+  private static boolean resolveModuleDependencies(ModuleFinder moduleFinder, ModuleFinder dependencyFinder, LinkedHashSet<String> foundModules, LinkedHashSet<String> unresolvedModules) {
     var rootSourceNames = moduleFinder.findAll().stream()
-            .map(ref -> ref.descriptor().name())
-            .collect(Collectors.toList());
+        .map(ref -> ref.descriptor().name())
+        .collect(Collectors.toList());
     var allFinder = ModuleFinder.compose(moduleFinder, dependencyFinder, ModuleHelper.systemModulesFinder());
-    
     return ModuleHelper.resolveOnlyRequires(allFinder, rootSourceNames,
-        (moduleName, __) -> unresolvedModules.add(moduleName));
+        new ResolverListener() {
+          @Override
+          public void module(String moduleName) {
+            foundModules.add(moduleName);
+          }
+          @Override
+          public void dependencyNotFound(String moduleName, String dependencyChain) {
+            unresolvedModules.add(moduleName);
+          }
+        });
   }
   
   @Override
@@ -103,19 +114,22 @@ public class ResolverPlugin implements Plugin {
             .toArray(ModuleFinder[]::new));
     
     
-    // find unresolved modules in dependencies (for source and test)
+    // find resolved and unresolved modules in dependencies (for source and test)
+    var resolvedModules = new LinkedHashSet<String>();
     var unresolvedModules = new LinkedHashSet<String>();
     
     // source module names
     var moduleSourceFinder = ModuleHelper.sourceModuleFinders(resolverConf.moduleSourcePath());
-    var sourceResolved = resolveModuleDependencies(moduleSourceFinder, dependencyFinder, unresolvedModules);
+    var sourceResolved = resolveModuleDependencies(moduleSourceFinder, dependencyFinder, resolvedModules, unresolvedModules);
     
     // test module names
     var moduleTestPath = FileHelper.pathFromFilesThatExist(resolverConf.moduleTestPath());
     if (!moduleTestPath.isEmpty()) {
       ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(resolverConf.moduleTestPath());
-      sourceResolved &= resolveModuleDependencies(moduleTestFinder, dependencyFinder, unresolvedModules);
+      sourceResolved &= resolveModuleDependencies(moduleTestFinder, dependencyFinder, resolvedModules, unresolvedModules);
     }
+    
+    
     
     // everything is resolved, nothing to do
     if (sourceResolved) {
@@ -129,29 +143,13 @@ public class ResolverPlugin implements Plugin {
     
     var aether = Aether.create(resolverConf.mavenLocalRepositoryPath(), remoteRepositories);
     
-    // mapping between module name and Maven artifact name
-    var dependencies = resolverConf.dependencies();
+    // create mapping between module name and Maven artifact name
     var moduleToArtifactMap = new LinkedHashMap<String, List<ArtifactQuery>>();
     var artifactKeyToModuleMap = new LinkedHashMap<String, String>();
-    for(var dependency: dependencies) {
-      var index = dependency.indexOf('=');
-      if (index == -1) {
-        throw new IllegalStateException("invalid dependency format " + dependency + ", = not found");
-      }
-      var module = dependency.substring(0, index);
-      var artifactNames = dependency.substring(index + 1);
-      
-      var artifactsCoords = artifactNames.split(",");
-      if (artifactsCoords.length == 0) {
-        throw new IllegalStateException("invalid dependency format " + dependency + ", empty Maven coords");
-      }
-      
-      for(var artifactCoords: artifactsCoords) {
-        var artifactQuery = aether.createArtifactQuery(artifactCoords);
-        moduleToArtifactMap.computeIfAbsent(module, __ -> new ArrayList<>()).add(artifactQuery);
-        artifactKeyToModuleMap.put(artifactQuery.getArtifactKey(), module);
-      }
-    }
+    parseResolverDependencies(resolverConf.dependencies(), aether, (module, artifactQuery) -> {
+      moduleToArtifactMap.computeIfAbsent(module, __ -> new ArrayList<>()).add(artifactQuery);
+      artifactKeyToModuleMap.put(artifactQuery.getArtifactKey(), module);
+    });
     
     verifyDeclaration("modules", unresolvedModules, moduleToArtifactMap.keySet());
     
@@ -233,6 +231,27 @@ public class ResolverPlugin implements Plugin {
     var artifactModuleName = descriptor.name();
     if (!artifactModuleName.equals(moduleName)) {
       log.info(null, __ -> "WARNING! artifact module name " + artifactModuleName + " (" + resolvedArtifact + ") declared in the module-info is different from declared module name " + moduleName);
+    }
+  }
+  
+  private static void parseResolverDependencies(List<String> dependencies, Aether aether, BiConsumer<String, ArtifactQuery> listener) {
+    for(var dependency: dependencies) {
+      var index = dependency.indexOf('=');
+      if (index == -1) {
+        throw new IllegalStateException("invalid dependency format " + dependency + ", = not found");
+      }
+      var module = dependency.substring(0, index);
+      var artifactNames = dependency.substring(index + 1);
+      
+      var artifactsCoords = artifactNames.split(",");
+      if (artifactsCoords.length == 0) {
+        throw new IllegalStateException("invalid dependency format " + dependency + ", empty Maven coords");
+      }
+      
+      for(var artifactCoords: artifactsCoords) {
+        var artifactQuery = aether.createArtifactQuery(artifactCoords);
+        listener.accept(module, artifactQuery);
+      }
     }
   }
   

@@ -29,4 +29,7 @@ public interface ResolverConf {
   
   List<Path> moduleDependencyPath();
   void moduleDependencyPath(List<Path> path);
+  
+  boolean checkForUpdate();
+  void checkForUpdate(boolean checkForUpdate);
 }
