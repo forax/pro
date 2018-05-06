@@ -79,8 +79,7 @@ public class Pro {
     PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity(), (_1, _2) -> { throw new AssertionError(); }, HashMap::new));
   }
   
-  /*
-  public static void update(Path dynamicPluginDir) {
+  public static void loadPlugins(Path dynamicPluginDir) {
     var config = CONFIG.get();
     var plugins = Plugins.getDynamicPlugins(dynamicPluginDir);
     for(var plugin : plugins) {
@@ -90,7 +89,7 @@ public class Pro {
         plugin.configure(config.asChecked(pluginName));
       }
     }
-  }*/
+  }
   
   public static void set(String key, Object value) {
     CONFIG.get().set(key, value);

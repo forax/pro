@@ -28,6 +28,7 @@ public class Configs {
   public interface DuplicatableConfig extends MutableConfig {
     DuplicatableConfig duplicate(); 
     Config asConfig();
+    MutableConfig asChecked(String prefix);
   }
   
   public interface Query {

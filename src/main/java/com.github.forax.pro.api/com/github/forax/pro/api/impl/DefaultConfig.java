@@ -66,6 +66,11 @@ public class DefaultConfig implements DuplicatableConfig, EvalContext {
       }
       
       @Override
+      public MutableConfig asChecked(String prefix) {
+        throw new UnsupportedOperationException("asChecked() can not be used on a non-mutable configuration");
+      }
+      
+      @Override
       public <T> T getOrUpdate(String key, Class<T> type) {
         throw new UnsupportedOperationException("getOrUpdate() can not be used on a non-mutable configuration");
       }
@@ -89,6 +94,7 @@ public class DefaultConfig implements DuplicatableConfig, EvalContext {
     }
   }*/
   
+  @Override
   public MutableConfig asChecked(String prefix) {
     return new MutableConfig() {
       @Override
