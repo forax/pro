@@ -171,7 +171,7 @@ public class Bootstrap {
     copyPackagedPluginToTargetImage("formatter");
 
     // re-generate builders
-    //com.github.forax.pro.Pro.update(java.nio.file.Paths.get("target/image/plugins"));
+    //com.github.forax.pro.Pro.loadPlugins(java.nio.file.Paths.get("target/image/plugins"));
     //com.github.forax.pro.bootstrap.genbuilder.GenBuilder.generate();
 
     Vanity.postOperations();
