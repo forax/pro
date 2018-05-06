@@ -5,6 +5,7 @@ import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
+import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
@@ -145,17 +147,22 @@ public class PackagerPlugin implements Plugin {
     FileHelper.deleteAllFiles(output, false);
     Files.createDirectories(output);
     
-    for(var path: inputs) {
-      try(var directoryStream = Files.newDirectoryStream(path)) {
-        for(var input: directoryStream) {
-          var exitCode = action.apply(input, output);
-          if (exitCode != 0) {
-            return exitCode;
-          }
-        }
-      }
+    try {
+      return inputs
+          .parallelStream()
+          .mapToInt(directory -> {
+            try(Stream<Path> stream = Files.list(directory)) {
+              return stream
+                  .mapToInt(file -> action.apply(file, output))
+                  .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
+            } catch(IOException e) {
+              throw new UncheckedIOException(e);
+            }
+          })
+          .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
+    } catch(UncheckedIOException e) {
+      throw e.getCause();
     }
-    return 0;
   }
 
   private static int packageModule(Log log, ToolProvider jarTool, Path moduleExploded,  Path moduleArtifact, PackagerConf packager, Map<String, Metadata> metadataMap, String prefix) {

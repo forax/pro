@@ -9,6 +9,7 @@ import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
+import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
@@ -133,17 +135,10 @@ public class DocerPlugin implements Plugin {
     FileHelper.deleteAllFiles(output, false);
     Files.createDirectories(output);
     
-    for(var module: finder.findAll()) {
-      var location = module.location();
-      if (!location.isPresent()) {
-        continue;
-      }
-      var exitCode = action.apply(Paths.get(location.get()), output);
-      if (exitCode != 0) {
-        return exitCode;
-      }
-    }
-    return 0;
+    var modules = finder.findAll().stream().flatMap(module -> module.location().stream()).collect(toList());
+    return modules.parallelStream()
+        .mapToInt(location -> action.apply(Paths.get(location), output))
+        .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
   }
   
   private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docerConf, Path input, Path output) {
