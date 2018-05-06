@@ -9,7 +9,7 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
 public interface ResolverConf {
-  List<String> dependencies();
+  Optional<List<String>> dependencies();
   void dependencies(List<String> dependencies);
   
   List<Path> moduleSourcePath();

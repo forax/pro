@@ -13,6 +13,10 @@ public class ArtifactQuery {
     return artifact.getGroupId() + ':' + artifact.getArtifactId();
   }
   
+  public String getArtifactCoords() {
+    return artifact.getGroupId() + ':' + artifact.getArtifactId() + ':' + artifact.getVersion();
+  }
+  
   @Override
   public String toString() {
     return getArtifactKey();

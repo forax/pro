@@ -1,8 +1,10 @@
 package com.github.forax.pro.plugin.resolver;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
+import static java.util.stream.Collectors.joining;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -129,13 +131,6 @@ public class ResolverPlugin implements Plugin {
       sourceResolved &= resolveModuleDependencies(moduleTestFinder, dependencyFinder, resolvedModules, unresolvedModules);
     }
     
-    
-    
-    // everything is resolved, nothing to do
-    if (sourceResolved) {
-      return 0;
-    }
-    
     log.debug(unresolvedModules, unresolved -> "unresolvedModules " + unresolved);
     
     var remoteRepositories = resolverConf.remoteRepositories().orElse(List.of());
@@ -143,10 +138,49 @@ public class ResolverPlugin implements Plugin {
     
     var aether = Aether.create(resolverConf.mavenLocalRepositoryPath(), remoteRepositories);
     
+    var depencenciesOpt = resolverConf.dependencies();
+    
+    // check if there are dependencies with new versions
+    if (resolverConf.checkForUpdate() && depencenciesOpt.isPresent()) {
+      try {
+        parseResolverDependencies(depencenciesOpt.get(), aether, (module, artifactQuery) -> {
+          if (resolvedModules.contains(module)) {  // if the module is referenced by a module-info
+            var artifactKey = artifactQuery.getArtifactKey();
+            ArtifactQuery queryMostRecent = aether.createArtifactQuery(artifactKey + ":[0,]");
+            Set<ArtifactInfo> artifactInfos;
+            try {
+              artifactInfos = aether.dependencies(queryMostRecent);
+            } catch (IOException e) {
+              throw new UncheckedIOException(e);
+            }
+            ArtifactInfo artifactInfo = artifactInfos.stream().filter(info -> info.getArtifactKey().equals(artifactKey)).findFirst().get();
+            if (!artifactQuery.getArtifactCoords().equals(artifactInfo.getArtifactCoords())) {
+              log.info(artifactInfo,
+                  _artifactInfo ->  _artifactInfo.getArtifactKey() + " can be updated" +
+                                    "\n     deps: " + artifactInfos.stream().map(ArtifactInfo::getArtifactCoords).collect(joining(", ")));
+            }
+          }
+        });
+      } catch( @SuppressWarnings("unused") UncheckedIOException e) {
+        log.info(null, __ -> "io or network error, dependencies will not be checked for update");
+      }
+    }
+    
+    // everything is resolved, nothing to do
+    if (sourceResolved) {
+      return 0;
+    }
+    
+    // does the dependencies are specified ? 
+    if (!depencenciesOpt.isPresent()) {
+      log.error(unresolvedModules, _depencenciesOpt -> "no dependencies specified but there are some unresolved modules " + unresolvedModules);
+      return 1;
+    }
+    
     // create mapping between module name and Maven artifact name
     var moduleToArtifactMap = new LinkedHashMap<String, List<ArtifactQuery>>();
     var artifactKeyToModuleMap = new LinkedHashMap<String, String>();
-    parseResolverDependencies(resolverConf.dependencies(), aether, (module, artifactQuery) -> {
+    parseResolverDependencies(depencenciesOpt.get(), aether, (module, artifactQuery) -> {
       moduleToArtifactMap.computeIfAbsent(module, __ -> new ArrayList<>()).add(artifactQuery);
       artifactKeyToModuleMap.put(artifactQuery.getArtifactKey(), module);
     });

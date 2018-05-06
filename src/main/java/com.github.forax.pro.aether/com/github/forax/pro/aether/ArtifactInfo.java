@@ -13,6 +13,10 @@ public class ArtifactInfo {
     return artifact.getGroupId() + ':' + artifact.getArtifactId();
   }
   
+  public String getArtifactCoords() {
+    return artifact.getGroupId() + ':' + artifact.getArtifactId() + ':' + artifact.getVersion();
+  }
+  
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ArtifactInfo)) {
