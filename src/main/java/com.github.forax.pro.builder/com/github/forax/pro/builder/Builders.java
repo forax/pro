@@ -237,6 +237,8 @@ public class Builders {
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface ResolverBuilder {
+    boolean checkForUpdate();
+    ResolverBuilder checkForUpdate(boolean checkForUpdate);
     java.util.List<java.lang.String> dependencies();
     ResolverBuilder dependencies(java.util.List<java.lang.String> dependencies);
     java.nio.file.Path mavenLocalRepositoryPath();
