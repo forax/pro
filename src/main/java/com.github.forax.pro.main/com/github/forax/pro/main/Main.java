@@ -98,6 +98,7 @@ public class Main {
         "import static com.github.forax.pro.builder.Builders.*;\n" + 
         "\n" + 
         "resolver.\n" + 
+        "    checkForUpdate(true).\n" +
         "    dependencies(list(\n" + 
         "        // JUnit 5\n" + 
         "        \"org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.1.0\",\n" + 
