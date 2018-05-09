@@ -1,6 +1,5 @@
 package com.github.forax.pro.plugin.docer;
 
-
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
@@ -19,7 +18,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
