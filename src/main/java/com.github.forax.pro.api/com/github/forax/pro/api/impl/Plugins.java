@@ -39,24 +39,24 @@ public class Plugins {
     return serviceLoader.stream();
   }
   
-  private static void loadDynamicPlugins(Path dynamicPluginDir, Consumer<? super Provider<Plugin>> consumer) {
-    if (Files.isDirectory(dynamicPluginDir)) { 
-      try(var stream = Files.list(dynamicPluginDir)) {
-        stream.flatMap(Plugins::findDynamicPlugins).forEach(consumer);
-      } catch(IOException e) {
-        throw new UncheckedIOException(e);
-      }
+  private static void loadDynamicPlugins(Path dynamicPluginDir, Consumer<? super Provider<Plugin>> consumer) throws IOException {
+    if (!Files.isDirectory(dynamicPluginDir)) {
+      return; // silent return, maybe there is not dynamic plugins
+    }
+    
+    try(var stream = Files.list(dynamicPluginDir)) {
+      stream.flatMap(Plugins::findDynamicPlugins).forEach(consumer);
     }
   } 
   
-  public static List<Plugin> getDynamicPlugins(Path dynamicPluginDir) {
+  public static List<Plugin> getDynamicPlugins(Path dynamicPluginDir) throws IOException {
     var plugins = new ArrayList<Plugin>();
     loadDynamicPlugins(dynamicPluginDir, provider -> plugins.add(provider.get()));
     plugins.sort(Comparator.comparing(Plugin::name));   // have a stable order
     return plugins;
   }
   
-  public static List<Plugin> getAllPlugins(Path dynamicPluginDir) {
+  public static List<Plugin> getAllPlugins(Path dynamicPluginDir) throws IOException {
     var pluginMap = new HashMap<Class<?>, Plugin>();
     Consumer<Provider<Plugin>> addToMap = provider -> pluginMap.computeIfAbsent(provider.type(), __ -> provider.get());
     

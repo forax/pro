@@ -69,8 +69,15 @@ public class Pro {
     var config = (DefaultConfig)CONFIG.get();
 
     var proConf = config.getOrThrow("pro", ProConf.class);
+    
+    List<Plugin> plugins;
+    try {
+      plugins = Plugins.getAllPlugins(proConf.pluginDir());
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    
     var log = Log.create("pro", proConf.loglevel());
-    var plugins = Plugins.getAllPlugins(proConf.pluginDir());
     log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
 
     plugins.forEach(plugin -> plugin.init(config.asChecked(plugin.name())));
@@ -81,7 +88,12 @@ public class Pro {
   
   public static void loadPlugins(Path dynamicPluginDir) {
     var config = CONFIG.get();
-    var plugins = Plugins.getDynamicPlugins(dynamicPluginDir);
+    List<Plugin> plugins;
+    try {
+      plugins = Plugins.getDynamicPlugins(dynamicPluginDir);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
     for(var plugin : plugins) {
       var pluginName = plugin.name();
       if (PLUGINS.putIfAbsent(pluginName, plugin) == null) {
