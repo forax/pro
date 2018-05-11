@@ -28,9 +28,10 @@ import com.github.forax.pro.helper.ModuleHelper;
 
 public class Bootstrap {
 
+  // jdk 12 will see similar issues: https://bugs.openjdk.java.net/browse/JDK-8193784
   private static int jdkVersion() {
     var major = Runtime.version().feature();
-    return Math.min(major, 10);  //FIXME --release doesn't work yet with the jdk 11
+    return Math.min(major, 11);
   }
 
   public static void main(String[] args) throws IOException {
