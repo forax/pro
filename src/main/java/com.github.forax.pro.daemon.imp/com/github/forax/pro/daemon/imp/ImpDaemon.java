@@ -81,13 +81,13 @@ public class ImpDaemon implements Daemon {
     for(;;) {
       try {
         refresher.waitARefresh();
-      } catch (InterruptedException e) {
+      } catch (@SuppressWarnings("unused") InterruptedException e) {
         // command requested
         Runnable runnable;
         while((runnable = commandQueue.poll()) != null) {
           try {
             runnable.run();
-          } catch(ExitException __) {
+          } catch(@SuppressWarnings("unused") ExitException __) {
             return;
           }
         }
@@ -148,10 +148,10 @@ public class ImpDaemon implements Daemon {
     for(;;) {
       try {
         key = watcher.poll(15, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
+      } catch (@SuppressWarnings("unused") InterruptedException e) {
         try {
           watcher.close();
-        } catch(IOException __) {
+        } catch(@SuppressWarnings("unused") IOException __) {
           // do nothing
         }
         return;
@@ -192,10 +192,10 @@ public class ImpDaemon implements Daemon {
 
           try {
             key = watcher.poll(1, TimeUnit.SECONDS);
-          } catch (InterruptedException e) {
+          } catch (@SuppressWarnings("unused") InterruptedException e) {
             try {
               watcher.close();
-            } catch(IOException __) {
+            } catch(@SuppressWarnings("unused") IOException __) {
               // do nothing
             }
             return;
