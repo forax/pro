@@ -8,6 +8,6 @@ import org.junit.jupiter.api.Test;
 class ConfigsTests {
   @Test
   void newRootIsNotNull() {
-    assertNotNull(new DefaultConfig().asConfig());
+    assertNotNull(new DefaultConfig());
   }
 }

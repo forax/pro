@@ -6,6 +6,7 @@ import static java.util.stream.Collectors.toMap;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.StackWalker.StackFrame;
+import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -27,9 +28,8 @@ import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
-import com.github.forax.pro.api.Task;
+import com.github.forax.pro.api.Command;
 import com.github.forax.pro.api.helper.ProConf;
-import com.github.forax.pro.api.impl.Configs.DuplicatableConfig;
 import com.github.forax.pro.api.impl.Configs.Query;
 import com.github.forax.pro.api.impl.DefaultConfig;
 import com.github.forax.pro.api.impl.Plugins;
@@ -42,9 +42,9 @@ public class Pro {
     throw new AssertionError();
   }
   
-  static final ThreadLocal<DuplicatableConfig> CONFIG = new ThreadLocal<>() {
+  static final ThreadLocal<DefaultConfig> CONFIG = new ThreadLocal<>() {
     @Override
-    protected DuplicatableConfig initialValue() {
+    protected DefaultConfig initialValue() {
       var config = new DefaultConfig();
       var proConf = config.getOrUpdate("pro", ProConf.class);
       proConf.currentDir(Paths.get("."));
@@ -66,7 +66,7 @@ public class Pro {
   static final HashMap<String, Plugin> PLUGINS;
   static {
     // initialization
-    var config = (DefaultConfig)CONFIG.get();
+    var config = CONFIG.get();
 
     var proConf = config.getOrThrow("pro", ProConf.class);
     
@@ -245,28 +245,29 @@ public class Pro {
   public static void local(String localDir, Runnable action) { 
     var oldConfig = CONFIG.get();
     var currentDir = oldConfig.getOrThrow("pro", ProConf.class).currentDir();
+    var newConfig = oldConfig.duplicate();
+    newConfig.getOrUpdate("pro", ProConf.class).currentDir(currentDir.resolve(localDir));
+    
+    CONFIG.set(newConfig);
     try {
-      var newConfig = oldConfig.duplicate();
-      newConfig.getOrUpdate("pro", ProConf.class).currentDir(currentDir.resolve(localDir));
-      CONFIG.set(newConfig);
       action.run();
     } finally {
       CONFIG.set(oldConfig);
     }
   }
   
-  public static Task task(Runnable action) {
+  public static Command command(Runnable action) {
     var line = StackWalker.getInstance().walk(s -> s.findFirst()).map(StackFrame::getLineNumber).orElse(-1);
-    return new Task() {
+    return new Command() {
       @Override
       public String name() {
-        return "task at " + line;
+        return "command at " + line;
       }
       @Override
-      public int execute(Config config) throws IOException {
+      public int execute(Config unused) throws IOException {
         var oldConfig = CONFIG.get();
+        CONFIG.set(oldConfig.duplicate());
         try {
-          CONFIG.set(DefaultConfig.asNonMutable(config));
           action.run();
         } finally {
           CONFIG.set(oldConfig);
@@ -276,16 +277,16 @@ public class Pro {
     };
   }
   
-  public static void run(Object... tasks) {
+  public static void run(Object... commands) {
     var config = CONFIG.get();
     var proConf = config.getOrThrow("pro", ProConf.class);
     
-    var taskList = new ArrayList<Task>();
-    for(Object task: tasks) {
-      if (task instanceof Task) {
-        taskList.add((Task)task);
+    var taskList = new ArrayList<Command>();
+    for(Object command: commands) {
+      if (command instanceof Command) {
+        taskList.add((Command)command);
       } else {
-        var pluginName = (task instanceof Query)? ((Query)task)._id_(): task.toString();
+        var pluginName = (command instanceof Query)? ((Query)command)._id_(): command.toString();
         var pluginOpt = findPluginByName(PLUGINS, pluginName, proConf);
         if (!pluginOpt.isPresent()) {
           // plugin not found
@@ -307,7 +308,7 @@ public class Pro {
     var config = CONFIG.get();
     var proConf = config.getOrThrow("pro", ProConf.class);
     
-    var plugins = new ArrayList<Task>();
+    var plugins = new ArrayList<Command>();
     for(var pluginName: pluginNames) {
       var pluginOpt = findPluginByName(PLUGINS, pluginName, proConf);  
       if (!pluginOpt.isPresent()) {
@@ -321,25 +322,25 @@ public class Pro {
     runAll(config, plugins);
   }
   
-  private static void runAll(DuplicatableConfig config, List<Task> tasks) {
-    var taskConfig = config.duplicate().asConfig();
+  private static void runAll(DefaultConfig config, List<Command> commands) {
+    var commandConfig = config.duplicate();
     
     var daemonOpt = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
     var consumer = daemonOpt
         .filter(Daemon::isStarted)
-        .<BiConsumer<List<Task>, Config>>map(daemon -> daemon::execute)
+        .<BiConsumer<List<Command>, Config>>map(daemon -> daemon::execute)
         .orElse(Pro::executeAll);
-    consumer.accept(tasks, taskConfig);
+    consumer.accept(commands, commandConfig);
   }
   
-  private static void executeAll(List<Task> tasks, Config config) {
+  private static void executeAll(List<Command> commands, Config config) {
     var proConf = config.getOrThrow("pro", ProConf.class);
     var exitOnError = proConf.exitOnError();
     
     var errorCode = 0;
     var start = System.currentTimeMillis();
-    for(var task: tasks) {
-      errorCode = execute(task, config);
+    for(var command: commands) {
+      errorCode = execute(command, config);
       if (errorCode != 0) {
         break;
       }
@@ -359,13 +360,13 @@ public class Pro {
     }
   }
   
-  private static int execute(Task task, Config config) {
+  private static int execute(Command command, Config config) {
     try {
-      return task.execute(config);
+      return command.execute(config);
     } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
       e.printStackTrace();
       var logLevel = config.getOrThrow("pro", ProConf.class).loglevel();
-      var log = Log.create(task.name(), logLevel);
+      var log = Log.create(command.name(), logLevel);
       log.error(e);
       return 1; // FIXME
     }

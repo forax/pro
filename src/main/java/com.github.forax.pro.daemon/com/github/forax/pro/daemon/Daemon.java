@@ -3,7 +3,7 @@ package com.github.forax.pro.daemon;
 import java.util.List;
 
 import com.github.forax.pro.api.Config;
-import com.github.forax.pro.api.Task;
+import com.github.forax.pro.api.Command;
 
 /**
  * An interface to interact with a daemon that watch directories and
@@ -31,5 +31,5 @@ public interface Daemon {
    * @param tasks a list of task to execute if a file change
    * @param config the configuration to use when running the task
    */
-  void execute(List<Task> tasks, Config config);
+  void execute(List<Command> tasks, Config config);
 }

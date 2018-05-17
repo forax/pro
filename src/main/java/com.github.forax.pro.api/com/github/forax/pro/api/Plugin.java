@@ -9,7 +9,7 @@ package com.github.forax.pro.api;
  * 
  * A class that implements this interface should *never* have fields !
  */
-public interface Plugin extends Task {
+public interface Plugin extends Command {
   /**
    * Called to register the plugin properties with their default values
    * (with {@link MutableConfig#set(String, Object)}).

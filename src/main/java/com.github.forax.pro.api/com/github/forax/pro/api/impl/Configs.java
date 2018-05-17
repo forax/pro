@@ -16,19 +16,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.forax.pro.api.Config;
-import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.TypeCheckedConfig;
 
 public class Configs {
   private Configs() {
     throw new AssertionError();
-  }
-  
-  public interface DuplicatableConfig extends MutableConfig {
-    DuplicatableConfig duplicate(); 
-    Config asConfig();
-    MutableConfig asChecked(String prefix);
   }
   
   public interface Query {

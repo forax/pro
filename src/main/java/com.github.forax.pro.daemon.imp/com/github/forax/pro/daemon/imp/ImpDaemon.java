@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
-import com.github.forax.pro.api.Task;
+import com.github.forax.pro.api.Command;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.Log;
@@ -74,7 +74,7 @@ public class ImpDaemon implements Daemon {
   
   // changed at each run, mutated only by the daemon thread
   private Thread watcherThread;
-  private List<Task> tasks = List.of();
+  private List<Command> tasks = List.of();
   private Config config;
   
   private void mainLoop() {
@@ -110,7 +110,7 @@ public class ImpDaemon implements Daemon {
     }
   }
   
-  private static int execute(Task task, Config config) {
+  private static int execute(Command task, Config config) {
     try {
       return task.execute(config);
     } catch (IOException | /*UncheckedIOException |*/ RuntimeException e) {  //FIXME revisit RuntimeException !
@@ -299,7 +299,7 @@ public class ImpDaemon implements Daemon {
   
   
   @Override
-  public void execute(List<Task> tasks, Config config) {
+  public void execute(List<Command> tasks, Config config) {
     if (thread == null) {
       throw new IllegalStateException("no thread was started");
     }

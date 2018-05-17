@@ -4,10 +4,9 @@ import java.util.Optional;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
-import com.github.forax.pro.api.impl.Configs.DuplicatableConfig;
 import com.github.forax.pro.api.impl.Configs.EvalContext;
 
-public class DefaultConfig implements DuplicatableConfig, EvalContext {
+public class DefaultConfig implements MutableConfig, EvalContext {
   private final Object root;
   
   public DefaultConfig() {
@@ -43,41 +42,16 @@ public class DefaultConfig implements DuplicatableConfig, EvalContext {
   //   Configs.forEach(root, key, consumer); 
   //}
   
-  @Override
-  public DuplicatableConfig duplicate() {
+  
+  public DefaultConfig duplicate() {
     return new DefaultConfig(root);
   }
   
-  public static DuplicatableConfig asNonMutable(Config config) {
-    return new DuplicatableConfig() {
+  public static Config asNonMutable(Config config) {
+    return new Config() {
       @Override
       public <T> Optional<T> get(String key, Class<T> type) {
         return config.get(key, type);
-      }
-
-      @Override
-      public DuplicatableConfig duplicate() {
-        return this;
-      }
-
-      @Override
-      public Config asConfig() {
-        return config;
-      }
-      
-      @Override
-      public MutableConfig asChecked(String prefix) {
-        throw new UnsupportedOperationException("asChecked() can not be used on a non-mutable configuration");
-      }
-      
-      @Override
-      public <T> T getOrUpdate(String key, Class<T> type) {
-        throw new UnsupportedOperationException("getOrUpdate() can not be used on a non-mutable configuration");
-      }
-
-      @Override
-      public void set(String key, Object value) {
-        throw new UnsupportedOperationException("set() can not be used on a non-mutable configuration");
       }
     };
   }
@@ -94,7 +68,6 @@ public class DefaultConfig implements DuplicatableConfig, EvalContext {
     }
   }*/
   
-  @Override
   public MutableConfig asChecked(String prefix) {
     return new MutableConfig() {
       @Override
@@ -116,26 +89,6 @@ public class DefaultConfig implements DuplicatableConfig, EvalContext {
           throw new IllegalArgumentException("a plugin can only set a key starting by its name");
         }
         DefaultConfig.this.set(key, object);
-      }
-      
-      //@Override
-      //public void forEach(String key, BiConsumer<? super String, Object> consumer) {
-      //  DefaultConfig.this.forEach(key, consumer);
-      //}
-      
-      @Override
-      public String toString() {
-        return DefaultConfig.this.toString();
-      }
-    };
-  }
-  
-  @Override
-  public Config asConfig() {
-    return new Config() {
-      @Override
-      public <T> Optional<T> get(String key, Class<T> type) {
-        return DefaultConfig.this.get(key, type);
       }
       
       //@Override
