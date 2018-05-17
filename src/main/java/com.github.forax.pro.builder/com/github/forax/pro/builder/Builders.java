@@ -1,12 +1,12 @@
 package com.github.forax.pro.builder;
 
-import com.github.forax.pro.Pro;
+import com.github.forax.pro.BuilderSupport;
 
 // THIS CLASS IS GENERATED, DO NOT EDIT
 // see GenBuilder.java and Bootstrap.java, if you want to re-generate it
 public class Builders {
   public static final ProBuilder pro =
-    Pro.getOrUpdate("pro", ProBuilder.class);
+    BuilderSupport.createBuilderProxy("pro", ProBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
@@ -24,7 +24,7 @@ public class Builders {
   }
   
   public static final CompilerBuilder compiler =
-    Pro.getOrUpdate("compiler", CompilerBuilder.class);
+    BuilderSupport.createBuilderProxy("compiler", CompilerBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
@@ -64,7 +64,7 @@ public class Builders {
   }
   
   public static final DocerBuilder docer =
-    Pro.getOrUpdate("docer", DocerBuilder.class);
+    BuilderSupport.createBuilderProxy("docer", DocerBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
@@ -100,7 +100,7 @@ public class Builders {
   }
   
   public static final FormatterBuilder formatter =
-    Pro.getOrUpdate("formatter", FormatterBuilder.class);
+    BuilderSupport.createBuilderProxy("formatter", FormatterBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
@@ -122,7 +122,7 @@ public class Builders {
   }
   
   public static final LinkerBuilder linker =
-    Pro.getOrUpdate("linker", LinkerBuilder.class);
+    BuilderSupport.createBuilderProxy("linker", LinkerBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
@@ -158,7 +158,7 @@ public class Builders {
   }
   
   public static final ModulefixerBuilder modulefixer =
-    Pro.getOrUpdate("modulefixer", ModulefixerBuilder.class);
+    BuilderSupport.createBuilderProxy("modulefixer", ModulefixerBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
@@ -176,7 +176,7 @@ public class Builders {
   }
   
   public static final PackagerBuilder packager =
-    Pro.getOrUpdate("packager", PackagerBuilder.class);
+    BuilderSupport.createBuilderProxy("packager", PackagerBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
@@ -218,7 +218,7 @@ public class Builders {
   }
   
   public static final PerferBuilder perfer =
-    Pro.getOrUpdate("perfer", PerferBuilder.class);
+    BuilderSupport.createBuilderProxy("perfer", PerferBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
@@ -232,14 +232,14 @@ public class Builders {
   }
   
   public static final ResolverBuilder resolver =
-    Pro.getOrUpdate("resolver", ResolverBuilder.class);
+    BuilderSupport.createBuilderProxy("resolver", ResolverBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface ResolverBuilder {
     boolean checkForUpdate();
     ResolverBuilder checkForUpdate(boolean checkForUpdate);
-    java.util.List<java.lang.String> dependencies();
+    java.util.Optional<java.util.List<java.lang.String>> dependencies();
     ResolverBuilder dependencies(java.util.List<java.lang.String> dependencies);
     java.nio.file.Path mavenLocalRepositoryPath();
     ResolverBuilder mavenLocalRepositoryPath(java.nio.file.Path mavenLocalRepositoryPath);
@@ -256,7 +256,7 @@ public class Builders {
   }
   
   public static final RunnerBuilder runner =
-    Pro.getOrUpdate("runner", RunnerBuilder.class);
+    BuilderSupport.createBuilderProxy("runner", RunnerBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
@@ -278,7 +278,7 @@ public class Builders {
   }
   
   public static final TesterBuilder tester =
-    Pro.getOrUpdate("tester", TesterBuilder.class);
+    BuilderSupport.createBuilderProxy("tester", TesterBuilder.class);
   
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig

@@ -35,7 +35,7 @@ public class GenBuilder {
     return Stream.of(
         "package com.github.forax.pro.builder;\n",
         "\n",
-        "import com.github.forax.pro.Pro;\n",
+        "import com.github.forax.pro.BuilderSupport;\n",
         "\n",
         "// THIS CLASS IS GENERATED, DO NOT EDIT\n",
         "// see GenBuilder.java and Bootstrap.java, if you want to re-generate it\n",
@@ -50,7 +50,7 @@ public class GenBuilder {
     var className = builderName(name);
     return Stream.of(
         "  public static final ", className, " ", name, " =\n",
-        "    Pro.getOrUpdate(\"", name, "\", ", className ,".class);\n",
+        "    BuilderSupport.createBuilderProxy(\"", name, "\", ", className ,".class);\n",
         "  \n",
         "  @SuppressWarnings(\"exports\")\n",
         "  @com.github.forax.pro.api.TypeCheckedConfig\n",
