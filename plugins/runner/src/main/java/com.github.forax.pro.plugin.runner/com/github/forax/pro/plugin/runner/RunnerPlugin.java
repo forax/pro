@@ -132,7 +132,7 @@ public class RunnerPlugin implements Plugin {
     
     try {
       return process.waitFor();
-    } catch (InterruptedException e) {
+    } catch (@SuppressWarnings("unused") InterruptedException e) {
       return 1; // FIXME
     }
   }
