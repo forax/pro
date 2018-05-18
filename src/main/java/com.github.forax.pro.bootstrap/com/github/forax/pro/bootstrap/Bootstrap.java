@@ -61,11 +61,8 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.runner@" + version,
         "com.github.forax.pro.plugin.tester@" + version,
         "com.github.forax.pro.plugin.jmher@" + version,
-        "com.github.forax.pro.plugin.uberpackager@" + version,
         "com.github.forax.pro.plugin.bootstrap@" + version + "/com.github.forax.pro.bootstrap.Bootstrap",
         "com.github.forax.pro.bootstrap.genbuilder@" + version + "/com.github.forax.pro.bootstrap.genbuilder.GenBuilder",
-        "com.github.forax.pro.ubermain@" + version,
-        "com.github.forax.pro.uberbooter@" + version,
         "com.github.forax.pro.daemon@" + version,
         "com.github.forax.pro.daemon.imp@" + version
         ));
@@ -101,8 +98,6 @@ public class Bootstrap {
         "com.github.forax.pro.plugin.docer",
         "com.github.forax.pro.plugin.packager",
         "com.github.forax.pro.plugin.linker",
-        "com.github.forax.pro.plugin.uberpackager",
-        "com.github.forax.pro.uberbooter",            // needed by ubermain
         "com.github.forax.pro.daemon.imp"
         )                                             // then add all system modules
         .appendAll(ModuleHelper.systemModulesFinder().findAll().stream()
