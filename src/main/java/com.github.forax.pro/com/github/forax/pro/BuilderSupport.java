@@ -12,6 +12,7 @@ public class BuilderSupport {
    * Entry point of the builder API, create a proxy that will redirect all the calls to the current configuration
    * so the user code can use the same builder to change different underlying configuration.
    * 
+   * @param <T> type of the plugin
    * @param key the name of the plugin that the builder reflect.
    * @param type the interface of the plugin that the builder reflect.
    * @return a new builder
