@@ -241,7 +241,33 @@ public class Pro {
     return pluginOpt;
   }
   
-  public static void local(String localDir, Runnable action) { 
+  /**
+   * A block of code.
+   *
+   * @param <X> the type of checked exception thrown by the lambda.
+   * 
+   * @see Pro#local(String, Action)
+   * @see Pro#command(Action)
+   */
+  @FunctionalInterface
+  public interface Action<X extends Throwable> {
+    /**
+     * Execute the block of code and possibly throw an exception.
+     * 
+     * @throws X an exception thrown.
+     */
+    void execute() throws X;
+  }
+  
+  /**
+   * Execute an action inside a local directory with a duplicated configuration.
+   * All changes done to the configuration by the action will be done on the local configuration. 
+   * 
+   * @param localDir a local directory
+   * @param action an action
+   * @throws X an exception that may be thrown
+   */
+  public static <X extends Throwable> void local(String localDir, Action<? extends X> action) throws X { 
     var oldConfig = CONFIG.get();
     var currentDir = oldConfig.getOrThrow("pro", ProConf.class).currentDir();
     var newConfig = oldConfig.duplicate();
@@ -249,13 +275,22 @@ public class Pro {
     
     CONFIG.set(newConfig);
     try {
-      action.run();
+      action.execute();
     } finally {
       CONFIG.set(oldConfig);
     }
   }
   
-  public static Command command(Runnable action) {
+  /**
+   * Create a new {@link Command} that will execute the action if the command is run.
+   * All changes done to the configuration by the action will be done on the local configuration. 
+   * 
+   * @param action the action to execute
+   * @return a new command.
+   * 
+   * @see #run(List)
+   */
+  public static Command command(Action<? extends IOException> action) {
     var line = StackWalker.getInstance().walk(s -> s.findFirst()).map(StackFrame::getLineNumber).orElse(-1);
     return new Command() {
       @Override
@@ -267,7 +302,7 @@ public class Pro {
         var oldConfig = CONFIG.get();
         CONFIG.set(oldConfig.duplicate());
         try {
-          action.run();
+          action.execute();
         } finally {
           CONFIG.set(oldConfig);
         }
