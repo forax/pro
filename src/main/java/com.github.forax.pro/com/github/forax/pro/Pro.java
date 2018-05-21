@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
@@ -231,15 +230,6 @@ public class Pro {
     exitIfNonZero(errorCode);
   }*/
   
-
-  private static Optional<Plugin> findPluginByName(Map<String, Plugin> allPlugins, String pluginName, ProConf proConf) {
-    var pluginOpt = Optional.ofNullable(allPlugins.get(pluginName));
-    if (!pluginOpt.isPresent()) {
-      var log = Log.create("pro", proConf.loglevel());
-      log.error(pluginName, name -> "unknown plugin " + name);  
-    }
-    return pluginOpt;
-  }
   
   /**
    * A block of code.
@@ -288,7 +278,7 @@ public class Pro {
    * @param action the action to execute
    * @return a new command.
    * 
-   * @see #run(List)
+   * @see #run(Object...)
    */
   public static Command command(Action<? extends IOException> action) {
     var line = StackWalker.getInstance().walk(s -> s.findFirst()).map(StackFrame::getLineNumber).orElse(-1);
@@ -312,48 +302,32 @@ public class Pro {
   }
   
   public static void run(Object... commands) {
+    run(List.of(commands));
+  }
+  
+  public static void run(List<?> commands) {
     var config = CONFIG.get();
     var proConf = config.getOrThrow("pro", ProConf.class);
     
-    var taskList = new ArrayList<Command>();
+    var commandList = new ArrayList<Command>();
     for(Object command: commands) {
       if (command instanceof Command) {
-        taskList.add((Command)command);
+        commandList.add((Command)command);
       } else {
         var pluginName = (command instanceof Query)? ((Query)command)._id_(): command.toString();
-        var pluginOpt = findPluginByName(PLUGINS, pluginName, proConf);
+        var pluginOpt = Optional.ofNullable(PLUGINS.get(pluginName));
         if (!pluginOpt.isPresent()) {
-          // plugin not found
+          var log = Log.create("pro", proConf.loglevel());
+          log.error(pluginName, name -> "unknown plugin " + name);  
           exit(proConf.exitOnError(), 1);  //FIXME
           return;
         }
-        taskList.add(pluginOpt.get());
+        
+        commandList.add(pluginOpt.get());
       }
     }
     
-    runAll(config, taskList);
-  }
-  
-  public static void run(String... pluginNames) {
-    run(List.of(pluginNames));
-  }
-  
-  public static void run(List<String> pluginNames) {
-    var config = CONFIG.get();
-    var proConf = config.getOrThrow("pro", ProConf.class);
-    
-    var plugins = new ArrayList<Command>();
-    for(var pluginName: pluginNames) {
-      var pluginOpt = findPluginByName(PLUGINS, pluginName, proConf);  
-      if (!pluginOpt.isPresent()) {
-        // plugin not found
-        exit(proConf.exitOnError(), 1);  //FIXME
-        return;
-      }
-      plugins.add(pluginOpt.get());
-    }
-    
-    runAll(config, plugins);
+    runAll(config, commandList);
   }
   
   private static void runAll(DefaultConfig config, List<Command> commands) {

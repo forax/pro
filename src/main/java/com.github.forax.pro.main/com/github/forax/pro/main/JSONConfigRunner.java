@@ -63,8 +63,7 @@ public class JSONConfigRunner implements ConfigRunner {
     Pro.set("pro.exitOnError", true);
     Pro.set("pro.arguments", String.join(",", arguments));
     
-    var plugins = pluginNames.stream().map(Object::toString).toArray(String[]::new);
-    //System.out.println("run " + String.join(" -> ", plugins));
-    Pro.run(plugins);
+    //System.out.println("run " + String.join(" -> ", pluginNames));
+    Pro.run(pluginNames);
   }
 }
