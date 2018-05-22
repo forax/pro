@@ -84,6 +84,11 @@ public class Pro {
     PLUGINS = plugins.stream().collect(toMap(Plugin::name, identity(), (_1, _2) -> { throw new AssertionError(); }, HashMap::new));
   }
   
+  /**
+   * Dynamically load plugins from a local directory.
+   * 
+   * @param dynamicPluginDir a folder containing the plugins
+   */
   public static void loadPlugins(Path dynamicPluginDir) {
     var config = CONFIG.get();
     List<Plugin> plugins;
@@ -101,58 +106,158 @@ public class Pro {
     }
   }
   
+  /**
+   * Change the value of a configuration key.
+   * 
+   * @param key a configuration key, a qualified (dot separated) string
+   * @param value the new value associated to the configuration key
+   */
   public static void set(String key, Object value) {
     CONFIG.get().set(key, value);
   }
-  
+  /**
+   * Returns the value associated with the configuration key or an empty Optional.
+   * @param key a configuration key, a qualified (dot separated) string
+   * @param type the type of the value or an interface that will proxy the value
+   * @return the value associated with the configuration key or an empty Optional.
+   * 
+   * @see #getOrElseThrow(String, Class)
+   */
   public static <T> Optional<T> get(String key, Class<T> type) {
     return CONFIG.get().get(key, type);
   }
-  
+  /**
+   * Returns the value associated with the configuration key.
+   * @param key a configuration key, a qualified (dot separated) string
+   * @param type the type of the value or an interface that will proxy the value
+   * @return the value associated with the configuration key.
+   * @throws IllegalStateException if there is no value for the associated key.
+   * 
+   * @see #get(String, Class)
+   */
   public static <T> T getOrElseThrow(String key, Class<T> type) {
     return get(key, type)
         .orElseThrow(() -> new IllegalStateException("unknown key " + key));
   }
-  
+  /**
+   * Returns the value associated with the configuration key,
+   * if there is no value and type is an interface, the value will be auto-vivified.
+   * @param key a configuration key, a qualified (dot separated) string
+   * @param type the type of the value or an interface that will proxy the value
+   * @return the value associated with the configuration key.
+   * 
+   * @see #get(String, Class)
+   */
   public static <T> T getOrUpdate(String key, Class<T> type) {
     return CONFIG.get().getOrUpdate(key, type);
   }
   
+  /**
+   * Create a Path representing a file system path from a string,
+   * to avoid cross-platform issues, the components of the path should be separated by a slash ('/')
+   * @param location a string 
+   * @return a new Path
+   */
   public static Path location(String location) {
     return Paths.get(location);
   }
+  /**
+   * Create a Path representing a file system path from all the components of a path.
+   * 
+   * @param first the first component of the path
+   * @param more the other components of the path, as a comma separated array
+   * @return a new Path
+   */
   public static Path location(String first, String... more) {
     return Paths.get(first, more);
   }
   
+  /**
+   * Create a file system path, a list of locations from an array of string
+   * @param locations an array of location
+   * @return a list of locations
+   */
   public static StableList<Path> path(String... locations) {
     return list(Arrays.stream(locations).map(Pro::location));
   }
+  /**
+   * Create a file system path, a list of locations from an array of Path
+   * @param locations an array of location
+   * @return a list of locations
+   */
   public static StableList<Path> path(Path... locations) {
     return list(locations);
   }
   
+  
+  /**
+   * Return a file name matcher using 'glob' regular expression.
+   * The 'glob' regular expression are defined in the javadoc of
+   * {@link java.nio.file.FileSystem#getPathMatcher(String)}.
+   * 
+   * @param regex a 'glob' regular expression
+   * @return a file matcher
+   */
   public static PathMatcher globRegex(String regex) {
     return FileSystems.getDefault().getPathMatcher("glob:" + regex);
   }
+  /**
+   * Return a file name matcher using Perl-like regular expression.
+   * The Perl-like regular expression are defined in the javadoc of
+   * {@link java.util.regex.Pattern}.
+   * 
+   * @param regex a Perl-like regular expression
+   * @return a file matcher
+   */
   public static PathMatcher perlRegex(String regex) {
     return FileSystems.getDefault().getPathMatcher("regex:" + regex);
   }
   
+  /**
+   * Returns all files and sub-directories recursively stored in the sourceDirectory.
+   * @param sourceDirectory a directory
+   * @return a list of files (and directories)
+   * 
+   * @see #files(Path, PathMatcher)
+   */
   public static StableList<Path> files(Path sourceDirectory) {
     return files(sourceDirectory, __ -> true);
   }
+  /**
+   * Returns all files and sub-directories recursively stored in the sourceDirectory
+   * that match a regular expression.
+   * 
+   * @param sourceDirectory a directory
+   * @param globRegex a file regular expression
+   * @return a list of files (and directories)
+   * 
+   * @see #files(Path, PathMatcher)
+   */
   public static StableList<Path> files(Path sourceDirectory, String globRegex) {
     return files(sourceDirectory, globRegex(globRegex));
   }
+  /**
+   * Returns all files and sub-directories recursively stored in the sourceDirectory
+   * that match a filter.
+   * 
+   * @param sourceDirectory a directory
+   * @param filter a path matcher 
+   * @return a list of files (and directories)
+   */
   public static StableList<Path> files(Path sourceDirectory, PathMatcher filter) {
-    try {
-      return list(Files.walk(sourceDirectory).filter(filter::matches));
+    try(var stream = Files.walk(sourceDirectory)) {
+      return list(stream.filter(filter::matches));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
   
+  /**
+   * Creates an URI from a string.
+   * 
+   * @param uri a string containing an URI
+   * @return a, URI
+   */
   public static URI uri(String uri) {
     try {
       return new URI(uri);
@@ -161,57 +266,59 @@ public class Pro {
     }
   }
   
+  /**
+   * Creates a List from elements.
+   * Each elements must be non null.
+   * 
+   * @param elements an array of elements
+   * @return a stable list.
+   * @throws NullPointerException if one element is null.
+   */
   @SafeVarargs
   public static <T> StableList<T> list(T... elements) {
     return StableList.of(elements);
   }
+  /**
+   * Creates a List from a collection.
+   * Each elements must be non null.
+   * 
+   * @param collection a collection of elements
+   * @return a stable list.
+   * @throws NullPointerException if one element is null.
+   */
   public static <T> StableList<T> list(Collection<? extends T> collection) {
     return StableList.from(collection);
   }
+  /**
+   * Creates a List from elements.
+   * Each elements must be non null.
+   * 
+   * @param stream a stream of elements
+   * @return a stable list.
+   * @throws NullPointerException if one element is null.
+   */
   public static <T> StableList<T> list(Stream<? extends T> stream) {
-    return list(stream.collect(StableList.toStableList()));
+    return stream.collect(StableList.toStableList());
   }
   
-  public static Path resolve(Path location, Path child) {
-    return location.resolve(child);
-  }
-  public static Path resolve(Path location, String child) {
-    return location.resolve(child);
-  }
-  
-  /* Not sure of this one
-  @SuppressWarnings("unchecked")  // emulate a dynamic language behavior
-  public static <T> StableList<T> append(Object... elements) {
-    return (StableList<T>)list(Arrays.stream(elements).flatMap(element -> {
-      if (element instanceof Collection) {
-        return ((Collection<?>)element).stream();
-      }
-      if (element instanceof Object[]) {
-        return Arrays.stream((Object[])element);
-      }
-      return Stream.of(element);
-    }));
-  }*/
-  
-  /*
-  @SafeVarargs
-  public static <T> List<T> append(Collection< ? extends T> locations, T... others) {
-    return list(Stream.concat(locations.stream(), Arrays.stream(others)));
-  }
-  public static List<Path> append(Collection<? extends Path> paths, String... others) {
-    return list(Stream.concat(paths.stream(), Arrays.stream(others).map(Pro::location)));
-  }
-  public static List<Path> append(Collection<? extends Path> path1, Collection<? extends Path> path2) {
-    return flatten(path1, path2);
-  }*/
-  
+  /**
+   * Concatenate an array of collections into a list.
+   * 
+   * @param collections an array of Collection
+   * @return a new list that contains all the elements of the collections 
+   */
   @SafeVarargs
   public static <T> List<T> flatten(Collection<? extends T>... collections) {
     return list(Arrays.stream(collections).flatMap(Collection::stream));
   }
   
+  /**
+   * Prints all elements pass as arguments separated by commas
+   * 
+   * @param elements the elements to print
+   */
   public static void print(Object... elements) {
-    System.out.println(Arrays.stream(elements).map(Object::toString).collect(Collectors.joining(" ")));
+    System.out.println(Arrays.stream(elements).map(String::valueOf).collect(Collectors.joining(" ")));
   }
   
   /*
@@ -301,10 +408,27 @@ public class Pro {
     };
   }
   
+  /**
+   * Execute all commands, {@link #command(Action) user-defined} or {@link Plugin plugins},
+   * one after another in the array order with the current configuration. 
+   * 
+   * @param commands an array of command to be executed
+   * 
+   * @see #run(List)
+   * @see Command#execute(Config)
+   */
   public static void run(Object... commands) {
     run(List.of(commands));
   }
   
+  /**
+   * Execute all commands, {@link #command(Action) user-defined} or {@link Plugin plugins},
+   * one after another in the list order with the current configuration. 
+   * 
+   * @param commands a list of command to be executed
+   * 
+   * @see Command#execute(Config)
+   */
   public static void run(List<?> commands) {
     var config = CONFIG.get();
     var proConf = config.getOrThrow("pro", ProConf.class);
