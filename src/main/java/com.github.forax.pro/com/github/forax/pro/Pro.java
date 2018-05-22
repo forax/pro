@@ -117,6 +117,8 @@ public class Pro {
   }
   /**
    * Returns the value associated with the configuration key or an empty Optional.
+   * 
+   * @param <T> expected type of the value
    * @param key a configuration key, a qualified (dot separated) string
    * @param type the type of the value or an interface that will proxy the value
    * @return the value associated with the configuration key or an empty Optional.
@@ -128,6 +130,8 @@ public class Pro {
   }
   /**
    * Returns the value associated with the configuration key.
+   * 
+   * @param <T> expected type of the value
    * @param key a configuration key, a qualified (dot separated) string
    * @param type the type of the value or an interface that will proxy the value
    * @return the value associated with the configuration key.
@@ -142,6 +146,8 @@ public class Pro {
   /**
    * Returns the value associated with the configuration key,
    * if there is no value and type is an interface, the value will be auto-vivified.
+   * 
+   * @param <T> expected type of the value
    * @param key a configuration key, a qualified (dot separated) string
    * @param type the type of the value or an interface that will proxy the value
    * @return the value associated with the configuration key.
@@ -270,6 +276,7 @@ public class Pro {
    * Creates a List from elements.
    * Each elements must be non null.
    * 
+   * @param <T> type of the elements
    * @param elements an array of elements
    * @return a stable list.
    * @throws NullPointerException if one element is null.
@@ -282,6 +289,7 @@ public class Pro {
    * Creates a List from a collection.
    * Each elements must be non null.
    * 
+   * @param <T> type of the elements
    * @param collection a collection of elements
    * @return a stable list.
    * @throws NullPointerException if one element is null.
@@ -293,6 +301,7 @@ public class Pro {
    * Creates a List from elements.
    * Each elements must be non null.
    * 
+   * @param <T> type of the elements
    * @param stream a stream of elements
    * @return a stable list.
    * @throws NullPointerException if one element is null.
@@ -304,6 +313,7 @@ public class Pro {
   /**
    * Concatenate an array of collections into a list.
    * 
+   * @param <T> common super type of the elements in the collections 
    * @param collections an array of Collection
    * @return a new list that contains all the elements of the collections 
    */
@@ -360,6 +370,7 @@ public class Pro {
    * Execute an action inside a local directory with a duplicated configuration.
    * All changes done to the configuration by the action will be done on the local configuration. 
    * 
+   * @param <X> the type of the propagated exceptions
    * @param localDir a local directory
    * @param action an action
    * @throws X an exception that may be thrown
