@@ -6,10 +6,12 @@ import static java.util.stream.Collectors.joining;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -62,7 +64,10 @@ public class GenBuilder {
                 case 0:
                   return getterTemplate(m);
                 case 1:
-                  return setterTemplate(className, m);
+                  if (m.getParameterTypes()[0] == List.class) {
+                    return Stream.of(setterTemplate(className, m, true), setterTemplate(className, m, false)).flatMap(t -> t);
+                  }
+                  return setterTemplate(className, m, false);
                 default:
                   return Stream.empty();
                 }
@@ -74,22 +79,25 @@ public class GenBuilder {
 
   private static Stream<Object> getterTemplate(Method method) {
     var name = method.getName();
+    var returnTypeName = method.getGenericReturnType().getTypeName();
     return Stream.concat(
              Stream.of(
                "    ", "@Deprecated", "\n").filter(__ -> method.isAnnotationPresent(Deprecated.class)),
              Stream.of(
-               "    ", method.getGenericReturnType().getTypeName(), " ", name, "();\n"
+               "    ", returnTypeName, " ", name, "();\n"
              )
            );
   }
   
-  private static Stream<Object> setterTemplate(String className, Method method) {
+  private static Stream<Object> setterTemplate(String className, Method method, boolean varargs) {
     var name = method.getName();
+    var parameterType = method.getGenericParameterTypes()[0];
+    var parameterTypeName = varargs? ((ParameterizedType)parameterType).getActualTypeArguments()[0].getTypeName() + "...": parameterType.getTypeName();
     return Stream.concat(
              Stream.of(
                "    ", "@Deprecated", "\n").filter(__ -> method.isAnnotationPresent(Deprecated.class)),
              Stream.of(
-               "    ", className, " ", name, "(", method.getGenericParameterTypes()[0].getTypeName(), " ", name, ");\n"
+               "    ", className, " ", name, "(", parameterTypeName, " ", name, ");\n"
              )
            );
   }

@@ -7,6 +7,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -201,6 +202,9 @@ public class Configs {
               continue;
             }
             case 1: {
+              if (method.isVarArgs()) {  // skip varags methods as they will hide the real implementation
+                continue;
+              }
               var mh = MethodHandles.insertArguments(SET_HASH, 2, name, method.getParameterTypes()[0]);
               setterMap.put(name, mh);
               continue;
@@ -342,7 +346,7 @@ public class Configs {
                   if (proxyReadOnly) {
                     throw readOnly(proxyClass, method.getName());
                   }
-                  var value = args[0];
+                  var value = method.isVarArgs()? List.of((Object[])args[0]): args[0];
                   setterMap.get(name).invokeExact(map, value);
                   return proxy; // acts as a builder;
                 }

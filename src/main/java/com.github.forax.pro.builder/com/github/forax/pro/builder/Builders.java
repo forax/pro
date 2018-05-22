@@ -12,6 +12,7 @@ public class Builders {
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface ProBuilder {
     java.util.List<java.lang.String> arguments();
+    ProBuilder arguments(java.lang.String... arguments);
     ProBuilder arguments(java.util.List<java.lang.String> arguments);
     java.nio.file.Path currentDir();
     ProBuilder currentDir(java.nio.file.Path currentDir);
@@ -30,10 +31,12 @@ public class Builders {
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface CompilerBuilder {
     java.util.Optional<java.util.List<java.nio.file.Path>> files();
+    CompilerBuilder files(java.nio.file.Path... files);
     CompilerBuilder files(java.util.List<java.nio.file.Path> files);
     java.util.Optional<java.lang.String> lint();
     CompilerBuilder lint(java.lang.String lint);
     java.util.List<java.nio.file.Path> moduleDependencyPath();
+    CompilerBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     CompilerBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
     java.nio.file.Path moduleExplodedSourcePath();
     CompilerBuilder moduleExplodedSourcePath(java.nio.file.Path moduleExplodedSourcePath);
@@ -42,22 +45,30 @@ public class Builders {
     java.nio.file.Path moduleMergedTestPath();
     CompilerBuilder moduleMergedTestPath(java.nio.file.Path moduleMergedTestPath);
     java.util.Optional<java.util.List<java.nio.file.Path>> modulePath();
+    CompilerBuilder modulePath(java.nio.file.Path... modulePath);
     CompilerBuilder modulePath(java.util.List<java.nio.file.Path> modulePath);
     java.util.List<java.nio.file.Path> moduleSourcePath();
+    CompilerBuilder moduleSourcePath(java.nio.file.Path... moduleSourcePath);
     CompilerBuilder moduleSourcePath(java.util.List<java.nio.file.Path> moduleSourcePath);
     java.util.List<java.nio.file.Path> moduleSourceResourcesPath();
+    CompilerBuilder moduleSourceResourcesPath(java.nio.file.Path... moduleSourceResourcesPath);
     CompilerBuilder moduleSourceResourcesPath(java.util.List<java.nio.file.Path> moduleSourceResourcesPath);
     java.util.List<java.nio.file.Path> moduleTestPath();
+    CompilerBuilder moduleTestPath(java.nio.file.Path... moduleTestPath);
     CompilerBuilder moduleTestPath(java.util.List<java.nio.file.Path> moduleTestPath);
     java.util.List<java.nio.file.Path> moduleTestResourcesPath();
+    CompilerBuilder moduleTestResourcesPath(java.nio.file.Path... moduleTestResourcesPath);
     CompilerBuilder moduleTestResourcesPath(java.util.List<java.nio.file.Path> moduleTestResourcesPath);
     java.util.Optional<java.util.List<java.lang.String>> rawArguments();
+    CompilerBuilder rawArguments(java.lang.String... rawArguments);
     CompilerBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
     int release();
     CompilerBuilder release(int release);
     java.util.Optional<java.util.List<java.lang.String>> rootModules();
+    CompilerBuilder rootModules(java.lang.String... rootModules);
     CompilerBuilder rootModules(java.util.List<java.lang.String> rootModules);
     java.util.Optional<java.util.List<java.nio.file.Path>> upgradeModulePath();
+    CompilerBuilder upgradeModulePath(java.nio.file.Path... upgradeModulePath);
     CompilerBuilder upgradeModulePath(java.util.List<java.nio.file.Path> upgradeModulePath);
     java.util.Optional<java.lang.Boolean> verbose();
     CompilerBuilder verbose(boolean verbose);
@@ -70,6 +81,7 @@ public class Builders {
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface DocerBuilder {
     java.util.Optional<java.util.List<java.nio.file.Path>> files();
+    DocerBuilder files(java.nio.file.Path... files);
     DocerBuilder files(java.util.List<java.nio.file.Path> files);
     boolean generateTestDoc();
     DocerBuilder generateTestDoc(boolean generateTestDoc);
@@ -78,24 +90,31 @@ public class Builders {
     java.util.Optional<java.net.URI> link();
     DocerBuilder link(java.net.URI link);
     java.util.List<java.nio.file.Path> moduleDependencyPath();
+    DocerBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     DocerBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
     java.nio.file.Path moduleDocSourcePath();
     DocerBuilder moduleDocSourcePath(java.nio.file.Path moduleDocSourcePath);
     java.nio.file.Path moduleDocTestPath();
     DocerBuilder moduleDocTestPath(java.nio.file.Path moduleDocTestPath);
     java.util.List<java.nio.file.Path> moduleMergedTestPath();
+    DocerBuilder moduleMergedTestPath(java.nio.file.Path... moduleMergedTestPath);
     DocerBuilder moduleMergedTestPath(java.util.List<java.nio.file.Path> moduleMergedTestPath);
     java.util.Optional<java.util.List<java.nio.file.Path>> modulePath();
+    DocerBuilder modulePath(java.nio.file.Path... modulePath);
     DocerBuilder modulePath(java.util.List<java.nio.file.Path> modulePath);
     java.util.List<java.nio.file.Path> moduleSourcePath();
+    DocerBuilder moduleSourcePath(java.nio.file.Path... moduleSourcePath);
     DocerBuilder moduleSourcePath(java.util.List<java.nio.file.Path> moduleSourcePath);
     boolean quiet();
     DocerBuilder quiet(boolean quiet);
     java.util.Optional<java.util.List<java.lang.String>> rawArguments();
+    DocerBuilder rawArguments(java.lang.String... rawArguments);
     DocerBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
     java.util.Optional<java.util.List<java.lang.String>> rootModules();
+    DocerBuilder rootModules(java.lang.String... rootModules);
     DocerBuilder rootModules(java.util.List<java.lang.String> rootModules);
     java.util.Optional<java.util.List<java.nio.file.Path>> upgradeModulePath();
+    DocerBuilder upgradeModulePath(java.nio.file.Path... upgradeModulePath);
     DocerBuilder upgradeModulePath(java.util.List<java.nio.file.Path> upgradeModulePath);
   }
   
@@ -108,12 +127,16 @@ public class Builders {
     boolean dryRun();
     FormatterBuilder dryRun(boolean dryRun);
     java.util.Optional<java.util.List<java.nio.file.Path>> files();
+    FormatterBuilder files(java.nio.file.Path... files);
     FormatterBuilder files(java.util.List<java.nio.file.Path> files);
     java.util.List<java.nio.file.Path> moduleSourcePath();
+    FormatterBuilder moduleSourcePath(java.nio.file.Path... moduleSourcePath);
     FormatterBuilder moduleSourcePath(java.util.List<java.nio.file.Path> moduleSourcePath);
     java.util.List<java.nio.file.Path> moduleTestPath();
+    FormatterBuilder moduleTestPath(java.nio.file.Path... moduleTestPath);
     FormatterBuilder moduleTestPath(java.util.List<java.nio.file.Path> moduleTestPath);
     java.util.Optional<java.util.List<java.lang.String>> rawArguments();
+    FormatterBuilder rawArguments(java.lang.String... rawArguments);
     FormatterBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
     boolean replace();
     FormatterBuilder replace(boolean replace);
@@ -136,18 +159,24 @@ public class Builders {
     boolean includeSystemJMODs();
     LinkerBuilder includeSystemJMODs(boolean includeSystemJMODs);
     java.util.Optional<java.util.List<java.lang.String>> launchers();
+    LinkerBuilder launchers(java.lang.String... launchers);
     LinkerBuilder launchers(java.util.List<java.lang.String> launchers);
     java.nio.file.Path moduleArtifactSourcePath();
     LinkerBuilder moduleArtifactSourcePath(java.nio.file.Path moduleArtifactSourcePath);
     java.util.List<java.nio.file.Path> moduleDependencyPath();
+    LinkerBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     LinkerBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
     java.util.Optional<java.util.List<java.nio.file.Path>> modulePath();
+    LinkerBuilder modulePath(java.nio.file.Path... modulePath);
     LinkerBuilder modulePath(java.util.List<java.nio.file.Path> modulePath);
     java.util.Optional<java.util.List<java.lang.String>> rawArguments();
+    LinkerBuilder rawArguments(java.lang.String... rawArguments);
     LinkerBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
     java.util.Optional<java.util.List<java.lang.String>> rootModules();
+    LinkerBuilder rootModules(java.lang.String... rootModules);
     LinkerBuilder rootModules(java.util.List<java.lang.String> rootModules);
     java.util.Optional<java.util.List<java.lang.String>> serviceNames();
+    LinkerBuilder serviceNames(java.lang.String... serviceNames);
     LinkerBuilder serviceNames(java.util.List<java.lang.String> serviceNames);
     boolean stripDebug();
     LinkerBuilder stripDebug(boolean stripDebug);
@@ -164,14 +193,17 @@ public class Builders {
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface ModulefixerBuilder {
     java.util.Optional<java.util.List<java.lang.String>> additionalRequires();
+    ModulefixerBuilder additionalRequires(java.lang.String... additionalRequires);
     ModulefixerBuilder additionalRequires(java.util.List<java.lang.String> additionalRequires);
     java.util.Optional<java.util.List<java.lang.String>> additionalUses();
+    ModulefixerBuilder additionalUses(java.lang.String... additionalUses);
     ModulefixerBuilder additionalUses(java.util.List<java.lang.String> additionalUses);
     boolean force();
     ModulefixerBuilder force(boolean force);
     java.nio.file.Path moduleDependencyFixerPath();
     ModulefixerBuilder moduleDependencyFixerPath(java.nio.file.Path moduleDependencyFixerPath);
     java.util.List<java.nio.file.Path> moduleDependencyPath();
+    ModulefixerBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     ModulefixerBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
   }
   
@@ -196,24 +228,32 @@ public class Builders {
     java.nio.file.Path moduleDocTestPath();
     PackagerBuilder moduleDocTestPath(java.nio.file.Path moduleDocTestPath);
     java.util.List<java.nio.file.Path> moduleExplodedSourcePath();
+    PackagerBuilder moduleExplodedSourcePath(java.nio.file.Path... moduleExplodedSourcePath);
     PackagerBuilder moduleExplodedSourcePath(java.util.List<java.nio.file.Path> moduleExplodedSourcePath);
     java.util.List<java.nio.file.Path> moduleExplodedTestPath();
+    PackagerBuilder moduleExplodedTestPath(java.nio.file.Path... moduleExplodedTestPath);
     PackagerBuilder moduleExplodedTestPath(java.util.List<java.nio.file.Path> moduleExplodedTestPath);
     @Deprecated
     java.util.Optional<java.util.List<java.lang.String>> moduleMetadata();
     @Deprecated
+    PackagerBuilder moduleMetadata(java.lang.String... moduleMetadata);
+    @Deprecated
     PackagerBuilder moduleMetadata(java.util.List<java.lang.String> moduleMetadata);
     java.util.List<java.nio.file.Path> moduleSourcePath();
+    PackagerBuilder moduleSourcePath(java.nio.file.Path... moduleSourcePath);
     PackagerBuilder moduleSourcePath(java.util.List<java.nio.file.Path> moduleSourcePath);
     java.nio.file.Path moduleSrcArtifactSourcePath();
     PackagerBuilder moduleSrcArtifactSourcePath(java.nio.file.Path moduleSrcArtifactSourcePath);
     java.nio.file.Path moduleSrcArtifactTestPath();
     PackagerBuilder moduleSrcArtifactTestPath(java.nio.file.Path moduleSrcArtifactTestPath);
     java.util.List<java.nio.file.Path> moduleTestPath();
+    PackagerBuilder moduleTestPath(java.nio.file.Path... moduleTestPath);
     PackagerBuilder moduleTestPath(java.util.List<java.nio.file.Path> moduleTestPath);
     java.util.Optional<java.util.List<java.lang.String>> modules();
+    PackagerBuilder modules(java.lang.String... modules);
     PackagerBuilder modules(java.util.List<java.lang.String> modules);
     java.util.Optional<java.util.List<java.lang.String>> rawArguments();
+    PackagerBuilder rawArguments(java.lang.String... rawArguments);
     PackagerBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
   }
   
@@ -228,6 +268,7 @@ public class Builders {
     java.nio.file.Path moduleArtifactTestPath();
     PerferBuilder moduleArtifactTestPath(java.nio.file.Path moduleArtifactTestPath);
     java.util.List<java.nio.file.Path> moduleDependencyPath();
+    PerferBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     PerferBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
   }
   
@@ -240,18 +281,24 @@ public class Builders {
     boolean checkForUpdate();
     ResolverBuilder checkForUpdate(boolean checkForUpdate);
     java.util.Optional<java.util.List<java.lang.String>> dependencies();
+    ResolverBuilder dependencies(java.lang.String... dependencies);
     ResolverBuilder dependencies(java.util.List<java.lang.String> dependencies);
     java.nio.file.Path mavenLocalRepositoryPath();
     ResolverBuilder mavenLocalRepositoryPath(java.nio.file.Path mavenLocalRepositoryPath);
     java.util.List<java.nio.file.Path> moduleDependencyPath();
+    ResolverBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     ResolverBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
     java.util.Optional<java.util.List<java.nio.file.Path>> modulePath();
+    ResolverBuilder modulePath(java.nio.file.Path... modulePath);
     ResolverBuilder modulePath(java.util.List<java.nio.file.Path> modulePath);
     java.util.List<java.nio.file.Path> moduleSourcePath();
+    ResolverBuilder moduleSourcePath(java.nio.file.Path... moduleSourcePath);
     ResolverBuilder moduleSourcePath(java.util.List<java.nio.file.Path> moduleSourcePath);
     java.util.List<java.nio.file.Path> moduleTestPath();
+    ResolverBuilder moduleTestPath(java.nio.file.Path... moduleTestPath);
     ResolverBuilder moduleTestPath(java.util.List<java.nio.file.Path> moduleTestPath);
     java.util.Optional<java.util.List<java.net.URI>> remoteRepositories();
+    ResolverBuilder remoteRepositories(java.net.URI... remoteRepositories);
     ResolverBuilder remoteRepositories(java.util.List<java.net.URI> remoteRepositories);
   }
   
@@ -264,16 +311,21 @@ public class Builders {
     java.nio.file.Path javaCommand();
     RunnerBuilder javaCommand(java.nio.file.Path javaCommand);
     java.util.Optional<java.util.List<java.lang.String>> mainArguments();
+    RunnerBuilder mainArguments(java.lang.String... mainArguments);
     RunnerBuilder mainArguments(java.util.List<java.lang.String> mainArguments);
     java.util.Optional<java.lang.String> module();
     RunnerBuilder module(java.lang.String module);
     java.util.List<java.nio.file.Path> modulePath();
+    RunnerBuilder modulePath(java.nio.file.Path... modulePath);
     RunnerBuilder modulePath(java.util.List<java.nio.file.Path> modulePath);
     java.util.Optional<java.util.List<java.lang.String>> rawArguments();
+    RunnerBuilder rawArguments(java.lang.String... rawArguments);
     RunnerBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
     java.util.Optional<java.util.List<java.lang.String>> rootModules();
+    RunnerBuilder rootModules(java.lang.String... rootModules);
     RunnerBuilder rootModules(java.util.List<java.lang.String> rootModules);
     java.util.Optional<java.util.List<java.nio.file.Path>> upgradeModulePath();
+    RunnerBuilder upgradeModulePath(java.nio.file.Path... upgradeModulePath);
     RunnerBuilder upgradeModulePath(java.util.List<java.nio.file.Path> upgradeModulePath);
   }
   
@@ -284,8 +336,10 @@ public class Builders {
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface TesterBuilder {
     java.util.List<java.nio.file.Path> moduleDependencyPath();
+    TesterBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     TesterBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
     java.util.List<java.nio.file.Path> moduleExplodedTestPath();
+    TesterBuilder moduleExplodedTestPath(java.nio.file.Path... moduleExplodedTestPath);
     TesterBuilder moduleExplodedTestPath(java.util.List<java.nio.file.Path> moduleExplodedTestPath);
     java.nio.file.Path pluginDir();
     TesterBuilder pluginDir(java.nio.file.Path pluginDir);
