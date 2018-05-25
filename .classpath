@@ -66,22 +66,22 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/asm-6.1.jar">
+	<classpathentry kind="lib" path="deps/asm-6.2.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/asm-analysis-6.1.jar">
+	<classpathentry kind="lib" path="deps/asm-analysis-6.2.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/asm-commons-6.1.jar">
+	<classpathentry kind="lib" path="deps/asm-commons-6.2.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/asm-tree-6.1.jar">
+	<classpathentry kind="lib" path="deps/asm-tree-6.2.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
