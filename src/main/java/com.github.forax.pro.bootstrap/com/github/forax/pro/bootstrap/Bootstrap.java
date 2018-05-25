@@ -140,7 +140,7 @@ public class Bootstrap {
     //      set(
     //        "resolver.remoteRepositories",
     //        list(uri("https://oss.sonatype.org/content/repositories/snapshots")));
-    //      String gjfVersion = "1.5";
+    //      String gjfVersion = "1.6";
     //      String guavaVersion = "24.1";
     //      String javacShadedVersion = "9+181-r4173-1";
     //      set("resolver.dependencies", list(
@@ -154,7 +154,7 @@ public class Bootstrap {
     //      ));
     //    });
     compileAndPackagePlugin("formatter", list("compiler", "packager"), () -> {
-      var gjfVersion = "1.5";
+      var gjfVersion = "1.6";
       var base = "https://github.com/google/google-java-format/releases/download/google-java-format";
       download(
           uri(base + "-" + gjfVersion + "/google-java-format-" + gjfVersion + "-all-deps.jar"),
