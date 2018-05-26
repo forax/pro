@@ -10,5 +10,5 @@ build_script:
   - cmd: build.bat
 
 test_script:
-  - cmd: target/pro/bin/pro test
+  - cmd: target/pro/bin/pro build test
  
