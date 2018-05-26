@@ -47,4 +47,4 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    condition: $JDK_RELEASE=='OpenJDK 10'
+    condition: $JDK_RELEASE = 'OpenJDK 10'
