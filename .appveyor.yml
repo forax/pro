@@ -23,6 +23,5 @@ deploy:
   artifact: C:\projects\pro\pro-win_x64.zip
   prerelease: true
   on:
-    branch: master
     appveyor_repo_tag: true
     
