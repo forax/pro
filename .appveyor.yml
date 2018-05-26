@@ -13,7 +13,7 @@ test_script:
   - cmd: target\pro\bin\pro build test.pro
  
 before_deploy:
-  - Compress-Archive -Path C:\projects\pro\target\pro -DestinationPath pro-macos.zip
+  - ps: Compress-Archive -Path C:\projects\pro\target\pro -DestinationPath pro-macos.zip
  
 deploy:
   provider: GitHub
