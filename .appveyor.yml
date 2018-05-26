@@ -17,6 +17,7 @@ before_deploy:
  
 deploy:
   provider: GitHub
+  description: "pro release"
   auth_token:
     secure: Axsa6CpU1DegL5GAWEiBm1ot2BfDMsQY0T3tsxmwzyBY+6wBt+Y4G4Tv5MRrsUd+
   artifact: pro-macos.zip
