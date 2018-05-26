@@ -2,9 +2,6 @@ sudo: false
 
 language: java
 
-before_install:
-  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
-
 matrix:
   include:
 # 10
@@ -18,6 +15,18 @@ matrix:
       install: . ./install-jdk.sh -F 11 -L BCL
     - env: JDK_RELEASE='OpenJDK 11-ea'
       install: . ./install-jdk.sh -F 11 -L GPL
+# MacOS X
+    - env: JDK_RELASE='OpenJDK 10 macOs'
+      os: osx
+      before_install:
+        - brew install wget
+      install:
+        - wget https://cdn.azul.com/zulu/bin/zulu10.2+3-jdk10.0.1-macosx_x64.zip
+        - unzip zulu10.2+3-jdk10.0.1-macosx_x64.zip
+        - env: JAVA_HOME=zulu10.2+3-jdk10.0.1-macosx_x64
+
+before_install:
+  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
 
 script:
 - java --version
