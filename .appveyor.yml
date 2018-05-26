@@ -8,5 +8,4 @@ install:
   - cmd: echo "%JAVA_HOME%"
 
 build_script:
-  - ps: start-process "cmd.exe" "/c build.bat"
-
+  - cmd: cmd.exe /c build.bat
