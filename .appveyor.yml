@@ -10,5 +10,18 @@ build_script:
   - cmd: build.bat
 
 test_script:
-  - cmd: target/pro/bin/pro build test.pro
+  - cmd: target\pro\bin\pro build test.pro
  
+before_deploy:
+  - Compress-Archive -Path C:\projects\pro\target\pro -DestinationPath pro-macos.zip
+ 
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: Axsa6CpU1DegL5GAWEiBm1ot2BfDMsQY0T3tsxmwzyBY+6wBt+Y4G4Tv5MRrsUd+
+  artifact: pro-macos.zip
+  prerelease: true
+  on:
+    branch: master
+    appveyor_repo_tag: true
+    
