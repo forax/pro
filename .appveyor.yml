@@ -1,5 +1,5 @@
 environment:
-  JAVA_HOME: "C:\projects\pro\zulu10.2+3-jdk10.0.1-win_x64"
+  JAVA_HOME: C:\projects\pro\zulu10.2+3-jdk10.0.1-win_x64
 
 install:
   - ps: (new-object net.webclient).DownloadFile('https://cdn.azul.com/zulu/bin/zulu10.2+3-jdk10.0.1-win_x64.zip', 'C:\projects\pro\zulu10.2+3-jdk10.0.1-win_x64.zip')
@@ -8,6 +8,5 @@ install:
   - cmd: echo "%JAVA_HOME%"
 
 build_script:
-  - cmd: build.bat
-
+  - ps: start-process "cmd.exe" "/c build.bat"
 
