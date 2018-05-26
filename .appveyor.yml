@@ -1,7 +1,8 @@
 install:
   - ps: (new-object net.webclient).DownloadFile('https://cdn.azul.com/zulu/bin/zulu10.2+3-jdk10.0.1-win_x64.zip', 'C:\projects\pro\zulu10.2+3-jdk10.0.1-win_x64.zip')
   - ps: Expand-Archive -Path C:\projects\pro\zulu10.2+3-jdk10.0.1-win_x64.zip
-  - cmd: set JAVA_HOME C:\projects\pro\zulu10.2+3-jdk10.0.1-win_x64
+  - cmd: setx JAVA_HOME C:\projects\pro\zulu10.2+3-jdk10.0.1-win_x64
+  - cmd: echo "%JAVA_HOME%"
 
 build_script:
   - cmd: build.bat
