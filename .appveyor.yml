@@ -6,7 +6,7 @@ install:
   - cmd: dir
   - ps: Expand-Archive -Path C:\projects\pro\zulu10.2+3-jdk10.0.1-win_x64.zip
 
-test_script:
+build_script:
   - cmd: build.bat
 
 
