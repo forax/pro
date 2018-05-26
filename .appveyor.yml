@@ -13,16 +13,16 @@ test_script:
   - cmd: target\pro\bin\pro build test.pro
  
 before_deploy:
-  - ps: Compress-Archive -Path C:\projects\pro\target\pro -DestinationPath pro-macos.zip
+  - ps: Compress-Archive -Path C:\projects\pro\target\pro -DestinationPath C:\projects\pro\pro-win_x64.zip
  
 deploy:
   provider: GitHub
   description: "pro release"
   auth_token:
     secure: Axsa6CpU1DegL5GAWEiBm1ot2BfDMsQY0T3tsxmwzyBY+6wBt+Y4G4Tv5MRrsUd+
-  artifact: pro-macos.zip
+  artifact: C:\projects\pro\pro-win_x64.zip
   prerelease: true
   on:
     branch: master
-#    appveyor_repo_tag: true
+    appveyor_repo_tag: true
     
