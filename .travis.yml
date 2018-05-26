@@ -19,12 +19,13 @@ matrix:
     - env: JDK_RELEASE='OpenJDK 11-ea'
       install: . ./install-jdk.sh -F 11 -L GPL
 # MacOS X
-    - env: JDK_RELASE='OpenJDK 10 macOs'
+    - env:
+        - JDK_RELEASE='OpenJDK 10 macOS'
+        - JAVA_HOME=zulu10.2+3-jdk10.0.1-macosx_x64
       os: osx
       install:
         - wget https://cdn.azul.com/zulu/bin/zulu10.2+3-jdk10.0.1-macosx_x64.zip
         - unzip zulu10.2+3-jdk10.0.1-macosx_x64.zip
-        - env: JAVA_HOME=zulu10.2+3-jdk10.0.1-macosx_x64
 
 script:
 - java --version
