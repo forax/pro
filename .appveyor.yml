@@ -14,13 +14,15 @@ test_script:
  
 before_deploy:
   - ps: Compress-Archive -Path C:\projects\pro\target\pro -DestinationPath C:\projects\pro\pro-win_x64.zip
+
+artifacts:
+- path: C:\projects\pro\pro-win_x64.zip
  
 deploy:
   provider: GitHub
   description: "pro release"
   auth_token:
     secure: Axsa6CpU1DegL5GAWEiBm1ot2BfDMsQY0T3tsxmwzyBY+6wBt+Y4G4Tv5MRrsUd+
-  artifact: C:\projects\pro\pro-win_x64.zip
   prerelease: true
   on:
     appveyor_repo_tag: true
