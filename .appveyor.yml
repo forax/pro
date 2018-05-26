@@ -3,6 +3,7 @@ environment:
 
 install:
   - ps: (new-object net.webclient).DownloadFile('https://cdn.azul.com/zulu/bin/zulu10.2+3-jdk10.0.1-win_x64.zip', 'zulu10.2+3-jdk10.0.1-win_x64.zip')
+  - cmd: dir
   - ps: Expand-Archive -Path zulu10.2+3-jdk10.0.1-win_x64.zip
 
 test_script:
