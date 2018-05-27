@@ -42,14 +42,14 @@ script:
 
 before_deploy:
   - cd target
-  - tar zcvf ../pro-$DEPLOY.tar.gz pro
+  - zip ../pro-$DEPLOY.zip pro
   - cd ..
 
 deploy:
   provider: releases
   api_key:
     secure: "LK+rfK0Ryhscy7QBYTTTqUEfwgHg8y/7rB4VJ+5i+w5XbkJNLZ031Rg3sfo71v0LybnfdjXc9myirqbEc4E4mUF0StXQTDzidJuvbaNkvxq9axJH3vhs8tBaI6cDisANSpWg5BpDEEffyW6+q2p2fiy2mKH58dHOryOq0sH+w1HtDUiJRvV5G68mcNYL7B60yuog0XFIwJMDq+yPQNwf6XCJ2Nlgk9h1liZY25Y4bSlXvBGN/SLQbVk5h4RVFXognyPFb8OOlpv7N1093POL918MveHJYjrzZAuLiZr3VhAD/HDNq66ytfZXE6FpS1hOitw0KryM/xMVDogs5ezWJLeRZ+HP3mESh+YeIE/6CqxMx4eFpQNp34EWtiizDa9hP97WcE7GsOTHndQ2oYC2fdMAm5WJUwgwdvhP7N/8p/BJgjCa9sreQa6xYYdPGK/JQAWauSY80YvFBx87wkiMonVcLph/8253zKjZ8APwQNTTd0k+Xx9TaU3VVDMnpBeUfYvUbzfNl+RUllMbxVvUe6sZjkAHTW8DpIbt8PyDFH44cSekcnTsDlSFhag85koBlsi0KmG1mvjAkDCzrB8VhJeX9krLzsruZSeL7b6K2pASzDsy+dalePuXWatW/PsFBorvlRy0e0K8zh+rbVUIFJLp+HCCSJ3V7JRLA45C/+c="
-  file: pro-$DEPLOY.tar.gz
+  file: pro-$DEPLOY.zip
   skip_cleanup: true
   prerelease: true
   on:
