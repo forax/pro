@@ -14,8 +14,9 @@ matrix:
     - env: oraclejdk10
       env: JDK_RELEASE='Oracle JDK 10'
       install: . ./install-jdk.sh -F 10 -L BCL
-    - env: DEPLOY='linux'
-      env: JDK_RELEASE='OpenJDK 10'
+    - env:
+      - JDK_RELEASE='OpenJDK 10'
+      - DEPLOY='linux'
       install: . ./install-jdk.sh -F 10 -L GPL
 # 11
     - env: JDK_RELEASE='Oracle JDK 11-ea'
@@ -23,8 +24,9 @@ matrix:
     - env: JDK_RELEASE='OpenJDK 11-ea'
       install: . ./install-jdk.sh -F 11 -L GPL
 # MacOS X
-    - env: DEPLOY='macos'
-      env: JDK_RELEASE='OpenJDK 10 macOS'
+    - env:
+      - JDK_RELEASE='OpenJDK 10 macOS'
+      - DEPLOY='macos'
       os: osx
       install: . ./install-macos.sh 
 
