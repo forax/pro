@@ -42,7 +42,7 @@ script:
 
 before_deploy:
   - cd target
-  - zip ../pro-$DEPLOY.zip pro
+  - zip -r ../pro-$DEPLOY.zip pro
   - cd ..
 
 deploy:
