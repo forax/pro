@@ -8,7 +8,7 @@ install:
 
 build_script:
   - cmd: build.bat
-  - ps: Compress-Archive -Path C:\projects\pro\target\pro -DestinationPath C:\projects\pro\pro-win_x64.zip
+  - ps: Compress-Archive -Path C:\projects\pro\target\pro -DestinationPath C:\projects\pro\pro-windows.zip
 
 test_script:
   - cmd: target\pro\bin\pro build test.pro
