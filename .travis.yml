@@ -24,14 +24,14 @@ matrix:
       install: . ./install-jdk.sh -F 11 -L BCL
     - env:
       - JDK_RELEASE='OpenJDK 11-ea'
-      - DEPLOY='false'
+      - DEPLOY='linux-early-access'
       install: . ./install-jdk.sh -F 11 -L GPL
-# MacOS X
+# macOS 10
     - env:
       - JDK_RELEASE='OpenJDK 10 macOS'
       - DEPLOY='macos'
       os: osx
-      install: . ./install-macos.sh 
+      install: . ./install-macos.sh
 
 script:
 - java --version
