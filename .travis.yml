@@ -5,6 +5,9 @@ language: java
 before_install:
   - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
 
+env:
+  - DEPLOY='false'
+
 matrix:
   include:
 # 10
@@ -12,6 +15,7 @@ matrix:
       env: JDK_RELEASE='Oracle JDK 10'
       install: . ./install-jdk.sh -F 10 -L BCL
     - env: JDK_RELEASE='OpenJDK 10'
+      env: DEPLOY='linux'
       install: . ./install-jdk.sh -F 10 -L GPL
 # 11
     - env: JDK_RELEASE='Oracle JDK 11-ea'
@@ -19,13 +23,10 @@ matrix:
     - env: JDK_RELEASE='OpenJDK 11-ea'
       install: . ./install-jdk.sh -F 11 -L GPL
 # MacOS X
-    - env:
-        - JDK_RELEASE='OpenJDK 10 macOS'
-        - JAVA_HOME=zulu10.2+3-jdk10.0.1-macosx_x64
+    - env: JDK_RELEASE='OpenJDK 10 macOS'
+      env: DEPLOY='macos'
       os: osx
-      install:
-        - wget https://cdn.azul.com/zulu/bin/zulu10.2+3-jdk10.0.1-macosx_x64.zip
-        - unzip zulu10.2+3-jdk10.0.1-macosx_x64.zip
+      install: . ./install-jdk.sh --url https://download.java.net/java/GA/jdk10/10.0.1/fb4372174a714e6b8c52526dc134031e/10/openjdk-10.0.1_osx-x64_bin.tar.gz
 
 script:
 - java --version
@@ -36,15 +37,15 @@ script:
 
 before_deploy:
   - cd target
-  - tar zcvf ../pro-linux.tar.gz pro
+  - tar zcvf ../pro-$DEPLOY.tar.gz pro
   - cd ..
 
 deploy:
   provider: releases
   api_key:
     secure: "LK+rfK0Ryhscy7QBYTTTqUEfwgHg8y/7rB4VJ+5i+w5XbkJNLZ031Rg3sfo71v0LybnfdjXc9myirqbEc4E4mUF0StXQTDzidJuvbaNkvxq9axJH3vhs8tBaI6cDisANSpWg5BpDEEffyW6+q2p2fiy2mKH58dHOryOq0sH+w1HtDUiJRvV5G68mcNYL7B60yuog0XFIwJMDq+yPQNwf6XCJ2Nlgk9h1liZY25Y4bSlXvBGN/SLQbVk5h4RVFXognyPFb8OOlpv7N1093POL918MveHJYjrzZAuLiZr3VhAD/HDNq66ytfZXE6FpS1hOitw0KryM/xMVDogs5ezWJLeRZ+HP3mESh+YeIE/6CqxMx4eFpQNp34EWtiizDa9hP97WcE7GsOTHndQ2oYC2fdMAm5WJUwgwdvhP7N/8p/BJgjCa9sreQa6xYYdPGK/JQAWauSY80YvFBx87wkiMonVcLph/8253zKjZ8APwQNTTd0k+Xx9TaU3VVDMnpBeUfYvUbzfNl+RUllMbxVvUe6sZjkAHTW8DpIbt8PyDFH44cSekcnTsDlSFhag85koBlsi0KmG1mvjAkDCzrB8VhJeX9krLzsruZSeL7b6K2pASzDsy+dalePuXWatW/PsFBorvlRy0e0K8zh+rbVUIFJLp+HCCSJ3V7JRLA45C/+c="
-  file: pro-linux.tar.gz
+  file: pro-$DEPLOY.tar.gz
   skip_cleanup: true
   on:
     tags: true
-    condition: $JDK_RELEASE = 'OpenJDK 10'
+    condition: $DEPLOY != 'false'
