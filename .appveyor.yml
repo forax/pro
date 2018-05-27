@@ -14,7 +14,7 @@ test_script:
   - cmd: target\pro\bin\pro build test.pro
 
 artifacts:
-- path: pro-win_x64.zip
+- path: pro-windows.zip
  
 deploy:
   provider: GitHub
