@@ -8,8 +8,16 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
 public interface CompilerConf {
+  @Deprecated
   int release();
+  @Deprecated
   void release(int release);
+  
+  Optional<Integer> sourceRelease();
+  void sourceRelease(int release);
+  
+  Optional<Integer> testRelease();
+  void testRelease(int testRelease);
   
   Optional<Boolean> verbose();
   void verbose(boolean verbose);

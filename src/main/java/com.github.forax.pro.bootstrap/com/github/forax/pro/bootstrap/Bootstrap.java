@@ -39,7 +39,7 @@ public class Bootstrap {
     set("pro.exitOnError", true);
 
     set("compiler.lint", "all,-varargs,-overloads");
-    set("compiler.release", jdkVersion());
+    set("compiler.sourceRelease", jdkVersion());
 
     var version = "0." + jdkVersion();
     set("packager.modules", list(

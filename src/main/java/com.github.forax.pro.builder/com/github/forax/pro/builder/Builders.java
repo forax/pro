@@ -62,11 +62,17 @@ public class Builders {
     java.util.Optional<java.util.List<java.lang.String>> rawArguments();
     CompilerBuilder rawArguments(java.lang.String... rawArguments);
     CompilerBuilder rawArguments(java.util.List<java.lang.String> rawArguments);
+    @Deprecated
     int release();
+    @Deprecated
     CompilerBuilder release(int release);
     java.util.Optional<java.util.List<java.lang.String>> rootModules();
     CompilerBuilder rootModules(java.lang.String... rootModules);
     CompilerBuilder rootModules(java.util.List<java.lang.String> rootModules);
+    java.util.Optional<java.lang.Integer> sourceRelease();
+    CompilerBuilder sourceRelease(int sourceRelease);
+    java.util.Optional<java.lang.Integer> testRelease();
+    CompilerBuilder testRelease(int testRelease);
     java.util.Optional<java.util.List<java.nio.file.Path>> upgradeModulePath();
     CompilerBuilder upgradeModulePath(java.nio.file.Path... upgradeModulePath);
     CompilerBuilder upgradeModulePath(java.util.List<java.nio.file.Path> upgradeModulePath);

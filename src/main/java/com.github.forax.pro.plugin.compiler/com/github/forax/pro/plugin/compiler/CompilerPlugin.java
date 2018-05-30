@@ -47,6 +47,7 @@ public class CompilerPlugin implements Plugin {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void init(MutableConfig config) {
     var compilerConf = config.getOrUpdate(name(), CompilerConf.class);
     compilerConf.release(9);
@@ -118,13 +119,15 @@ public class CompilerPlugin implements Plugin {
         .orElseThrow(() -> new IllegalStateException("can not find javac"));
     var compiler = config.getOrThrow(name(), CompilerConf.class);
     
-    
+    @SuppressWarnings("deprecation")
+    var sourceRelease = compiler.sourceRelease().orElse(compiler.release());
     var moduleSourceFinder = ModuleHelper.sourceModuleFinders(compiler.moduleSourcePath());
     var errorCode = compile(log, javacTool, compiler,
         compiler.moduleSourcePath(),
         moduleSourceFinder,
         List.of(),
         compiler.moduleSourceResourcesPath(),
+        sourceRelease,
         compiler.moduleExplodedSourcePath(),
         "source:");
     if (errorCode != 0) {
@@ -155,11 +158,12 @@ public class CompilerPlugin implements Plugin {
         moduleMergedTestFinder,
         List.of(compiler.moduleExplodedSourcePath()),
         StableList.<Path>of().appendAll(compiler.moduleSourceResourcesPath()).appendAll(compiler.moduleTestResourcesPath()),
+        compiler.testRelease().orElse(sourceRelease),
         compiler.moduleExplodedTestPath(),
         "test:");
   }
 
-  private static int compile(Log log, ToolProvider javacTool, CompilerConf compiler, List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, List<Path> resourcesPath, Path destination, String pass) throws IOException {
+  private static int compile(Log log, ToolProvider javacTool, CompilerConf compiler, List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, List<Path> resourcesPath, int release, Path destination, String pass) throws IOException {
     Optional<List<Path>> modulePath = modulePathOrDependencyPath(compiler.modulePath(),
         compiler.moduleDependencyPath(), additionalSourcePath);
     
@@ -207,21 +211,21 @@ public class CompilerPlugin implements Plugin {
     deleteAllFiles(destination, false);
     
     
-    var javac = new Javac(compiler.release());
+    var javac = new Javac(release);
     compiler.verbose().ifPresent(javac::verbose);
     compiler.lint().ifPresent(javac::lint);
     compiler.rawArguments().ifPresent(javac::rawArguments);
     compiler.upgradeModulePath().ifPresent(javac::upgradeModulePath);
     compiler.rootModules().ifPresent(javac::rootModules);
     
-    var compatibilityMode = compiler.release() <= 8;
+    var compatibilityMode = release <= 8;
     if (!compatibilityMode) {
       // module mode, compile all java files at once using moduleSourcePath
       javac.moduleSourcePath(moduleSourcePath);
       modulePath.ifPresent(javac::modulePath);
       javac.destination(destination);
       
-      var errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, rootSourceNames, javac, compiler.release(), __ -> true);
+      var errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, rootSourceNames, javac, release, __ -> true);
       if (errorCode != 0) {
         return errorCode;
       }
@@ -236,7 +240,7 @@ public class CompilerPlugin implements Plugin {
         javac.destination(destination.resolve(moduleName));
         
         var moduleInfoFilter = pathFilenameEquals("module-info.java");
-        var errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, List.of(moduleName), javac, compiler.release(), moduleInfoFilter.negate());
+        var errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, List.of(moduleName), javac, release, moduleInfoFilter.negate());
         if (errorCode != 0) {
           return errorCode;
         }
