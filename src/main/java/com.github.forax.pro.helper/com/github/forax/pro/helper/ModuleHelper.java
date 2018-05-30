@@ -311,6 +311,30 @@ public class ModuleHelper {
     }
   }
 
+  public static List<String> topologicalSort(ModuleFinder finder, List<String> rootNames) {
+    var order = new ArrayList<String>();
+    var visited = new HashSet<String>();
+    for(var root: rootNames) {
+      deepFirst(root, finder, visited, order);
+    }
+    return order;
+  }
+  
+  private static void deepFirst(String name, ModuleFinder finder, HashSet<String> visited, ArrayList<String> order) {
+    if (visited.contains(name)) {
+      return;
+    }
+    var refOpt = finder.find(name);
+    if (!refOpt.isPresent()) {
+      return;
+    }
+    visited.add(name);
+    for(Requires requires: refOpt.get().descriptor().requires()) {
+      deepFirst(requires.name(), finder, visited, order);
+    }
+    order.add(name);
+  }
+  
 
   public static ModuleDescriptor mergeModuleDescriptor(ModuleDescriptor sourceModule, ModuleDescriptor testModule) {
     var open = sourceModule.isOpen() || testModule.isOpen();

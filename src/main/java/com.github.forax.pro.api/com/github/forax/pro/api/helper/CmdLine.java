@@ -5,8 +5,16 @@ import static java.util.stream.Collectors.joining;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class CmdLine {
-  private final ArrayList<String> arguments = new ArrayList<>();
+public final class CmdLine {
+  private final ArrayList<String> arguments;
+  
+  private CmdLine(ArrayList<String> arguments) {
+    this.arguments = arguments;
+  }
+  
+  public CmdLine() {
+    this(new ArrayList<>());
+  }
   
   public CmdLine add(Object value) {
     arguments.add(value.toString());  // implicit nullcheck

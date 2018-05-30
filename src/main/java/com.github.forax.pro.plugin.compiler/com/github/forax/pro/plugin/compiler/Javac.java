@@ -6,31 +6,48 @@ import java.util.Objects;
 import java.util.Optional;
 
 class Javac {
-  private final int release;
-  private final Path destination;
-  private final List<Path> moduleSourcePath;
-  
+  private Path destination;
+  private int release;
+  private List<Path> moduleSourcePath;
+  private List<Path> sourcePath;
   private List<Path> modulePath;
+  private List<Path> classPath;
   private List<Path> upgradeModulePath;
   private List<String> rootModules;
   private boolean verbose; 
   private String lint;
   private List<String> rawArguments;
   
-  Javac(int release, Path destination, List<Path> moduleSourcePath) {
+  Javac(int release) {
     this.release = release;
-    this.destination = destination;
-    this.moduleSourcePath = moduleSourcePath;
   }
   
+  public void destination(Path destination) {
+    this.destination = Objects.requireNonNull(destination);
+  }
+  public Optional<Path> destination() {
+    return Optional.ofNullable(destination);
+  }
+  
+  public void release(int release) {
+    this.release = release;
+  }
   public int release() {
     return release;
   }
-  public Path destination() {
-    return destination;
+  
+  public Optional<List<Path>> moduleSourcePath() {
+    return Optional.ofNullable(moduleSourcePath);
   }
-  public List<Path> moduleSourcePath() {
-    return moduleSourcePath;
+  public void moduleSourcePath(List<Path> moduleSourcePath) {
+    this.moduleSourcePath = Objects.requireNonNull(moduleSourcePath);
+  }
+  
+  public Optional<List<Path>> sourcePath() {
+    return Optional.ofNullable(sourcePath);
+  }
+  public void sourcePath(List<Path> sourcePath) {
+    this.sourcePath = Objects.requireNonNull(sourcePath);
   }
   
   public boolean verbose() {
@@ -66,6 +83,17 @@ class Javac {
   }
   public void modulePath(List<Path> modulePath) {
     this.modulePath = Objects.requireNonNull(modulePath);
+  }
+  
+  public Optional<List<Path>> classPath() {
+    return Optional.ofNullable(classPath);
+  }
+  /**
+   * Set the class path or remove it if set as null.
+   * @param classPath a class path or null
+   */
+  public void classPath(List<Path> classPath) {
+    this.classPath = classPath;
   }
   
   public Optional<List<String>> rootModules() {
