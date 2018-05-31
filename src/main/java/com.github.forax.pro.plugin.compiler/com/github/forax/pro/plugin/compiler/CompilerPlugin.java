@@ -10,18 +10,21 @@ import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEquals;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.spi.ToolProvider;
@@ -267,6 +270,22 @@ public class CompilerPlugin implements Plugin {
         });
       }
     }
+    
+    // declare all services for the classpath
+    for(var module: moduleFinder.findAll()) {
+      var descriptor = module.descriptor();
+      var moduleFolder = destination.resolve(descriptor.name());
+      var servicesPath = moduleFolder.resolve("META-INF/services/");
+      Set<Provides> provides = descriptor.provides();
+      if (!provides.isEmpty()) {
+        Files.createDirectories(servicesPath);
+      }
+      for(var provide: provides) {
+        var servicePath = servicesPath.resolve(provide.service());
+        Files.write(servicePath, (Iterable<String>)provide.providers().stream()::iterator, CREATE_NEW);
+      }
+    }
+    
     return 0;
   }
   
