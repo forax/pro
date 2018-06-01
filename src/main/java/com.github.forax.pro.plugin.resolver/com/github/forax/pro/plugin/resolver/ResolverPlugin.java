@@ -192,10 +192,15 @@ public class ResolverPlugin implements Plugin {
         .collect(Collectors.toList());
     log.debug(unresolvedRootArtifacts, unresolvedRootArtifactList -> "unresolved root artifacts " + unresolvedRootArtifactList);
     
+    // find all resolved artifacts
     var unresolvedArtifacts = new LinkedHashSet<ArtifactInfo>();
     for(var unresolvedRootArtifact: unresolvedRootArtifacts) {
       unresolvedArtifacts.addAll(aether.dependencies(unresolvedRootArtifact));  
     }
+    
+    // remove not resolvable artifacts
+    resolverConf.dontResolve().map(deps -> StableList.from(deps).map(aether::createArtifactInfo)).ifPresent(unresolvedArtifacts::removeAll);
+    
     log.debug(unresolvedArtifacts, unresolvedArtifactList -> "unresolved artifacts " + unresolvedArtifactList);
     
     verifyDeclaration("artifacts",

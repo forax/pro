@@ -289,6 +289,9 @@ public class Builders {
     java.util.Optional<java.util.List<java.lang.String>> dependencies();
     ResolverBuilder dependencies(java.lang.String... dependencies);
     ResolverBuilder dependencies(java.util.List<java.lang.String> dependencies);
+    java.util.Optional<java.util.List<java.lang.String>> dontResolve();
+    ResolverBuilder dontResolve(java.lang.String... dontResolve);
+    ResolverBuilder dontResolve(java.util.List<java.lang.String> dontResolve);
     java.nio.file.Path mavenLocalRepositoryPath();
     ResolverBuilder mavenLocalRepositoryPath(java.nio.file.Path mavenLocalRepositoryPath);
     java.util.List<java.nio.file.Path> moduleDependencyPath();

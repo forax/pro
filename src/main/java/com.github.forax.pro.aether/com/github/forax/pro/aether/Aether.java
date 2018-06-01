@@ -81,6 +81,12 @@ public class Aether {
     var artifact = new DefaultArtifact(artifactCoords);
     return new ArtifactQuery(artifact);
   }
+  
+  @SuppressWarnings("static-method")
+  public ArtifactInfo createArtifactInfo(String artifactCoords) {
+    var artifact = new DefaultArtifact(artifactCoords);
+    return new ArtifactInfo(artifact);
+  }
 
   public Set<ArtifactInfo> dependencies(ArtifactQuery query)throws IOException {
     var artifact = query.artifact;

@@ -32,4 +32,7 @@ public interface ResolverConf {
   
   boolean checkForUpdate();
   void checkForUpdate(boolean checkForUpdate);
+  
+  Optional<List<String>> dontResolve();
+  void dontResolve(List<String> dependencies);
 }
