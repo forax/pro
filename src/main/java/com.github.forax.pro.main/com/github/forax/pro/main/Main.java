@@ -99,7 +99,7 @@ public class Main {
         "\n" + 
         "resolver.\n" + 
         "    checkForUpdate(true).\n" +
-        "    dependencies(list(\n" + 
+        "    dependencies(\n" + 
         "        // JUnit 5\n" + 
         "        \"org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.1.0\",\n" + 
         "        \"org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.1.0\",\n" + 
@@ -111,22 +111,21 @@ public class Main {
         "//        \"org.apache.commons.math3=org.apache.commons:commons-math3:3.6.1\",\n" + 
         "//        \"net.sf.jopt-simple=net.sf.jopt-simple:jopt-simple:5.0.4\",\n" + 
         "//        \"org.openjdk.jmh.generator=org.openjdk.jmh:jmh-generator-annprocess:1.20\"\n" +
-        "    ))\n" + 
+        "    )\n" + 
         "\n" + 
         "// compiler.\n" + 
-        "//     rawArguments(list(\n" + 
+        "//     rawArguments(\n" + 
         "//         \"--processor-module-path\", \"deps\"   // enable JMH annotation processor\n" + 
-        "//     ))\n" + 
+        "//     )\n" + 
         "\n" + 
         "docer.\n" + 
-        "    rawArguments(list(\n" + 
-        "        \"-quiet\",\n" + 
-        "        \"-link\", \"https://docs.oracle.com/javase/9/docs/api/\"))\n" + 
+        "    quiet(true).\n" + 
+        "    link(uri(\"https://docs.oracle.com/javase/9/docs/api/\"))\n" + 
         "   \n" + 
         "packager.\n" + 
-        "    modules(list(\n" + 
+        "    modules(\n" + 
         "        \"" + module + "@1.0/" + module + ".Main\"\n" + 
-        "    ))   \n" + 
+        "    )   \n" + 
         "    \n" + 
         "run(resolver, modulefixer, compiler, tester, docer, packager, runner /*, perfer */)\n" + 
         "\n" + 
