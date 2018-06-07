@@ -8,18 +8,12 @@ import static com.github.forax.pro.Pro.run;
 import static com.github.forax.pro.Pro.set;
 import static com.github.forax.pro.Pro.uri;
 import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
+import static com.github.forax.pro.helper.FileHelper.download;
 import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
 import static java.nio.file.Files.createDirectories;
-import static java.nio.file.StandardOpenOption.CREATE_NEW;
-import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.URI;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -212,23 +206,6 @@ public class Bootstrap {
                       location("target/image/plugins/" + name + "/libs"),
                       stream -> stream.filter(p -> p.toString().endsWith(".jar")),
                       Files::copy));
-    }
-  }
-
-  private static void download(URI urlSpec, Path targetDirectory) {
-    var fileName = Paths.get(urlSpec.getPath()).getFileName();
-    var targetFile = targetDirectory.resolve(fileName);
-    if (Files.exists(targetFile)) {
-      return;
-    }
-    try { 
-      Files.createDirectories(targetDirectory);
-      try(var input = Channels.newChannel(urlSpec.toURL().openStream());
-          var output = FileChannel.open(targetFile, CREATE_NEW, WRITE)) {
-        output.transferFrom(input, 0, Long.MAX_VALUE);
-      }
-    } catch (IOException e) {
-      throw new UncheckedIOException("download failed: url=" + urlSpec + " targetDirectory=" + targetDirectory, e);
     }
   }
 }

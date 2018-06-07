@@ -1,11 +1,16 @@
 package com.github.forax.pro.helper;
 
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.WRITE;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -149,6 +154,23 @@ public class FileHelper {
       }));
     } catch(IOException e) {
       throw new UncheckedIOException(e);
+    }
+  }
+  
+  public static void download(URI uri, Path targetDirectory) {
+    var fileName = Paths.get(uri.getPath()).getFileName();
+    var targetFile = targetDirectory.resolve(fileName);
+    if (Files.exists(targetFile)) {
+      return;
+    }
+    try { 
+      Files.createDirectories(targetDirectory);
+      try(var input = uri.toURL().openStream();
+           var output = Files.newOutputStream(targetFile, CREATE_NEW, WRITE)) {
+        input.transferTo(output);
+      }
+    } catch (IOException e) {
+      throw new UncheckedIOException("download failed: url=" + uri + " targetDirectory=" + targetDirectory, e);
     }
   }
 }
