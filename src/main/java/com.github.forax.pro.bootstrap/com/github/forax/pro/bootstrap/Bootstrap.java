@@ -11,8 +11,12 @@ import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.download;
 import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
 import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.createTempDirectory;
+import static java.nio.file.Files.move;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -97,7 +101,7 @@ public class Bootstrap {
         .appendAll(ModuleHelper.systemModulesFinder().findAll().stream()
                   .map(ref -> ref.descriptor().name())
                   .collect(Collectors.toSet())));
-
+    
     run("modulefixer", "compiler", "docer", "packager");
 
     compileAndPackagePlugin("runner", list("resolver", "modulefixer", "compiler", "packager"), () -> { /* empty */});
@@ -165,10 +169,31 @@ public class Bootstrap {
     // re-generate builders
     //com.github.forax.pro.Pro.loadPlugins(java.nio.file.Paths.get("target/image/plugins"));
     //com.github.forax.pro.bootstrap.genbuilder.GenBuilder.generate();
-
+    
+    // update module name to maven coordinates list
+    //updateModuleNameList();
+    
     Vanity.postOperations();
   }
 
+  
+  private static void updateModuleNameList() {
+    var moduleNameListURI = uri("https://raw.githubusercontent.com/jodastephen/jpms-module-names/master/generated/module-maven.properties");
+    var resolverResourceFile = location("src/main/resources/com.github.forax.pro.plugin.resolver/com/github/forax/pro/plugin/resolver/module-maven.properties");
+    
+    try {
+      var tmpDir = createTempDirectory("pro");
+      download(moduleNameListURI, tmpDir); 
+      System.out.println("download " + moduleNameListURI);
+      createDirectories(resolverResourceFile.getParent());
+      move(tmpDir.resolve("module-maven.properties"),
+          resolverResourceFile,
+          REPLACE_EXISTING);
+    } catch(IOException | UncheckedIOException e) {
+      System.err.println("can not update module name list " + e.getMessage());
+    }
+  }
+  
   private static void compileAndPackagePlugin(String name, List<String> plugins, Runnable extras) throws IOException {
     deleteAllFiles(location("plugins/" + name + "/target"), false);
 
