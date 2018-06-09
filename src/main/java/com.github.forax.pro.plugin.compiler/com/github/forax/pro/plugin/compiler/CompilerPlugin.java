@@ -261,13 +261,19 @@ public class CompilerPlugin implements Plugin {
     //copy all resources
     for(var resources: resourcesPath) {
       if (Files.exists(resources)) {
-        log.debug(null, __ -> "copy " + resources + " to " + destination);
-        FileHelper.walkAndFindCounterpart(resources, destination, Function.identity(), (src, dest) -> {
-          if (Files.isDirectory(src) && Files.isDirectory(dest)) { // do not overwrite directory
-            return;
+        for(var moduleName: rootSourceNames) {  // copy only resources of the modules
+          var resourceDir = resources.resolve(moduleName);
+          var destinationDir = destination.resolve(moduleName);
+          if (Files.exists(resourceDir)) {
+            log.debug(null, __ -> "copy " + resourceDir + " to " + destinationDir);
+            FileHelper.walkAndFindCounterpart(resourceDir, destinationDir, Function.identity(), (src, dest) -> {
+              if (Files.isDirectory(src) && Files.isDirectory(dest)) { // do not overwrite directory
+                return;
+              }
+              Files.copy(src, dest); 
+            });
           }
-          Files.copy(src, dest); 
-        });
+        }
       }
     }
     
