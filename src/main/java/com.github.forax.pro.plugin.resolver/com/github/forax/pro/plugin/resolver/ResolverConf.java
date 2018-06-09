@@ -24,6 +24,9 @@ public interface ResolverConf {
   Path mavenLocalRepositoryPath();
   void mavenLocalRepositoryPath(Path path);
   
+  URI moduleNameList();
+  void moduleNameList(URI moduleNameList);
+  
   Optional<List<URI>> remoteRepositories();
   void remoteRepositories(List<URI> remoteRepositories);
   

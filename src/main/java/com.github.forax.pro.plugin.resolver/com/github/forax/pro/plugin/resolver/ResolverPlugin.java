@@ -1,11 +1,14 @@
 package com.github.forax.pro.plugin.resolver;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
+import static com.github.forax.pro.helper.util.Lazy.lazy;
 import static java.util.stream.Collectors.joining;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleFinder;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -16,7 +19,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -36,6 +38,8 @@ import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
 import com.github.forax.pro.helper.ModuleHelper.ResolverListener;
 import com.github.forax.pro.helper.util.StableList;
+import com.github.forax.pro.helper.util.Strategy;
+import com.github.forax.pro.plugin.resolver.DependencyParser.ModuleNameMap;
 
 public class ResolverPlugin implements Plugin {
   @Override
@@ -49,6 +53,14 @@ public class ResolverPlugin implements Plugin {
     resolverConf.checkForUpdate(false);
   }
   
+  private static URI getDefaultModuleNameList() {
+    try {
+      return ResolverPlugin.class.getResource("module-maven.properties").toURI();
+    } catch (URISyntaxException e) {
+      throw new UncheckedIOException(new IOException(e));
+    }
+  }
+  
   @Override
   public void configure(MutableConfig config) {
     var resolverConf = config.getOrUpdate(name(), ResolverConf.class);
@@ -57,6 +69,10 @@ public class ResolverPlugin implements Plugin {
     // inputs
     derive(resolverConf, ResolverConf::moduleSourcePath, convention, ConventionFacade::javaModuleSourcePath);
     derive(resolverConf, ResolverConf::moduleTestPath, convention, ConventionFacade::javaModuleTestPath);
+    derive(resolverConf, ResolverConf::moduleNameList,
+        resolverConf, conf -> conf.moduleDependencyPath().stream()
+                                      .map(path -> path.resolve("module-maven.properties")).filter(Files::exists).map(Path::toUri).findFirst()
+                                  .orElseGet(ResolverPlugin::getDefaultModuleNameList));
     
     // outputs
     derive(resolverConf, ResolverConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
@@ -137,13 +153,17 @@ public class ResolverPlugin implements Plugin {
     log.debug(remoteRepositories, remotes -> "remoteRepositories " + remotes);
     
     var aether = Aether.create(resolverConf.mavenLocalRepositoryPath(), remoteRepositories);
+    var moduleNameMap = lazy(() -> ModuleNameMap.create(resolverConf));
+    var dependencyParsingStrategy = Strategy.compose(
+        DependencyParser::parseMavenArtifactCoords,
+        dependency -> DependencyParser.parseVersionAndUseModuleNameMap(dependency, moduleNameMap.eval()));
     
     var depencenciesOpt = resolverConf.dependencies();
     
     // check if there are dependencies with new versions
     if (resolverConf.checkForUpdate() && depencenciesOpt.isPresent()) {
       try {
-        parseResolverDependencies(depencenciesOpt.get(), aether, (module, artifactQuery) -> {
+        DependencyParser.parseDependencies(depencenciesOpt.get(), aether, dependencyParsingStrategy, (module, artifactQuery) -> {
           if (resolvedModules.contains(module)) {  // if the module is referenced by a module-info
             var artifactKey = artifactQuery.getArtifactKey();
             ArtifactQuery queryMostRecent = aether.createArtifactQuery(artifactKey + ":[0,]");
@@ -180,7 +200,7 @@ public class ResolverPlugin implements Plugin {
     // create mapping between module name and Maven artifact name
     var moduleToArtifactMap = new LinkedHashMap<String, List<ArtifactQuery>>();
     var artifactKeyToModuleMap = new LinkedHashMap<String, String>();
-    parseResolverDependencies(depencenciesOpt.get(), aether, (module, artifactQuery) -> {
+    DependencyParser.parseDependencies(depencenciesOpt.get(), aether, dependencyParsingStrategy, (module, artifactQuery) -> {
       moduleToArtifactMap.computeIfAbsent(module, __ -> new ArrayList<>()).add(artifactQuery);
       artifactKeyToModuleMap.put(artifactQuery.getArtifactKey(), module);
     });
@@ -270,27 +290,6 @@ public class ResolverPlugin implements Plugin {
     var artifactModuleName = descriptor.name();
     if (!artifactModuleName.equals(moduleName)) {
       log.info(null, __ -> "WARNING! artifact module name " + artifactModuleName + " (" + resolvedArtifact + ") declared in the module-info is different from declared module name " + moduleName);
-    }
-  }
-  
-  private static void parseResolverDependencies(List<String> dependencies, Aether aether, BiConsumer<String, ArtifactQuery> listener) {
-    for(var dependency: dependencies) {
-      var index = dependency.indexOf('=');
-      if (index == -1) {
-        throw new IllegalStateException("invalid dependency format " + dependency + ", = not found");
-      }
-      var module = dependency.substring(0, index);
-      var artifactNames = dependency.substring(index + 1);
-      
-      var artifactsCoords = artifactNames.split(",");
-      if (artifactsCoords.length == 0) {
-        throw new IllegalStateException("invalid dependency format " + dependency + ", empty Maven coords");
-      }
-      
-      for(var artifactCoords: artifactsCoords) {
-        var artifactQuery = aether.createArtifactQuery(artifactCoords);
-        listener.accept(module, artifactQuery);
-      }
     }
   }
   
