@@ -7,7 +7,7 @@ import java.util.Optional;
  *  Represent a strategy of evaluation.
  *
  * @param <V> the type of parameter of the evaluation.
- * @param <R> the type of the result of the evaluation
+ * @param <R> the type of the result of the evaluation.
  */
 public interface Strategy<V, R> {
   /**
@@ -19,6 +19,8 @@ public interface Strategy<V, R> {
   
   /**
    * Create a strategy that try each strategy in the order of the array.
+   * @param <V> the type of parameter of the evaluation.
+   * @param <R> the type of the result of the evaluation.
    * @param strategies an array of strategies
    * @return a strategy that will delegate its computation to several strategies.
    */

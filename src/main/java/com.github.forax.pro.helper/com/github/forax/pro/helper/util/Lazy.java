@@ -17,6 +17,7 @@ public interface Lazy<V> {
 
   /**
    * Create a lazy evaluation of a value from a computation (a supplier).
+   * @param <V> the type of the value
    * @param supplier the computation of the value, should be side effect free.
    * @return the result of the computation
    */
