@@ -14,6 +14,7 @@ module com.github.forax.pro.main {
   uses javax.tools.Tool;
   
   provides com.github.forax.pro.main.runner.ConfigRunner
-    with com.github.forax.pro.main.JSONConfigRunner,
+    with com.github.forax.pro.main.JavaConfigRunner,
+         com.github.forax.pro.main.JSONConfigRunner,
          com.github.forax.pro.main.JShellConfigRunner;
 }
