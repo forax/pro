@@ -26,6 +26,7 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="src/test/java/com.github.forax.pro.helper"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/plugin/com.github.forax.pro.plugin.tester" path="plugins/tester/src/test/java/com.github.forax.pro.plugin.tester"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/integration.pro" path="src/test/java/integration.pro"/>
+	<classpathentry kind="src" path="wrapper"/>
 	<classpathentry kind="lib" path="deps/aether.api-1.0.1.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
