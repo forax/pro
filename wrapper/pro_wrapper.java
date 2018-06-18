@@ -124,8 +124,6 @@ class pro_wrapper {
     
     // make the command in pro/bin executable
     for(var cmd: (Iterable<Path>)list(folder.resolve("pro").resolve("bin"))::iterator) {
-      System.out.println("set " + cmd + " executable");
-      
       Set<PosixFilePermission> permissions = getPosixFilePermissions(cmd);
       Collections.addAll(permissions, OWNER_EXECUTE, GROUP_EXECUTE, OTHERS_EXECUTE);
       setPosixFilePermissions(cmd, permissions);
