@@ -5,7 +5,7 @@ jobs:
       - image: circleci/openjdk:11-ea-node-browsers
     working_directory: ~/repo
     environment:
-      JAVA_HOME: ./jdk-11-lword
+      JAVA_HOME: ./jdk-11-lworld
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       
