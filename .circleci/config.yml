@@ -20,10 +20,17 @@ jobs:
       - run: ./build.sh
       - run: ./target/pro/bin/pro version
       - run: ./target/pro/bin/pro build test.pro    
+      
+      - persist_to_workspace:
+          root: target
+          paths:
+            - pro
   deploy:
     machine:
       enabled: true
     steps:
+      - attach_workspace:
+          at: target
       # package pro
       - run: cd target
       - run: zip -r ../pro-early-access-lworld.zip pro
