@@ -49,7 +49,12 @@ workflows:
   version: 2
   build-and-deploy:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
       - deploy:
           requires:
             - build
@@ -57,4 +62,4 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /.*\..*/
+              only: /.*/
