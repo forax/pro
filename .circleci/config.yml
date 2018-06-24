@@ -12,14 +12,17 @@ jobs:
     steps:
       - checkout
       # install
-      - run: wget https://github.com/forax/valuetype-lambda/releases/download/e5cec7364448/jdk-11-lworld.tar.gz
-      - run: tar zxvf jdk-11-lworld.tar.gz
-      - run: $JAVA_HOME/bin/java --version
+      - run: |
+          wget https://github.com/forax/valuetype-lambda/releases/download/e5cec7364448/jdk-11-lworld.tar.gz
+          tar zxvf jdk-11-lworld.tar.gz
+          $JAVA_HOME/bin/java --version
+          
       # build pro
-      - run: chmod u+x ./build.sh
-      - run: ./build.sh
-      - run: ./target/pro/bin/pro version
-      - run: ./target/pro/bin/pro build test.pro    
+      - run: |
+          chmod u+x ./build.sh
+          ./build.sh
+          ./target/pro/bin/pro version
+          ./target/pro/bin/pro build test.pro    
       
       - persist_to_workspace:
           root: target
@@ -32,14 +35,18 @@ jobs:
       - attach_workspace:
           at: target
       # package pro
-      - run: cd target
-      - run: zip -r ../pro-early-access-lworld.zip pro
-      - run: cd ..
+      - run: |
+          cd target
+          zip -r ../pro-early-access-lworld.zip pro
+          cd ..
+          
       # upload on github release
-      - run: wget https://github.com/tcnksm/ghr/releases/download/v0.10.0/ghr_v0.10.0_linux_amd64.tar.gz
-      - run: tar xvf ghr_v0.10.0_linux_amd64.tar.gz
-      - run: mv ghr_v0.10.0_linux_amd64/ghr ghr
-      - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME `git describe --tags` pro-early-access-lworld.zip
+      - run: |
+          wget https://github.com/tcnksm/ghr/releases/download/v0.10.0/ghr_v0.10.0_linux_amd64.tar.gz
+          tar xvf ghr_v0.10.0_linux_amd64.tar.gz
+          mv ghr_v0.10.0_linux_amd64/ghr ghr
+          ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME `git describe --tags` pro-early-access-lworld.zip
+          
 workflows:
   version: 2
   build-and-deploy:
