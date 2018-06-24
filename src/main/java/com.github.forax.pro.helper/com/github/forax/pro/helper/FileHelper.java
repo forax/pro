@@ -37,7 +37,7 @@ public class FileHelper {
    * @throws IOException if a file can not be deleted
    */
   public static void deleteAllFiles(Path directory, boolean removeDirectory) throws IOException {
-    Files.walkFileTree(directory, new FileVisitor<Path>() {
+    Files.walkFileTree(directory, new FileVisitor<>() {
       @Override
       public FileVisitResult postVisitDirectory(Path path, IOException e) throws IOException {
         if (removeDirectory || !path.equals(directory)) {
