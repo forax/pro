@@ -5,16 +5,16 @@ jobs:
       - image: circleci/openjdk:11-ea-node-browsers
     working_directory: ~/repo
     environment:
+      JAVA_HOME=jdk-11-lword
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
+      
     steps:
       - checkout
       # install
       - run: wget https://github.com/forax/valuetype-lambda/releases/download/e5cec7364448/jdk-11-lworld.tar.gz
       - run: tar zxvf jdk-11-lworld.tar.gz
-      - run: export JAVA_HOME=jdk-11-lword
-      - run: export PATH=$JAVA_HOME/bin:$PATH
-      - run: java --version
+      - run: $JAVA_HOME/bin/java --version
       # build pro
       - run: chmod u+x ./build.sh
       - run: ./build.sh
