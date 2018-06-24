@@ -42,7 +42,7 @@ jobs:
       - run: wget https://github.com/tcnksm/ghr/releases/download/v0.10.0/ghr_v0.10.0_linux_amd64.tar.gz
       - run: tar xvf ghr_v0.10.0_linux_amd64.tar.gz
       - run: mv ghr_v0.10.0_linux_amd64/ghr ghr
-      - run: ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-early-access-lworld.zip
+      - run: ./ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-early-access-lworld.zip
           
 workflows:
   version: 2
