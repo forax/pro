@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: fedora/latest
+      - image: fedora:latest
 
     working_directory: ~/repo
 
