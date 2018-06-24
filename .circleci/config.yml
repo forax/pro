@@ -43,7 +43,7 @@ jobs:
       - run: tar xvf ghr_v0.10.0_linux_amd64.tar.gz
       - run: mv ghr_v0.10.0_linux_amd64/ghr ghr
       - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG
-      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-early-access-lworld.zip
+      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-lworld.zip
           
 workflows:
   version: 2
