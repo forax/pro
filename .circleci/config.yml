@@ -35,7 +35,7 @@ jobs:
       # package pro
       - run: |
           cd target
-          zip -r ../pro-early-access-lworld.zip pro
+          zip -r ../pro-linux-early-access-lworld.zip pro
           cd ..
           
       # upload on github release
