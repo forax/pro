@@ -1,19 +1,14 @@
 package com.github.forax.pro.plugin.tester;
 
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModule;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.io.UncheckedIOException;
 import java.lang.module.ModuleReference;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.function.IntSupplier;
-import java.util.stream.Collectors;
 
-import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
@@ -36,26 +31,22 @@ public class TesterRunner implements IntSupplier {
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
       var moduleReference = ModuleHelper.getOnlyModule((Path) args.get("testPath"));
-      var testClasses = findTestClasses(moduleReference);
-      var launcher = LauncherFactory.create();
-      return launch(moduleReference, launcher, testClasses);
+      return launch(moduleReference);
     } finally {
       Thread.currentThread().setContextClassLoader(oldContext);
     }
   }
 
-  private int launch(ModuleReference moduleReference, Launcher launcher, List<Class<?>> testClasses) {
+  private int launch(ModuleReference moduleReference) {
     var builder = LauncherDiscoveryRequestBuilder.request();
-    testClasses.forEach(testClass -> builder.selectors(selectClass(testClass)));
-
+    builder.selectors(selectModule(moduleReference.descriptor().name()));
     builder.configurationParameter("junit.jupiter.execution.parallel.enabled", "" + args.get("parallel"));
 
     var startTimeMillis = System.currentTimeMillis();
     var launcherDiscoveryRequest = builder.build();
     var summaryGeneratingListener = new SummaryGeneratingListener();
-    launcher.execute(launcherDiscoveryRequest, summaryGeneratingListener);
+    LauncherFactory.create().execute(launcherDiscoveryRequest, summaryGeneratingListener);
     var duration = System.currentTimeMillis() - startTimeMillis;
-    
     var summary = summaryGeneratingListener.getSummary();
     int failures = (int) summary.getTestsFailedCount();
     if (failures == 0) {
@@ -69,28 +60,5 @@ public class TesterRunner implements IntSupplier {
       System.out.println(stringWriter);
     }
     return failures;
-  }
-
-  private List<Class<?>> findTestClasses(ModuleReference moduleReference) {
-    try (var moduleReader = moduleReference.open()) {
-      return moduleReader.list()
-          .filter(name -> name.endsWith("Tests.class")) // TODO Make test class filter configurable
-          .map(TesterRunner::loadTestClass)
-          .collect(Collectors.toList());
-    } catch(IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  private static Class<?> loadTestClass(String fileName) {
-    var className = fileName.substring(0, fileName.length() - ".class".length());
-    className = className.replace('/','.');
-    var classLoader = TesterRunner.class.getClassLoader();
-    try {
-      return classLoader.loadClass(className);
-    } catch (ClassNotFoundException e) {
-      throw new UncheckedIOException(
-          new IOException("Loading failed for name: " + className + " (" + fileName + ')', e));
-    }
   }
 }
