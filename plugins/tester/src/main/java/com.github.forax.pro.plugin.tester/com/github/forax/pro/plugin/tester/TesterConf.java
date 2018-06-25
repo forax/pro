@@ -20,4 +20,6 @@ public interface TesterConf {
   // tester
   int timeout();
   void timeout(int seconds);
+  boolean parallel();
+  void parallel(boolean parallel);
 }

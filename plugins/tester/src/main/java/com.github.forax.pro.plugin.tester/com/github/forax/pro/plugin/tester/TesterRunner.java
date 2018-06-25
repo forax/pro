@@ -9,6 +9,7 @@ import java.io.UncheckedIOException;
 import java.lang.module.ModuleReference;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
@@ -21,11 +22,12 @@ import com.github.forax.pro.helper.ModuleHelper;
 
 public class TesterRunner implements IntSupplier {
   private final ClassLoader classLoader;
-  private final Path testPath;
+  private final Map<String, Object> args;
 
-  public TesterRunner(Path testPath) {
+  // Note: TestConf.class does not work as a parameter here.
+  public TesterRunner(Map<String, Object> args) {
     this.classLoader = getClass().getClassLoader();
-    this.testPath = testPath;
+    this.args = args;
   }
 
   @Override
@@ -33,7 +35,7 @@ public class TesterRunner implements IntSupplier {
     var oldContext = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
-      var moduleReference = ModuleHelper.getOnlyModule(testPath);
+      var moduleReference = ModuleHelper.getOnlyModule((Path) args.get("testPath"));
       var testClasses = findTestClasses(moduleReference);
       var launcher = LauncherFactory.create();
       return launch(moduleReference, launcher, testClasses);
@@ -42,9 +44,11 @@ public class TesterRunner implements IntSupplier {
     }
   }
 
-  private static int launch(ModuleReference moduleReference, Launcher launcher, List<Class<?>> testClasses) {
+  private int launch(ModuleReference moduleReference, Launcher launcher, List<Class<?>> testClasses) {
     var builder = LauncherDiscoveryRequestBuilder.request();
     testClasses.forEach(testClass -> builder.selectors(selectClass(testClass)));
+
+    builder.configurationParameter("junit.jupiter.execution.parallel.enabled", "" + args.get("parallel"));
 
     var startTimeMillis = System.currentTimeMillis();
     var launcherDiscoveryRequest = builder.build();
@@ -67,7 +71,7 @@ public class TesterRunner implements IntSupplier {
     return failures;
   }
 
-  private static List<Class<?>> findTestClasses(ModuleReference moduleReference) {
+  private List<Class<?>> findTestClasses(ModuleReference moduleReference) {
     try (var moduleReader = moduleReference.open()) {
       return moduleReader.list()
           .filter(name -> name.endsWith("Tests.class")) // TODO Make test class filter configurable
