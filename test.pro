@@ -1,23 +1,22 @@
 import static com.github.forax.pro.Pro.*
 import static com.github.forax.pro.builder.Builders.*
+import com.github.forax.pro.api.*;
+
+Command test(boolean parallel) {
+  return command(() -> {
+    tester.parallel(parallel);
+    run(tester);  
+  });
+}
 
 // pro.loglevel("debug")
 tester.timeout(99)
-tester.parallel(false)
 
-// run "pro" tests
-run(tester)
-
-// run "pro" tests again, now in parallel
-tester.parallel(true)
-run(tester)
+// run "pro" tests, once in serial, once in parallel
+run(test(false), test(true))
 
 // run "plugins" tests
-tester.moduleExplodedTestPath(
-  list(
-    path("plugins/tester/target/test/exploded")
-  )
-)
-run(tester)
+tester.moduleExplodedTestPath(path("plugins/tester/target/test/exploded"))
+run(test(false), test(true))
 
 /exit
