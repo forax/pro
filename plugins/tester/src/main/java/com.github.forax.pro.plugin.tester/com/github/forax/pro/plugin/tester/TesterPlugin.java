@@ -4,6 +4,7 @@ import static com.github.forax.pro.api.MutableConfig.derive;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,14 +85,18 @@ public class TesterPlugin implements Plugin {
     var moduleReference = ModuleHelper.getOnlyModule(testPath);
     var moduleDescriptor = moduleReference.descriptor();
     var moduleName = moduleDescriptor.name();
-    var testClassLoader = createTestClassLoader(tester, testPath, moduleName);
+    var loader = createTestClassLoader(tester, testPath, moduleName);
+    
+    var testConfClass = load(loader, TestConf.class);
+    var testConf = create(testConfClass, new Class<?>[] { java.lang.module.ModuleDescriptor.class, boolean.class}, moduleDescriptor, tester.parallel());
+    var runnerClass = load(loader, TesterRunner.class);
+    var runner = (IntSupplier) create(runnerClass, new Class<?>[] { testConfClass }, testConf);
+     
     try {
-      var fixture = create(testClassLoader, TesterFixture.class, moduleDescriptor, tester.parallel());
-      var runner = (IntSupplier) create(testClassLoader, TesterRunner.class, fixture);
       var future = executor.submit(runner::getAsInt);
       return future.get(tester.timeout(), TimeUnit.SECONDS);
     } catch (InterruptedException e) {
-      throw new IOException("execute() interrupted", e);
+      throw new IOException(e);
     } catch (ExecutionException e) {
       throw rethrow(e.getCause());
     } catch (TimeoutException e) {
@@ -100,13 +105,22 @@ public class TesterPlugin implements Plugin {
     }
   }
 
-  private Object create(ClassLoader loader, Class<?> type, Object... args) throws IOException {
+  private static Class<?> load(ClassLoader loader, Class<?> type) {
+    var name = type.getName();
     try {
-      var typeClass = loader.loadClass(type.getName());
-      // TODO Assuming first public c'tor with matching parameter types...
-      return typeClass.getConstructors()[0].newInstance(args);
-    } catch (ReflectiveOperationException e) {
-      throw new IOException("Loading class or creating instance of " + type + " failed.", e);
+      return loader.loadClass(name);
+    } catch (ClassNotFoundException e) {
+      throw new AssertionError(e);
+    }
+  }
+  
+  private static Object create(Class<?> type, Class<?>[] parameterTypes, Object... args) {
+    try {
+      return type.getConstructor(parameterTypes).newInstance(args);
+    } catch (IllegalAccessException | NoSuchMethodException | InstantiationException e) {
+      throw new AssertionError(e);
+    } catch(InvocationTargetException e) {
+      throw rethrow(e.getCause());
     }
   }
 

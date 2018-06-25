@@ -12,11 +12,11 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
 public class TesterRunner implements IntSupplier {
   private final ClassLoader classLoader;
-  private final TesterFixture fixture;
+  private final TestConf testConf;
 
-  public TesterRunner(TesterFixture fixture) {
+  public TesterRunner(TestConf testConf) {
     this.classLoader = getClass().getClassLoader();
-    this.fixture = fixture;
+    this.testConf = testConf;
   }
 
   @Override
@@ -24,16 +24,20 @@ public class TesterRunner implements IntSupplier {
     var oldContext = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
-      return launchJUnitPlatform();
+      return launchJUnitPlatform(testConf);
     } finally {
       Thread.currentThread().setContextClassLoader(oldContext);
     }
   }
 
-  private int launchJUnitPlatform() {
+  private static int launchJUnitPlatform(TestConf testConf) {
+    var moduleName = testConf.moduleName();
+    var moduleNameAndVersion = testConf.moduleNameAndVersion();
+    var parallel = testConf.parallel();
+    
     var builder = LauncherDiscoveryRequestBuilder.request();
-    builder.selectors(selectModule(fixture.moduleDescriptor.name()));
-    builder.configurationParameter("junit.jupiter.execution.parallel.enabled", "" + fixture.parallel);
+    builder.selectors(selectModule(moduleName));
+    builder.configurationParameter("junit.jupiter.execution.parallel.enabled", "" + parallel);
 
     var startTimeMillis = System.currentTimeMillis();
     var launcherDiscoveryRequest = builder.build();
@@ -44,8 +48,7 @@ public class TesterRunner implements IntSupplier {
     int failures = (int) summary.getTestsFailedCount();
     if (failures == 0) {
       var succeeded = summary.getTestsSucceededCount();
-      String moduleName = fixture.moduleDescriptor.toNameAndVersion();
-      System.out.printf("[tester] Successfully tested %s: %d tests in %d ms%n", moduleName, succeeded, duration);
+      System.out.printf("[tester] Successfully tested %s: %d tests in %d ms%n", moduleNameAndVersion, succeeded, duration);
     } else {
       var stringWriter = new StringWriter();
       summary.printTo(new PrintWriter(stringWriter));
