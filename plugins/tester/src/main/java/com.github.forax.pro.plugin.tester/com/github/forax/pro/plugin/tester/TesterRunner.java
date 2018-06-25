@@ -4,25 +4,19 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModul
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.module.ModuleReference;
-import java.nio.file.Path;
-import java.util.Map;
 import java.util.function.IntSupplier;
 
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
-import com.github.forax.pro.helper.ModuleHelper;
-
 public class TesterRunner implements IntSupplier {
   private final ClassLoader classLoader;
-  private final Map<String, Object> args;
+  private final TesterFixture fixture;
 
-  // Note: TestConf.class does not work as a parameter here.
-  public TesterRunner(Map<String, Object> args) {
+  public TesterRunner(TesterFixture fixture) {
     this.classLoader = getClass().getClassLoader();
-    this.args = args;
+    this.fixture = fixture;
   }
 
   @Override
@@ -30,17 +24,16 @@ public class TesterRunner implements IntSupplier {
     var oldContext = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(classLoader);
     try {
-      var moduleReference = ModuleHelper.getOnlyModule((Path) args.get("testPath"));
-      return launch(moduleReference);
+      return launchJUnitPlatform();
     } finally {
       Thread.currentThread().setContextClassLoader(oldContext);
     }
   }
 
-  private int launch(ModuleReference moduleReference) {
+  private int launchJUnitPlatform() {
     var builder = LauncherDiscoveryRequestBuilder.request();
-    builder.selectors(selectModule(moduleReference.descriptor().name()));
-    builder.configurationParameter("junit.jupiter.execution.parallel.enabled", "" + args.get("parallel"));
+    builder.selectors(selectModule(fixture.moduleDescriptor.name()));
+    builder.configurationParameter("junit.jupiter.execution.parallel.enabled", "" + fixture.parallel);
 
     var startTimeMillis = System.currentTimeMillis();
     var launcherDiscoveryRequest = builder.build();
@@ -51,7 +44,7 @@ public class TesterRunner implements IntSupplier {
     int failures = (int) summary.getTestsFailedCount();
     if (failures == 0) {
       var succeeded = summary.getTestsSucceededCount();
-      String moduleName = moduleReference.descriptor().toNameAndVersion();
+      String moduleName = fixture.moduleDescriptor.toNameAndVersion();
       System.out.printf("[tester] Successfully tested %s: %d tests in %d ms%n", moduleName, succeeded, duration);
     } else {
       var stringWriter = new StringWriter();

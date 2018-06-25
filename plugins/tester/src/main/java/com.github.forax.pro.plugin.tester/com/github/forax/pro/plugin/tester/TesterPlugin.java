@@ -4,13 +4,10 @@ import static com.github.forax.pro.api.MutableConfig.derive;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -84,35 +81,39 @@ public class TesterPlugin implements Plugin {
 
   private int execute(TesterConf tester, Path testPath) throws IOException {
     var executor = Executors.newSingleThreadExecutor();
-
     var moduleReference = ModuleHelper.getOnlyModule(testPath);
-    var moduleName = moduleReference.descriptor().name();
+    var moduleDescriptor = moduleReference.descriptor();
+    var moduleName = moduleDescriptor.name();
     var testClassLoader = createTestClassLoader(tester, testPath, moduleName);
-
-    IntSupplier runner;
     try {
-      var runnerClass = testClassLoader.loadClass(TesterRunner.class.getName());
-      var args = new HashMap<String, Object>();
-      args.put("testPath", testPath);
-      args.put("parallel", tester.parallel());
-      runner = (IntSupplier) runnerClass.getConstructor(Map.class).newInstance(args);
+      var fixture = create(testClassLoader, TesterFixture.class, moduleDescriptor, tester.parallel());
+      var runner = (IntSupplier) create(testClassLoader, TesterRunner.class, fixture);
       var future = executor.submit(runner::getAsInt);
       return future.get(tester.timeout(), TimeUnit.SECONDS);
-
-    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InterruptedException e) {
-      throw new IOException("Loading, creating or invoking the TesterRunner failed", e);
-    } catch(InvocationTargetException | ExecutionException e) {
+    } catch (InterruptedException e) {
+      throw new IOException("execute() interrupted", e);
+    } catch (ExecutionException e) {
       throw rethrow(e.getCause());
-    } catch(TimeoutException e) {
+    } catch (TimeoutException e) {
       e.printStackTrace(); // FIXME
       return 1;
     }
   }
 
-  private ClassLoader createTestClassLoader(TesterConf tester, Path testPath, String testModuleName) {
+  private Object create(ClassLoader loader, Class<?> type, Object... args) throws IOException {
+    try {
+      var typeClass = loader.loadClass(type.getName());
+      // TODO Assuming first public c'tor with matching parameter types...
+      return typeClass.getConstructors()[0].newInstance(args);
+    } catch (ReflectiveOperationException e) {
+      throw new IOException("Loading class or creating instance of " + type + " failed.", e);
+    }
+  }
+
+  private ClassLoader createTestClassLoader(
+      TesterConf tester, Path testPath, String testModuleName) {
     var pluginModuleName = TesterPlugin.class.getModule().getName(); // "com.github.forax.pro.plugin.tester"
     var rootNames = List.of(pluginModuleName, testModuleName);
-
     var moduleFinderRoots = StableList
         .of(testPath)                                // "target/test/exploded/[MODULE_NAME]
         .append(tester.pluginDir().resolve(name()))  // "[PRO_HOME]/plugins/tester"
@@ -131,10 +132,10 @@ public class TesterPlugin implements Plugin {
 
   private static UndeclaredThrowableException rethrow(Throwable cause) {
     if (cause instanceof RuntimeException) {
-      throw (RuntimeException)cause;
+      throw (RuntimeException) cause;
     }
     if (cause instanceof Error) {
-      throw (Error)cause;
+      throw (Error) cause;
     }
     return new UndeclaredThrowableException(cause);
   }
