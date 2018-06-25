@@ -8,7 +8,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +37,7 @@ public class TesterPlugin implements Plugin {
   public void init(MutableConfig config) {
     var testerConf = config.getOrUpdate(name(), TesterConf.class);
     testerConf.timeout(60);
+    testerConf.parallel(true);
   }
 
   @Override
@@ -89,7 +92,10 @@ public class TesterPlugin implements Plugin {
     IntSupplier runner;
     try {
       var runnerClass = testClassLoader.loadClass(TesterRunner.class.getName());
-      runner = (IntSupplier) runnerClass.getConstructor(Path.class).newInstance(testPath);
+      var args = new HashMap<String, Object>();
+      args.put("testPath", testPath);
+      args.put("parallel", tester.parallel());
+      runner = (IntSupplier) runnerClass.getConstructor(Map.class).newInstance(args);
       var future = executor.submit(runner::getAsInt);
       return future.get(tester.timeout(), TimeUnit.SECONDS);
 

@@ -297,6 +297,8 @@ public class Builders {
     java.util.List<java.nio.file.Path> moduleDependencyPath();
     ResolverBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     ResolverBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
+    java.net.URI moduleNameList();
+    ResolverBuilder moduleNameList(java.net.URI moduleNameList);
     java.util.Optional<java.util.List<java.nio.file.Path>> modulePath();
     ResolverBuilder modulePath(java.nio.file.Path... modulePath);
     ResolverBuilder modulePath(java.util.List<java.nio.file.Path> modulePath);
@@ -350,6 +352,8 @@ public class Builders {
     java.util.List<java.nio.file.Path> moduleExplodedTestPath();
     TesterBuilder moduleExplodedTestPath(java.nio.file.Path... moduleExplodedTestPath);
     TesterBuilder moduleExplodedTestPath(java.util.List<java.nio.file.Path> moduleExplodedTestPath);
+    boolean parallel();
+    TesterBuilder parallel(boolean parallel);
     java.nio.file.Path pluginDir();
     TesterBuilder pluginDir(java.nio.file.Path pluginDir);
     int timeout();
