@@ -87,11 +87,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="deps/org.apiguardian.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="deps/org.json-20160810.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
@@ -102,11 +97,12 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.jupiter.api.jar"/>
+	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.jupiter.engine.jar"/>
+	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.engine.jar"/>
+	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.launcher.jar"/>
+	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.commons.jar"/>
+	<classpathentry kind="lib" path="plugins/tester/deps/org.opentest4j.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-10">
 		<attributes>
 			<attribute name="module" value="true"/>
