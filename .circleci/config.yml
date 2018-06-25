@@ -20,6 +20,7 @@ jobs:
       # build pro
       - run: chmod u+x ./build.sh
       - run: ./build.sh
+      - run: sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS=-XX:+EnableValhalla/g ./target/pro/bin/pro
       - run: ./target/pro/bin/pro version
       - run: ./target/pro/bin/pro build test.pro
       - persist_to_workspace:
