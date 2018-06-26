@@ -34,15 +34,16 @@ public class TesterRunner implements IntSupplier {
     var moduleName = testConf.moduleName();
     var moduleNameAndVersion = testConf.moduleNameAndVersion();
     var parallel = testConf.parallel();
-    
+
     var builder = LauncherDiscoveryRequestBuilder.request();
     builder.selectors(selectModule(moduleName));
-    builder.configurationParameter("junit.jupiter.execution.parallel.enabled", "" + parallel);
+    builder.configurationParameter("junit.jupiter.execution.parallel.enabled", Boolean.toString(parallel));
 
-    var startTimeMillis = System.currentTimeMillis();
+    var launcher = LauncherFactory.create();
     var launcherDiscoveryRequest = builder.build();
     var summaryGeneratingListener = new SummaryGeneratingListener();
-    LauncherFactory.create().execute(launcherDiscoveryRequest, summaryGeneratingListener);
+    var startTimeMillis = System.currentTimeMillis();
+    launcher.execute(launcherDiscoveryRequest, summaryGeneratingListener);
     var duration = System.currentTimeMillis() - startTimeMillis;
     var summary = summaryGeneratingListener.getSummary();
     int failures = (int) summary.getTestsFailedCount();

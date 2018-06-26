@@ -3,6 +3,7 @@ package com.github.forax.pro.plugin.tester;
 import static com.github.forax.pro.api.MutableConfig.derive;
 
 import java.io.IOException;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -88,9 +89,11 @@ public class TesterPlugin implements Plugin {
     var loader = createTestClassLoader(tester, testPath, moduleName);
     
     var testConfClass = load(loader, TestConf.class);
-    var testConf = create(testConfClass, new Class<?>[] { java.lang.module.ModuleDescriptor.class, boolean.class}, moduleDescriptor, tester.parallel());
+    var testConfTypes = new Class<?>[] {ModuleDescriptor.class, boolean.class};
+    var testConf = create(testConfClass, testConfTypes, moduleDescriptor, tester.parallel());
     var runnerClass = load(loader, TesterRunner.class);
-    var runner = (IntSupplier) create(runnerClass, new Class<?>[] { testConfClass }, testConf);
+    var runnerTypes = new Class<?>[] {testConfClass};
+    var runner = (IntSupplier) create(runnerClass, runnerTypes, testConf);
      
     try {
       var future = executor.submit(runner::getAsInt);
