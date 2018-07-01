@@ -5,10 +5,12 @@ import static com.github.forax.pro.api.MutableConfig.derive;
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -23,7 +25,6 @@ import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.Log;
-import com.github.forax.pro.helper.ModuleHelper;
 import com.github.forax.pro.helper.util.StableList;
 
 public class TesterPlugin implements Plugin {
@@ -57,13 +58,12 @@ public class TesterPlugin implements Plugin {
     testerConf.moduleExplodedTestPath().forEach(registry::watch);
   }
 
-  private static List<Path> directories(List<Path> paths) {
+  private static List<ModuleReference> modules(List<Path> paths) {
     return ModuleFinder.of(paths.toArray(new Path[0]))
         .findAll()
         .stream()
-        .flatMap(ref -> ref.location().stream())
-        .map(Paths::get)
-        .sorted()
+        .filter(ref -> ref.location().isPresent())
+        .sorted(Comparator.comparing(ref -> ref.descriptor().name()))
         .collect(Collectors.toList());
   }
 
@@ -74,18 +74,18 @@ public class TesterPlugin implements Plugin {
     var testerConf = config.getOrThrow(name(), TesterConf.class);
 
     var exitCodeSum = 0;
-    for (var path : directories(testerConf.moduleExplodedTestPath())) {
-      log.debug(path, p -> String.format("Testing %s...", p.toFile().getName()));
-      exitCodeSum += execute(testerConf, path.toAbsolutePath().normalize());
+    for (var moduleRef : modules(testerConf.moduleExplodedTestPath())) {
+      log.verbose(moduleRef, _moduleRef -> "Testing module " + _moduleRef.descriptor().name() + " ...");
+      exitCodeSum += execute(testerConf, moduleRef);
     }
     return exitCodeSum;
   }
 
-  private int execute(TesterConf tester, Path testPath) throws IOException {
+  private int execute(TesterConf tester, ModuleReference moduleReference) throws IOException {
     var executor = Executors.newSingleThreadExecutor();
-    var moduleReference = ModuleHelper.getOnlyModule(testPath);
     var moduleDescriptor = moduleReference.descriptor();
     var moduleName = moduleDescriptor.name();
+    var testPath = Paths.get(moduleReference.location().get());
     var loader = createTestClassLoader(tester, testPath, moduleName);
     
     var testConfClass = load(loader, TestConf.class);
