@@ -1,9 +1,8 @@
 package com.github.forax.pro.plugin.tester;
 
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModule;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.*;
 
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.function.IntSupplier;
 
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
@@ -37,6 +36,7 @@ public class TesterRunner implements IntSupplier {
 
     var builder = LauncherDiscoveryRequestBuilder.request();
     builder.selectors(selectModule(moduleName));
+    //builder.selectors(selectPackage(moduleName));
     builder.configurationParameter("junit.jupiter.execution.parallel.enabled", Boolean.toString(parallel));
 
     var launcher = LauncherFactory.create();
@@ -46,16 +46,20 @@ public class TesterRunner implements IntSupplier {
     launcher.execute(launcherDiscoveryRequest, summaryGeneratingListener);
     var duration = System.currentTimeMillis() - startTimeMillis;
     var summary = summaryGeneratingListener.getSummary();
-    int failures = (int) summary.getTestsFailedCount();
-    if (failures == 0) {
+    
+    // DEBUG
+    //summary.printTo(new PrintWriter(System.out));
+    
+    var success = summary.getTestsFailedCount() == 0 && summary.getTestsAbortedCount() == 0 &&
+                  summary.getContainersFailedCount() == 0 && summary.getContainersAbortedCount() == 0;
+    if (success) {
       var succeeded = summary.getTestsSucceededCount();
       System.out.printf("[tester] Successfully tested %s: %d tests in %d ms%n", moduleNameAndVersion, succeeded, duration);
     } else {
-      var stringWriter = new StringWriter();
-      summary.printTo(new PrintWriter(stringWriter));
-      summary.printFailuresTo(new PrintWriter(stringWriter));
-      System.out.println(stringWriter);
+      var writer = new PrintWriter(System.err);
+      summary.printTo(writer);
+      summary.printFailuresTo(writer);
     }
-    return failures;
+    return success? 0: 1;
   }
 }
