@@ -63,8 +63,9 @@ class pro_wrapper {
     return "/bin/sh";
   }
   
-  private static boolean earlyAccess() {
-    return Boolean.parseBoolean(System.getenv("PRO_EARLY_ACCESS"));
+  private static Optional<String> specialBuild() {
+    var specialBuild = System.getenv("PRO_SPECIAL_BUILD");
+    return Optional.ofNullable(specialBuild);
   }
   
   private static String userHome() {
@@ -165,8 +166,8 @@ class pro_wrapper {
   
   private static int installAndRun(String[] args) throws IOException {
     var release = lastestReleaseVersion().orElseThrow(() -> new IOException("latest release not found on Github"));
-    var earlyAccess = earlyAccess()? "-early-access": "";
-    var filename = "pro-" + platform() + earlyAccess + ".zip";
+    var specialBuild = specialBuild().map(build -> '-' + build).orElse("");
+    var filename = "pro-" + platform() + specialBuild + ".zip";
     
     var cachePath = Paths.get(userHome(), ".pro", "cache", release, filename);
     if (!exists(cachePath)) {
