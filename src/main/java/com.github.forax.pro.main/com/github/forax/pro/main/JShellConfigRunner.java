@@ -19,6 +19,7 @@ public class JShellConfigRunner implements ConfigRunner {
     var args =
       Stream.of(
         Stream.of("-R-Dpro.exitOnError=true"),
+        Stream.of("-R-XX:+EnableValhalla").filter(__ -> System.getProperty("valhalla.enableValhalla") != null),
         Stream.of(arguments).filter(a -> a.length() != 0).map(a -> "-R-Dpro.arguments=" + String.join(",", a)),
         Stream.of(configFile.toString())
         )
