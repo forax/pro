@@ -13,7 +13,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-04cebb8a8b8c6eb948a9/jdk-11-lworld.tar.gz
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-ced62f92ace88e459517/jdk-11-lworld.tar.gz
           tar zxvf jdk-11-lworld.tar.gz
           $JAVA_HOME/bin/java --version
           
