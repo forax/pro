@@ -53,7 +53,7 @@ public class Pro {
         .map(Log.Level::of)
         .orElse(Log.Level.INFO);
       proConf.loglevel(logLevel.name().toLowerCase());
-      proConf.exitOnError(Boolean.valueOf(System.getProperty("pro.exitOnError", "false")));
+      proConf.exitOnError(Boolean.valueOf(System.getProperty("pro.exitOnError", "true")));
       var arguments = Optional.ofNullable(System.getProperty("pro.arguments", null))
           .map(value -> List.of(value.split(",")))
           .orElse(List.of());
@@ -391,19 +391,34 @@ public class Pro {
   
   /**
    * Create a new {@link Command} that will execute the action if the command is run.
-   * All changes done to the configuration by the action will be done on the local configuration. 
+   * All changes done to the configuration by the action will be done a new fresh local configuration. 
    * 
+   * @param action the action to execute
+   * @return a new command.
+   * 
+   * @deprecated use {@link #command(String, Action)} instead.
+   */
+  @Deprecated
+  public static Command command(Action<? extends IOException> action) {
+    var line = StackWalker.getInstance().walk(s -> s.findFirst()).map(StackFrame::getLineNumber).orElse(-1);
+    return command("command at line " + line, action);
+  }
+  
+  /**
+   * Create a new {@link Command} that will execute the action if the command is run.
+   * All changes done to the configuration by the action will be done a new fresh local configuration. 
+   * 
+   * @param name name of the command
    * @param action the action to execute
    * @return a new command.
    * 
    * @see #run(Object...)
    */
-  public static Command command(Action<? extends IOException> action) {
-    var line = StackWalker.getInstance().walk(s -> s.findFirst()).map(StackFrame::getLineNumber).orElse(-1);
+  public static Command command(String name, Action<? extends IOException> action) {
     return new Command() {
       @Override
       public String name() {
-        return "command at " + line;
+        return name;
       }
       @Override
       public int execute(Config unused) throws IOException {
@@ -454,8 +469,7 @@ public class Pro {
         if (!pluginOpt.isPresent()) {
           var log = Log.create("pro", proConf.loglevel());
           log.error(pluginName, name -> "unknown plugin " + name);  
-          exit(proConf.exitOnError(), 1);  //FIXME
-          return;
+          throw exit(proConf.exitOnError(), "pro", 1);  //FIXME
         }
         
         commandList.add(pluginOpt.get());
@@ -481,10 +495,12 @@ public class Pro {
     var exitOnError = proConf.exitOnError();
     
     var errorCode = 0;
+    var failedCommandName = "";
     var start = System.currentTimeMillis();
     for(var command: commands) {
       errorCode = execute(command, config);
       if (errorCode != 0) {
+        failedCommandName = command.name();
         break;
       }
     }
@@ -499,7 +515,7 @@ public class Pro {
     }
     
     if (errorCode != 0) {
-      exit(exitOnError, errorCode);
+      throw exit(exitOnError, failedCommandName, errorCode);
     }
   }
   
@@ -515,10 +531,12 @@ public class Pro {
     }
   }
   
-  private static void exit(boolean exitOnError, int errorCode) {
+  private static Error exit(boolean exitOnError, String failedCommandName, int errorCode) {
+    String errorMessage = failedCommandName + " exit with code " + errorCode;
     if (exitOnError) {
+      System.err.println(errorMessage);
       System.exit(errorCode);
-      throw new AssertionError("should have exited with code " + errorCode);
     }
+    throw new Error(errorMessage);
   }
 }

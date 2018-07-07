@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.main.runner.ConfigRunner;
@@ -66,7 +67,7 @@ public class Main {
   }
   
   enum Command {
-    SHELL(__ -> shell()),
+    SHELL(Main::shell),
     BUILD(Main::build),
     DAEMON(Main::daemon),
     RESOLVE(Main::resolve),
@@ -204,11 +205,19 @@ public class Main {
     return ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
   }
   
-  static void shell() {
+  static void shell(String[] arguments) {
     if (getDaemon().filter(Daemon::isStarted).isPresent()) {
       throw new InputException("shell doesn't currently support daemon mode :(");
     }
-    JShellWrapper.run(System.in, System.out, System.err);
+    var args =
+        Stream.of(
+          Stream.of("-R-Dpro.exitOnError=false"),
+          Stream.of("-R-XX:+EnableValhalla").filter(__ -> System.getProperty("valhalla.enableValhalla") != null),
+          Stream.of(arguments).filter(a -> a.length() != 0).map(a -> "-R-Dpro.arguments=" + String.join(",", a))
+          )
+        .flatMap(s -> s)
+        .toArray(String[]::new);
+    JShellWrapper.run(System.in, System.out, System.err, args);
   }
   
   static void build(String[] args) {
