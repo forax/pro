@@ -25,9 +25,9 @@ matrix:
       os: osx
       jdk: openjdk-ea
 
-#  allow_failures:
+  allow_failures:
+    - jdk: oraclejdk-ea
 #    - jdk: openjdk-ea
-#    - jdk: oraclejdk-ea
 
 install:
 - java --version
