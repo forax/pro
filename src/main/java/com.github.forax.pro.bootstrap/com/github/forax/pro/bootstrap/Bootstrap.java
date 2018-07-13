@@ -29,7 +29,7 @@ public class Bootstrap {
   // jdk 12 will see similar issues: https://bugs.openjdk.java.net/browse/JDK-8193784
   private static int jdkVersion() {
     var major = Runtime.version().feature();
-    return Math.min(major, 11);
+    return /*Math.min(major, 11);*/ major; // weirdly jdk12 javac --release 11 doesn't currently work
   }
 
   public static void main(String[] args) throws IOException {
