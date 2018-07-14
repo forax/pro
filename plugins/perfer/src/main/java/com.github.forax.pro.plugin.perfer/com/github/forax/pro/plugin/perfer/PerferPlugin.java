@@ -9,6 +9,7 @@ import java.lang.module.ModuleFinder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.openjdk.jmh.runner.BenchmarkList;
 import org.openjdk.jmh.runner.BenchmarkListEntry;
@@ -104,9 +105,15 @@ public class PerferPlugin implements Plugin {
   }
   
   private static int executeClass(String moduleName, String className, List<Path> modulePath, Path javaCommand) throws IOException {
-    var process = new ProcessBuilder(
-        StableList.of(javaCommand.toString()).appendAll(StableList.of("--module-path",
-            modulePath.stream().map(Path::toString).collect(joining(":")), "-m", moduleName + '/' + className)))
+    StableList<String> arguments = Stream.of(
+        Stream.of("-XX:+EnableValhalla").filter(__ -> System.getProperty("valhalla.enableValhalla") != null),
+        Stream.of("--module-path", modulePath.stream().map(Path::toString).collect(joining(":"))),
+        Stream.of("-m", moduleName + '/' + className)
+        )
+      .flatMap(s -> s)
+      .collect(StableList.toStableList());
+    
+    var process = new ProcessBuilder(StableList.of(javaCommand.toString()).appendAll(arguments))
                 .redirectErrorStream(true).start();
 
     process.getInputStream().transferTo(System.out);
