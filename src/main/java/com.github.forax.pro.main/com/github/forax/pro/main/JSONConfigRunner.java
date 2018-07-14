@@ -64,6 +64,10 @@ public class JSONConfigRunner implements ConfigRunner {
     Pro.set("pro.arguments", String.join(",", arguments));
     
     //System.out.println("run " + String.join(" -> ", pluginNames));
-    Pro.run(pluginNames);
+    try {
+      Pro.run(pluginNames);
+    } catch(@SuppressWarnings("unused") Exception | Error e) {
+      System.exit(1);
+    }
   }
 }

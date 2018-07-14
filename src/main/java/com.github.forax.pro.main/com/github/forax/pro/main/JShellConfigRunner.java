@@ -26,6 +26,7 @@ public class JShellConfigRunner implements ConfigRunner {
       .flatMap(s -> s)
       .toArray(String[]::new);
     
-    JShellWrapper.run(System.in, System.out, System.err, args);
+    int exitCode = JShellWrapper.run(System.in, System.out, System.err, args);
+    System.exit(exitCode);
   }
 }
