@@ -532,7 +532,7 @@ public class Pro {
   }
   
   private static Error exit(boolean exitOnError, String failedCommandName, int errorCode) {
-    String errorMessage = failedCommandName + " exit with code " + errorCode;
+    String errorMessage = "command '" + failedCommandName + "' exit with code " + errorCode;
     if (exitOnError) {
       System.err.println(errorMessage);
       System.exit(errorCode);
