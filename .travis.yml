@@ -6,20 +6,20 @@ matrix:
   include:
 
     - env: DEPLOY='linux'
-      jdk: openjdk10
+      jdk: openjdk11
 
     - env: DEPLOY='linux-early-access'
       jdk: openjdk-ea
 
     - env: DEPLOY='false'
-      jdk: oraclejdk10
+      jdk: oraclejdk11
 
     - env: DEPLOY='false'
       jdk: oraclejdk-ea
 
     - env: DEPLOY='macos'
       os: osx
-      jdk: openjdk10
+      jdk: openjdk11
 
     - env: DEPLOY='macos-early-access'
       os: osx
