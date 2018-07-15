@@ -156,7 +156,8 @@ class pro_wrapper {
 
   private static int exec(String command, String[] args) throws IOException {
     var builder = new ProcessBuilder(Stream.of(Stream.of(shell()), Stream.of(command), Arrays.stream(args)).flatMap(x -> x).toArray(String[]::new));
-    var process = builder.inheritIO().start();
+    var process = builder.redirectErrorStream(true).start();
+    process.getInputStream().transferTo(System.out);
     try {
       return process.waitFor();
     } catch (InterruptedException e) {

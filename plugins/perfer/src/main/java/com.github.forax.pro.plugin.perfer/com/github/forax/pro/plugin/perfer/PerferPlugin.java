@@ -114,7 +114,8 @@ public class PerferPlugin implements Plugin {
       .collect(StableList.toStableList());
     
     var process = new ProcessBuilder(StableList.of(javaCommand.toString()).appendAll(arguments))
-                .redirectErrorStream(true).start();
+        .redirectErrorStream(true)
+        .start();
 
     process.getInputStream().transferTo(System.out);
 

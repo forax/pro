@@ -35,8 +35,11 @@ public class JavaConfigRunner implements ConfigRunner {
     var exitCode = 1;
     try {
       var process = new ProcessBuilder(args)
-          .inheritIO()
+          .redirectErrorStream(true)
           .start();
+    
+      process.getInputStream().transferTo(System.out);
+      
       exitCode = process.waitFor();
     } catch (InterruptedException|IOException e) {
       System.err.println("i/o error " + e.getMessage());
