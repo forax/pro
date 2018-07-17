@@ -12,6 +12,10 @@ Command test(boolean parallel) {
 // pro.loglevel("debug")
 tester.timeout(99)
 
+// See https://junit.org/junit5/docs/current/user-guide/#running-tests-tag-expressions
+//   tester.includeTags(list("integration"))
+//   tester.excludeTags(list("slow", "flaky"))
+
 // run "pro" tests, once in serial, once in parallel
 run(test(false), test(true))
 

@@ -38,6 +38,8 @@ public class TesterPlugin implements Plugin {
     var testerConf = config.getOrUpdate(name(), TesterConf.class);
     testerConf.timeout(60);
     testerConf.parallel(true);
+    testerConf.includeTags(List.of());
+    testerConf.excludeTags(List.of());
   }
 
   @Override
@@ -89,8 +91,8 @@ public class TesterPlugin implements Plugin {
     var loader = createTestClassLoader(tester, testPath, moduleName);
     
     var testConfClass = load(loader, TestConf.class);
-    var testConfTypes = new Class<?>[] {ModuleDescriptor.class, boolean.class};
-    var testConf = create(testConfClass, testConfTypes, moduleDescriptor, tester.parallel());
+    var testConfTypes = new Class<?>[] {ModuleDescriptor.class, boolean.class, List.class, List.class};
+    var testConf = create(testConfClass, testConfTypes, moduleDescriptor, tester.parallel(), tester.includeTags(), tester.excludeTags());
     var runnerClass = load(loader, TesterRunner.class);
     var runnerTypes = new Class<?>[] {testConfClass};
     var runner = (IntSupplier) create(runnerClass, runnerTypes, testConf);

@@ -1,7 +1,9 @@
 package com.github.forax.pro.helper;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+@Tag("slow")
 @SuppressWarnings("static-method")
 class SlowNoopTests {
   @Test

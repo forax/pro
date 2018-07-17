@@ -5,6 +5,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.*;
 import java.io.PrintWriter;
 import java.util.function.IntSupplier;
 
+import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
@@ -33,10 +34,26 @@ public class TesterRunner implements IntSupplier {
     var moduleName = testConf.moduleName();
     var moduleNameAndVersion = testConf.moduleNameAndVersion();
     var parallel = testConf.parallel();
+    var includeTags = testConf.includeTags();
+    var excludeTags = testConf.excludeTags();
 
+    // Create Launcher API entry point
+    // https://junit.org/junit5/docs/current/user-guide/#launcher-api
     var builder = LauncherDiscoveryRequestBuilder.request();
+
+    // Select from...
     builder.selectors(selectModule(moduleName));
     //builder.selectors(selectPackage(moduleName));
+
+    // Apply filters...
+    if (!includeTags.isEmpty()) {
+      builder.filters(TagFilter.includeTags(includeTags));
+    }
+    if (!excludeTags.isEmpty()) {
+      builder.filters(TagFilter.excludeTags(excludeTags));
+    }
+
+    // Fine-tune configuration...
     builder.configurationParameter("junit.jupiter.execution.parallel.enabled", Boolean.toString(parallel));
 
     var launcher = LauncherFactory.create();

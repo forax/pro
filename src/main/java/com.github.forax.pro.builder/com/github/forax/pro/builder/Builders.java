@@ -346,6 +346,12 @@ public class Builders {
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface TesterBuilder {
+    java.util.List<java.lang.String> excludeTags();
+    TesterBuilder excludeTags(java.lang.String... excludeTags);
+    TesterBuilder excludeTags(java.util.List<java.lang.String> excludeTags);
+    java.util.List<java.lang.String> includeTags();
+    TesterBuilder includeTags(java.lang.String... includeTags);
+    TesterBuilder includeTags(java.util.List<java.lang.String> includeTags);
     java.util.List<java.nio.file.Path> moduleDependencyPath();
     TesterBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     TesterBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);

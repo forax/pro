@@ -22,4 +22,8 @@ public interface TesterConf {
   void timeout(int seconds);
   boolean parallel();
   void parallel(boolean parallel);
+  List<String> includeTags();
+  void includeTags(List<String> tags);
+  List<String> excludeTags();
+  void excludeTags(List<String> tags);
 }
