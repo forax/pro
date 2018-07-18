@@ -2,6 +2,7 @@ package com.github.forax.pro.plugin.tester;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import com.github.forax.pro.api.TypeCheckedConfig;
 
@@ -22,8 +23,8 @@ public interface TesterConf {
   void timeout(int seconds);
   boolean parallel();
   void parallel(boolean parallel);
-  List<String> includeTags();
+  Optional<List<String>> includeTags();
   void includeTags(List<String> tags);
-  List<String> excludeTags();
+  Optional<List<String>> excludeTags();
   void excludeTags(List<String> tags);
 }
