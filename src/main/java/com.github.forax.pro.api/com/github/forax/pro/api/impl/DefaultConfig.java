@@ -37,12 +37,6 @@ public class DefaultConfig implements MutableConfig, EvalContext {
     Configs.set(root, key, value);
   }
   
-  //@Override
-  //public void forEach(String key, BiConsumer<? super String, Object> consumer) {
-  //   Configs.forEach(root, key, consumer); 
-  //}
-  
-  
   public DefaultConfig duplicate() {
     return new DefaultConfig(root);
   }
@@ -55,18 +49,6 @@ public class DefaultConfig implements MutableConfig, EvalContext {
       }
     };
   }
-  
-  /*
-  public void enter(Runnable runnable) {
-    var oldRoot = root;
-    var newRoot = Configs.duplicate(oldRoot);
-    root = newRoot;
-    try {
-      runnable.run();
-    } finally {
-      root = oldRoot;
-    }
-  }*/
   
   public MutableConfig asChecked(String prefix) {
     return new MutableConfig() {
@@ -90,11 +72,6 @@ public class DefaultConfig implements MutableConfig, EvalContext {
         }
         DefaultConfig.this.set(key, object);
       }
-      
-      //@Override
-      //public void forEach(String key, BiConsumer<? super String, Object> consumer) {
-      //  DefaultConfig.this.forEach(key, consumer);
-      //}
       
       @Override
       public String toString() {
