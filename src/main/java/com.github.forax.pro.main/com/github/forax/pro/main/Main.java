@@ -1,5 +1,6 @@
 package com.github.forax.pro.main;
 
+import static com.github.forax.pro.main.runner.PropertySequence.property;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.util.function.Function.identity;
@@ -11,14 +12,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.ServiceLoader;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.main.runner.ConfigRunner;
+import com.github.forax.pro.main.runner.PropertySequence;
 
 public class Main {
   private Main() {
@@ -38,61 +42,63 @@ public class Main {
   
   static class Configuration {
     final Path configFile;
-    final Function<String[], String[]> arguments;
+    final Function<List<String>, List<String>> arguments;
     
-    Configuration(Path configFile, Function<String[], String[]> arguments) {
+    Configuration(Path configFile, Function<List<String>, List<String>> arguments) {
       this.configFile = configFile;
       this.arguments = arguments;
     }
   }
   
   enum InputFile {
-    ARGUMENT(args -> (args.length >= 1)? Optional.of(new Configuration(Paths.get(args[0]), Main::shift)): Optional.empty()),
+    ARGUMENT(args -> (args.size() >= 1)? Optional.of(new Configuration(Paths.get(args.get(0)), Main::shift)): Optional.empty()),
     DEFAULT_JAVA(args -> Optional.of(new Configuration(Paths.get("build.java"), identity()))),
     DEFAULT_PRO(args -> Optional.of(new Configuration(Paths.get("build.pro"), identity()))),
     DEFAULT_JSON(args -> Optional.of(new Configuration(Paths.get("build.json"), identity())))
     ;
     
-    private final Function<String[], Optional<Configuration>> mapper;
+    private final Function<List<String>, Optional<Configuration>> mapper;
 
-    private InputFile(Function<String[], Optional<Configuration>> mapper) {
+    private InputFile(Function<List<String>, Optional<Configuration>> mapper) {
       this.mapper = mapper;
     }
     
-    static Optional<Configuration> findConfiguration(String[] args) {
+    static Optional<Configuration> findConfiguration(List<String> args) {
       return Arrays.stream(InputFile.values())
           .flatMap(inputFile -> inputFile.mapper.apply(args).filter(conf -> Files.exists(conf.configFile)).stream())
           .findFirst();
     }
   }
   
-  enum Command {
+  enum Option {
     SHELL(Main::shell),
     BUILD(Main::build),
+    COMMAND(Main::command),
     DAEMON(Main::daemon),
-    RESOLVE(Main::resolve),
-    SCAFFOLD(__ -> scaffold()),
-    HELP(__ -> help()),
-    VERSION(__ -> version())
+    RESOLVE((__, args) -> resolve(args)),
+    SCAFFOLD((_1, _2) -> scaffold()),
+    HELP((_1, _2) -> help()),
+    VERSION((_1, _2) -> version())
     ;
     
-    final Consumer<String[]> consumer;
+    final BiConsumer<PropertySequence, List<String>> consumer;
 
-    private Command(Consumer<String[]> consumer) {
+    private Option(BiConsumer<PropertySequence, List<String>> consumer) {
       this.consumer = consumer;
     }
     
-    static Command command(String name) {
+    static Option option(String name) {
       return Arrays.stream(values())
-          .filter(command -> command.name().toLowerCase().equals(name))
+          .filter(option -> option.name().toLowerCase().equals(name))
           .findFirst()
-          .orElseThrow(() -> { throw new InputException("unknown sub command '" + name + "'"); });
+          .orElseThrow(() -> { throw new InputException("unknown option '" + name + "'"); });
     }
   }
   
   static void scaffold() {
     var module = Optional.ofNullable(System.console())
         .map(console -> console.readLine("module name: (like com.acme.foo.bar) "))
+        .filter(name -> !name.isEmpty())
         .orElse("com.acme.foo.bar");
     
     var content =
@@ -205,22 +211,23 @@ public class Main {
     return ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
   }
   
-  static void shell(String[] arguments) {
+  static void shell(PropertySequence propertySeq, List<String> arguments) {
     if (getDaemon().filter(Daemon::isStarted).isPresent()) {
       throw new InputException("shell doesn't currently support daemon mode :(");
     }
     var args =
         Stream.of(
-          Stream.of("-R-Dpro.exitOnError=false"),
           Stream.of("-R-XX:+EnableValhalla").filter(__ -> System.getProperty("valhalla.enableValhalla") != null),
-          Stream.of(arguments).filter(a -> a.length() != 0).map(a -> "-R-Dpro.arguments=" + String.join(",", a))
+          Stream.of("-R-Dpro.exitOnError=false"),
+          propertySeq.stream().map(entry -> "-D" + entry.getKey() + '=' + entry.getValue()),
+          Stream.of(arguments).filter(a -> !a.isEmpty()).map(a -> "-R-Dpro.arguments=" + String.join(",", a))
           )
         .flatMap(s -> s)
         .toArray(String[]::new);
     JShellWrapper.run(System.in, System.out, System.err, args);
   }
   
-  static void build(String[] args) {
+  static void build(PropertySequence propertySeq, List<String> args) {
     var conf = InputFile.findConfiguration(args)
         .orElseThrow(() -> new InputException("no existing input file specified"));
     var configFile = conf.configFile;
@@ -231,13 +238,20 @@ public class Main {
     loader.forEach(configRunners::add);
     
     configRunners.stream()
-        .flatMap(configRunner -> configRunner.accept(configFile, arguments).stream())
+        .flatMap(configRunner -> configRunner.accept(configFile, propertySeq, arguments).stream())
         .findFirst()
         .orElseThrow(() -> new InputException("no config runner available for config file " + configFile))
         .run();
   }
   
-  static void daemon(String[] args) {
+  static void command(PropertySequence propertySeq, List<String> args) {
+    if (args.isEmpty()) {
+      throw new InputException("no command specified, the option 'command' takes a command as argument");
+    }
+    execute(propertySeq.append(property("pro.commands", args.get(0))), shift(args));
+  }
+  
+  static void daemon(PropertySequence propertySeq, List<String> args) {
     var daemon = getDaemon().orElseThrow(() -> new InputException("daemon not found"));
     if (daemon.isStarted()) {
       throw new InputException("daemon already started");
@@ -248,15 +262,17 @@ public class Main {
         daemon.stop();
       }
     }));
-    main(args);
+    execute(propertySeq, args);
   }
   
-  static void resolve(String[] args) {
-    if (args.length == 0) {
+  static void resolve(List<String> args) {
+    if (args.isEmpty()) {
       throw new InputException("no Maven id specified");
     }
     try {
-      MavenArtifactResolver.resolve(args[0]);
+      for(var arg: args) {
+        MavenArtifactResolver.resolve(arg);
+      }
     } catch (IOException e) {
       throw new InputException(e);
     }
@@ -264,39 +280,43 @@ public class Main {
   
   static void help() {
     System.err.println(
-        "usage: pro [subcommand] args                                                       \n" +
+        "usage: pro [option] args                                                           \n" +
         "                                                                                   \n" +
-        "  subcommands                                                                      \n" +
+        "  option                                                                           \n" +
         "    build [buildfile]      execute the build file                                  \n" +
         "                           use build.json or build.pro if no buildfile is specified\n" +
-        "    daemon subcommand      start the subcommand in daemon mode                     \n" +
+        "    command acommand       ask to execute the build until that command             \n" +
+        "    daemon option          start the option in daemon mode                         \n" +
         "    resolve maven:id:[0,]  display Java module name and its dependencies           \n" +
         "    shell                  start the interactive shell                             \n" +
         "    scaffold               create a default build.pro                              \n" +
         "    version                print the current version                               \n" +
         "    help                   this help                                               \n" +
         "                                                                                   \n" +
-        "  if no subcommand is specified, 'build' is used                                   \n"
+        "  if no option is specified, 'build' is used                                       \n"
     );
   }
   
-  static String[] shift(String[] args) {
-    return Arrays.stream(args).skip(1).toArray(String[]::new);
+  static List<String> shift(List<String> args) {
+    return args.subList(1, args.size());
+  }
+  
+  private static void execute(PropertySequence propertySeq, List<String> args) {
+    Option command;
+    List<String> arguments;
+    if (args.isEmpty()) {
+      command = Option.BUILD;
+      arguments = args;
+    } else {
+      command = Option.option(args.get(0));
+      arguments = shift(args);
+    }
+    command.consumer.accept(propertySeq, arguments);
   }
   
   public static void main(String[] args) {
     try {
-      Command command;
-      String[] arguments;
-      if (args.length == 0) {
-        command = Command.BUILD;
-        arguments = args;
-      } else {
-        command = Command.command(args[0]);
-        arguments = shift(args);
-      }
-      command.consumer.accept(arguments);
-      
+      execute(PropertySequence.empty(), List.of(args));
     } catch(InputException e) {
       System.err.println("error: " + e.getMessage() + "\n");
       help();
