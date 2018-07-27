@@ -49,10 +49,6 @@ public class Configs {
     return asQuery(proxy)._get_(key, type, readOnly);
   }
   
-  //private static void forEachProperty(Object proxy, BiConsumer<? super String, Object> consumer) {
-  //  asQuery(proxy)._map_().forEach(consumer);
-  //}
-  
   @SuppressWarnings("unchecked")
   public static <T, U, V> void derive(T to, BiConsumer<? super T, ? super V> setter, U from, Function<? super U, ? extends V> eval) {
     var fromQuery = asQuery(from);
@@ -93,12 +89,6 @@ public class Configs {
     var result = traverse(proxy, properties, properties.length - 1, key);
     return getProperty(result, properties[properties.length - 1], type, readOnly);
   }
-  
-  //static void forEach(Object proxy, String key, BiConsumer<? super String, Object> consumer) {
-  //  var properties = splitAsProperties(key);
-  //  var result = traverse(proxy, properties, properties.length, key);
-  //  forEachProperty(result, consumer);
-  //}
 
   static Stream<String> toStringStream(String prefix, Object value, EvalContext context) {
     if (!(value instanceof Query)) {
