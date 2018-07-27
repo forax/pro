@@ -3,28 +3,32 @@ package com.github.forax.pro.main;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.github.forax.pro.helper.Platform;
 import com.github.forax.pro.main.runner.ConfigRunner;
+import com.github.forax.pro.main.runner.PropertySequence;
 
 public class JavaConfigRunner implements ConfigRunner {
   @Override
-  public Optional<Runnable> accept(Path configFile, String[] arguments) {
-    return Optional.<Runnable>of(() -> run(configFile, arguments))
+  public Optional<Runnable> accept(Path configFile, PropertySequence propertySeq, List<String> arguments) {
+    return Optional.<Runnable>of(() -> run(configFile, propertySeq, arguments))
         .filter(__ -> configFile.toString().endsWith(".java"));
   }
   
-  private static void run(Path configFile, String... arguments) {
+  private static void run(Path configFile, PropertySequence propertySeq, List<String> arguments) {
     //System.out.println("run with java " + configFile);
     
     Path javaHome = Paths.get(System.getProperty("java.home"));
     var args =
         Stream.of(
           Stream.of(javaHome.resolve("bin").resolve(Platform.current().javaExecutableName()).toString()),
+          Stream.of("-XX:+EnableValhalla").filter(__ -> System.getProperty("valhalla.enableValhalla") != null),
           Stream.of("-Dpro.exitOnError=true"),
-          Stream.of(arguments).filter(a -> a.length() != 0).map(a -> "-Dpro.arguments=" + String.join(",", a)),
+          propertySeq.stream().map(entry -> "-D" + entry.getKey() + '=' + entry.getValue()),
+          Stream.of(arguments).filter(a -> !a.isEmpty()).map(a -> "-Dpro.arguments=" + String.join(",", a)),
           Stream.of(configFile.toString())
           )
         .flatMap(s -> s)

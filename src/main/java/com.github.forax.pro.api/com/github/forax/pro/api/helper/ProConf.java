@@ -2,6 +2,7 @@ package com.github.forax.pro.api.helper;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import com.github.forax.pro.api.TypeCheckedConfig;
 
@@ -21,4 +22,7 @@ public interface ProConf {
   
   List<String> arguments();
   void arguments(List<String> arguments);
+  
+  Optional<List<String>> commands();
+  void commands(List<String> commands);
 }

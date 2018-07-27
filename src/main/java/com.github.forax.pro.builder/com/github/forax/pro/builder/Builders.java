@@ -14,6 +14,9 @@ public class Builders {
     java.util.List<java.lang.String> arguments();
     ProBuilder arguments(java.lang.String... arguments);
     ProBuilder arguments(java.util.List<java.lang.String> arguments);
+    java.util.Optional<java.util.List<java.lang.String>> commands();
+    ProBuilder commands(java.lang.String... commands);
+    ProBuilder commands(java.util.List<java.lang.String> commands);
     java.nio.file.Path currentDir();
     ProBuilder currentDir(java.nio.file.Path currentDir);
     boolean exitOnError();

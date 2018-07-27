@@ -58,6 +58,9 @@ public class Pro {
           .map(value -> List.of(value.split(",")))
           .orElse(List.of());
       proConf.arguments(arguments);
+      Optional.ofNullable(System.getProperty("pro.commands", null))
+          .map(value -> List.of(value.split(",")))
+          .ifPresent(proConf::commands);
       return config;
     }
   };
@@ -432,6 +435,36 @@ public class Pro {
         return 0; // FIXME
       }
     };
+  }
+  
+  private static class IgnoredCommand implements Command {
+    final Command command;
+    
+    IgnoredCommand(Command command) {
+      this.command = command;
+    }
+    
+    @Override
+    public String name() {
+      return command.name();
+    }
+    @Override
+    public int execute(Config config) throws IOException {
+      var proConf = CONFIG.get().getOrThrow("pro", ProConf.class);
+      var log = Log.create("pro", proConf.loglevel());
+      log.info(null, __ -> "ignore " + command.name());  
+      return 0;
+    }
+  }
+  
+  /**
+   * Wrapper to ignore a command if the command is not explicitly enabled.
+   * 
+   * @param command the command to ignore.
+   * @return the corresponding ignored command.
+   */
+  public static Command ignore(Command command) {
+    return new IgnoredCommand(command);
   }
   
   /**

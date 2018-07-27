@@ -14,11 +14,12 @@ import org.json.JSONTokener;
 
 import com.github.forax.pro.Pro;
 import com.github.forax.pro.main.runner.ConfigRunner;
+import com.github.forax.pro.main.runner.PropertySequence;
 
 public class JSONConfigRunner implements ConfigRunner {
   @Override
-  public Optional<Runnable> accept(Path config, String[] arguments) {
-    return Optional.<Runnable>of(() -> run(config, arguments))
+  public Optional<Runnable> accept(Path config, PropertySequence propertySeq, List<String> arguments) {
+    return Optional.<Runnable>of(() -> run(config, propertySeq, arguments))
              .filter(__ -> config.toString().endsWith(".json"));
   }
   
@@ -46,7 +47,7 @@ public class JSONConfigRunner implements ConfigRunner {
   }
   
  
-  private static void run(Path configFile, String... arguments) {
+  private static void run(Path configFile, PropertySequence propertySeq, List<String> arguments) {
     //System.out.println("run with json " + configFile);
     
     var pluginNames = new ArrayList<>();
@@ -62,6 +63,7 @@ public class JSONConfigRunner implements ConfigRunner {
     
     Pro.set("pro.exitOnError", true);
     Pro.set("pro.arguments", String.join(",", arguments));
+    propertySeq.forEach((key, value) -> Pro.set(key, value.toString()));
     
     //System.out.println("run " + String.join(" -> ", pluginNames));
     try {
