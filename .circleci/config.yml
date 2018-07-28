@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  build-lworld:
     docker:
       - image: circleci/openjdk:11-ea-node-browsers
     working_directory: ~/repo
@@ -13,7 +13,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-f91edec8e76c78632eb7/jdk-11-lworld.tar.gz
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-91a81da4d975b4de107c/jdk-11-lworld.tar.gz
           tar zxvf jdk-11-lworld.tar.gz
           $JAVA_HOME/bin/java --version
           
@@ -27,7 +27,7 @@ jobs:
           root: target
           paths:
             - pro
-  deploy:
+  deploy-lworld:
     machine:
       enabled: true
     steps:
@@ -45,20 +45,78 @@ jobs:
       - run: mv ghr_v0.10.0_linux_amd64/ghr ghr
       - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG
       - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-lworld.zip
+   build-loom:
+    docker:
+      - image: circleci/openjdk:11-ea-node-browsers
+    working_directory: ~/repo
+    environment:
+      JAVA_HOME: ./jdk-11-loom
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+      
+    steps:
+      - checkout
+      # install
+      - run: |
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-91a81da4d975b4de107c/jdk-11-loom.tar.gz
+          tar zxvf jdk-11-loom.tar.gz
+          $JAVA_HOME/bin/java --version
           
+      # build pro
+      - run: chmod u+x ./build.sh
+      - run: ./build.sh
+      - run: ./target/pro/bin/pro version
+      - run: ./target/pro/bin/pro build test.pro
+      - persist_to_workspace:
+          root: target
+          paths:
+            - pro
+  deploy-loom:
+    machine:
+      enabled: true
+    steps:
+      - attach_workspace:
+          at: target
+      # package pro
+      - run: |
+          cd target
+          zip -r ../pro-linux-early-access-loom.zip pro
+          cd ..
+          
+      # upload on github release
+      - run: wget https://github.com/tcnksm/ghr/releases/download/v0.10.0/ghr_v0.10.0_linux_amd64.tar.gz
+      - run: tar xvf ghr_v0.10.0_linux_amd64.tar.gz
+      - run: mv ghr_v0.10.0_linux_amd64/ghr ghr
+      - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG
+      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-loom.zip    
+         
 workflows:
   version: 2
   build-and-deploy:
     jobs:
-      - build:
+      - build-lworld:
           filters:
             branches:
               ignore: /.*/
             tags:
               only: /.*/
-      - deploy:
+      - deploy-lworld:
           requires:
-            - build
+            - build-lworld
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+      - build-loom:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+      - deploy-loom:
+          requires:
+            - build-loom
           filters:
             branches:
               ignore: /.*/
