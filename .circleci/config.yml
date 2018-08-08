@@ -13,14 +13,14 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-91a81da4d975b4de107c/jdk-11-lworld.tar.gz
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-823acd69e6a0cbf6a525/jdk-11-lworld.tar.gz
           tar zxvf jdk-11-lworld.tar.gz
           $JAVA_HOME/bin/java --version
           
       # build pro
       - run: chmod u+x ./build.sh
       - run: ./build.sh
-      - run: sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:+EnableValhalla -XX:-UseBimorphicInlining\""/g ./target/pro/bin/pro
+      - run: sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:+EnableValhalla\""/g ./target/pro/bin/pro
       - run: ./target/pro/bin/pro version
       - run: ./target/pro/bin/pro build test.pro
       - persist_to_workspace:
@@ -58,7 +58,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-91a81da4d975b4de107c/jdk-11-loom.tar.gz
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-823acd69e6a0cbf6a525/jdk-11-loom.tar.gz
           tar zxvf jdk-11-loom.tar.gz
           $JAVA_HOME/bin/java --version
           
