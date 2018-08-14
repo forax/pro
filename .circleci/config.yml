@@ -58,7 +58,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-823acd69e6a0cbf6a525/jdk-11-loom.tar.gz
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-f79ea30d25edc6d9281c/jdk-11-loom.tar.gz
           tar zxvf jdk-11-loom.tar.gz
           $JAVA_HOME/bin/java --version
           
