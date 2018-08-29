@@ -5,7 +5,7 @@ jobs:
       - image: circleci/openjdk:11-ea-node-browsers
     working_directory: ~/repo
     environment:
-      JAVA_HOME: ./jdk-11-lworld
+      JAVA_HOME: ./jdk-12-lworld
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       
@@ -13,8 +13,8 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-62859593154ebe828be1/jdk-11-lworld.tar.gz
-          tar zxvf jdk-11-lworld.tar.gz
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-1035a883761aac13dd82/jdk-12-lworld.tar.gz
+          tar zxvf jdk-12-lworld.tar.gz
           $JAVA_HOME/bin/java --version
           
       # build pro
@@ -50,7 +50,7 @@ jobs:
       - image: circleci/openjdk:11-ea-node-browsers
     working_directory: ~/repo
     environment:
-      JAVA_HOME: ./jdk-11-loom
+      JAVA_HOME: ./jdk-12-loom
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       
@@ -58,8 +58,8 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-62859593154ebe828be1/jdk-11-loom.tar.gz
-          tar zxvf jdk-11-loom.tar.gz
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-1035a883761aac13dd82/jdk-12-loom.tar.gz
+          tar zxvf jdk-12-loom.tar.gz
           $JAVA_HOME/bin/java --version
           
       # build pro
