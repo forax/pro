@@ -14,9 +14,6 @@ matrix:
     - env: DEPLOY='false'
       jdk: oraclejdk11
 
-    - env: DEPLOY='false'
-      jdk: oraclejdk-ea
-
     - env: DEPLOY='macos'
       os: osx
       jdk: openjdk11
@@ -25,8 +22,7 @@ matrix:
       os: osx
       jdk: openjdk-ea
 
-  allow_failures:
-    - jdk: oraclejdk-ea
+#  allow_failures:
 #    - jdk: openjdk-ea
 
 install:
