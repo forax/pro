@@ -34,16 +34,16 @@ class Scaffold {
         "    checkForUpdate(true).\n" +
         "    dependencies(\n" + 
         "        // JUnit 5\n" + 
-        "        \"org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.2.0\",\n" + 
-        "        \"org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.2.0\",\n" + 
+        "        \"org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.3.1\",\n" + 
+        "        \"org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.3.1\",\n" + 
         "        \"org.apiguardian.api=org.apiguardian:apiguardian-api:1.0.0\",\n" + 
-        "        \"org.opentest4j=org.opentest4j:opentest4j:1.1.0\" /*,*/\n" +
+        "        \"org.opentest4j=org.opentest4j:opentest4j:1.1.1\" /*,*/\n" +
         "\n" +
         "//        // JMH\n" + 
-        "//        \"org.openjdk.jmh=org.openjdk.jmh:jmh-core:1.20\",\n" + 
+        "//        \"org.openjdk.jmh=org.openjdk.jmh:jmh-core:1.21\",\n" + 
         "//        \"org.apache.commons.math3=org.apache.commons:commons-math3:3.6.1\",\n" + 
         "//        \"net.sf.jopt-simple=net.sf.jopt-simple:jopt-simple:5.0.4\",\n" + 
-        "//        \"org.openjdk.jmh.generator=org.openjdk.jmh:jmh-generator-annprocess:1.20\"\n" +
+        "//        \"org.openjdk.jmh.generator=org.openjdk.jmh:jmh-generator-annprocess:1.21\"\n" +
         "    )\n" + 
         "\n" + 
         "// compiler.\n" + 
