@@ -113,7 +113,7 @@ class Scaffold {
         "\n" + 
         "public class Main {\n" + 
         "  public static void main(String[] args) {\n" + 
-        "    System.out.println(\"Hello !\");\n" + 
+        "    System.out.println(\"Hello Pro !\");\n" + 
         "  }\n" + 
         "}\n";
     
@@ -147,7 +147,7 @@ class Scaffold {
       
       Files.write(Path.of(".classpath"), eclipseClassPath.getBytes(UTF_8), CREATE_NEW);
       Files.write(Path.of(".project"), eclipseProject.getBytes(UTF_8), CREATE_NEW);
-      System.out.println("eclipse .classpath and .project generated");
+      System.out.println(".classpath and .project (Eclipse) generated");
       
       var sourcePath = Paths.get("src", "main", "java", module);
       Files.createDirectories(sourcePath);
