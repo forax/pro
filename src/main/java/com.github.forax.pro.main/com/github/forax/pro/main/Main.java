@@ -17,7 +17,6 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import com.github.forax.pro.daemon.Daemon;
