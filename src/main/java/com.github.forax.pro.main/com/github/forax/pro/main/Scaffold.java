@@ -53,7 +53,7 @@ class Scaffold {
         "\n" + 
         "docer.\n" + 
         "    quiet(true).\n" + 
-        "    link(uri(\"https://docs.oracle.com/javase/9/docs/api/\"))\n" + 
+        "    link(uri(\"https://docs.oracle.com/en/java/javase/11/docs/api/index.html\"))\n" + 
         "   \n" + 
         "packager.\n" + 
         "    modules(\n" + 
