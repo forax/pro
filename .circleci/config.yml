@@ -44,7 +44,7 @@ jobs:
       - run: tar xvf ghr_v0.12.0_linux_amd64.tar.gz
       - run: mv ghr_v0.12.0_linux_amd64/ghr ghr
       - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG
-      - run: ./ghr -replace -draft -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-lworld.zip
+      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-lworld.zip
   build-loom:
     docker:
       - image: circleci/openjdk:11-ea-node-browsers
@@ -88,7 +88,7 @@ jobs:
       - run: tar xvf ghr_v0.12.0_linux_amd64.tar.gz
       - run: mv ghr_v0.12.0_linux_amd64/ghr ghr
       - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG
-      - run: ./ghr -replace -draft -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-loom.zip    
+      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-loom.zip    
          
 workflows:
   version: 2
