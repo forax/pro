@@ -13,7 +13,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-4dab61cd0bf5f445f813/jdk-12-lworld.tar.gz
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-6e88bdaff93f29d43412/jdk-12-lworld.tar.gz
           tar zxvf jdk-12-lworld.tar.gz
           $JAVA_HOME/bin/java --version
           
@@ -58,7 +58,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-4dab61cd0bf5f445f813/jdk-12-loom.tar.gz
+          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-6e88bdaff93f29d43412/jdk-12-loom.tar.gz
           tar zxvf jdk-12-loom.tar.gz
           $JAVA_HOME/bin/java --version
           
