@@ -9,18 +9,27 @@ import java.util.Optional;
 class Javadoc {
   private final Path destination;
   private final List<Path> moduleSourcePath;
-  
+ 
+  private Integer release;
+  private boolean quiet;
+  private boolean html5;
+  private URI link;
+  private boolean enablePreview;
   private List<Path> modulePath;
   private List<Path> upgradeModulePath;
   private List<String> rootModules;
   private List<String> rawArguments;
-  private boolean quiet;
-  private boolean html5;
-  private URI link;
   
   Javadoc(Path destination, List<Path> moduleSourcePath) {
     this.destination = destination;
     this.moduleSourcePath = moduleSourcePath;
+  }
+  
+  public Optional<Integer> release() {
+    return Optional.ofNullable(release);
+  }
+  public void release(int release) {
+    this.release = release;
   }
   
   public Path destination() {
@@ -75,5 +84,11 @@ class Javadoc {
   }
   public void link(URI link) {
     this.link = Objects.requireNonNull(link);
+  }
+  public boolean enablePreview() {
+    return enablePreview;
+  }
+  public void enablePreview(boolean enablePreview) {
+    this.enablePreview = enablePreview;
   }
 }

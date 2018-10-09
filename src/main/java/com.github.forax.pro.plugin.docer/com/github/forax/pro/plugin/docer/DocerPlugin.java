@@ -89,7 +89,9 @@ public class DocerPlugin implements Plugin {
     MODULE_PATH(actionMaybe("--module-path", Javadoc::modulePath, File.pathSeparator)),
     QUIET(exists("-quiet", Javadoc::quiet)),
     HTML5(exists("-html5", Javadoc::html5)),
-    LINK(actionMaybe("-link", Javadoc::link))
+    LINK(actionMaybe("-link", Javadoc::link)),
+    ENABLE_PREVIEW(exists("--enable-preview", Javadoc::enablePreview)),
+    RELEASE(actionMaybe("--release", Javadoc::release))
     ;
     
     final OptionAction<Javadoc> action;
@@ -111,7 +113,7 @@ public class DocerPlugin implements Plugin {
     var moduleSourcePath = FileHelper.pathFromFilesThatExist(docerConf.moduleSourcePath());
     var moduleSourceFinder = ModuleHelper.sourceModuleFinders(moduleSourcePath);
     var errorCode = generateAll(moduleSourceFinder, docerConf.moduleDocSourcePath(),
-        (input, output) -> generateDoc(log, javadocTool, docerConf, input, output));
+        (input, output) -> generateDoc(log, javadocTool, docerConf, true, input, output));
     if (errorCode != 0) {
       return errorCode;
     }
@@ -122,7 +124,7 @@ public class DocerPlugin implements Plugin {
     
     var moduleTestFinder = ModuleHelper.sourceModuleFinders(moduleTestPath);
     return generateAll(moduleTestFinder, docerConf.moduleDocTestPath(),
-        (input, output) -> generateDoc(log, javadocTool, docerConf, input, output));
+        (input, output) -> generateDoc(log, javadocTool, docerConf, false, input, output));
   }
 
   interface Action {
@@ -139,7 +141,7 @@ public class DocerPlugin implements Plugin {
         .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
   }
   
-  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docerConf, Path input, Path output) {
+  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docerConf, boolean main, Path input, Path output) {
     var javadoc = new Javadoc(output.resolve(input.getFileName().toString()), docerConf.moduleSourcePath());
     docerConf.rawArguments().ifPresent(javadoc::rawArguments);
     javadoc.modulePath(docerConf.moduleDependencyPath());
@@ -147,6 +149,8 @@ public class DocerPlugin implements Plugin {
     docerConf.rootModules().ifPresent(javadoc::rootModules);
     javadoc.quiet(docerConf.quiet());
     javadoc.html5(docerConf.html5());
+    (main? docerConf.sourceRelease(): docerConf.testRelease().or(docerConf::sourceRelease)).ifPresent(javadoc::release);
+    docerConf.enablePreview().ifPresent(javadoc::enablePreview);
     docerConf.link().filter(url -> isLinkHostOnline(log, url)).ifPresent(javadoc::link);
     
     var cmdLine = gatherAll(JavadocOption.class, option -> option.action).apply(javadoc, new CmdLine());

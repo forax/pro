@@ -13,6 +13,11 @@ public interface DocerConf {
   boolean generateTestDoc();
   void generateTestDoc(boolean generate);
   
+  Optional<Integer> sourceRelease();
+  void sourceRelease(int sourceRelease);
+  Optional<Integer> testRelease();
+  void testRelease(int sourceRelease);
+  
   boolean quiet();
   void quiet(boolean quiet);
   
@@ -21,6 +26,9 @@ public interface DocerConf {
   
   Optional<URI> link();
   void link(URI link);
+  
+  Optional<Boolean> enablePreview();
+  void enablePreview(boolean enablePreview);
   
   Optional<List<String>> rawArguments();
   void rawArguments(List<String> rawArguments);
