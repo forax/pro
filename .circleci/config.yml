@@ -13,7 +13,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-8293aecc3c48178f8305/jdk-12-lworld.tar.gz
+          wget https://github.com/forax/java-next/releases/download/untagged-8293aecc3c48178f8305/jdk-12-lworld.tar.gz
           tar zxvf jdk-12-lworld.tar.gz
           $JAVA_HOME/bin/java --version
           
@@ -58,7 +58,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-8293aecc3c48178f8305/jdk-12-loom.tar.gz
+          wget https://github.com/forax/java-next/releases/download/untagged-8293aecc3c48178f8305/jdk-12-loom.tar.gz
           tar zxvf jdk-12-loom.tar.gz
           $JAVA_HOME/bin/java --version
           
@@ -103,13 +103,14 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/valuetype-lambda/releases/download/untagged-8293aecc3c48178f8305/jdk-12-amber.tar.gz
+          wget https://github.com/forax/java-next/releases/download/untagged-8293aecc3c48178f8305/jdk-12-amber.tar.gz
           tar zxvf jdk-12-amber.tar.gz
           $JAVA_HOME/bin/java --version
           
       # build pro
       - run: chmod u+x ./build.sh
       - run: ./build.sh
+      - run: sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"--enable-preview\""/g ./target/pro/bin/pro
       - run: ./target/pro/bin/pro version
       - run: ./target/pro/bin/pro build test.pro
       - persist_to_workspace:
