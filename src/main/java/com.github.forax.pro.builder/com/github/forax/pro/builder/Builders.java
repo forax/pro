@@ -33,6 +33,8 @@ public class Builders {
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface CompilerBuilder {
+    java.util.Optional<java.lang.Boolean> enablePreview();
+    CompilerBuilder enablePreview(boolean enablePreview);
     java.util.Optional<java.util.List<java.nio.file.Path>> files();
     CompilerBuilder files(java.nio.file.Path... files);
     CompilerBuilder files(java.util.List<java.nio.file.Path> files);
@@ -89,6 +91,8 @@ public class Builders {
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface DocerBuilder {
+    java.util.Optional<java.lang.Boolean> enablePreview();
+    DocerBuilder enablePreview(boolean enablePreview);
     java.util.Optional<java.util.List<java.nio.file.Path>> files();
     DocerBuilder files(java.nio.file.Path... files);
     DocerBuilder files(java.util.List<java.nio.file.Path> files);
@@ -122,6 +126,10 @@ public class Builders {
     java.util.Optional<java.util.List<java.lang.String>> rootModules();
     DocerBuilder rootModules(java.lang.String... rootModules);
     DocerBuilder rootModules(java.util.List<java.lang.String> rootModules);
+    java.util.Optional<java.lang.Integer> sourceRelease();
+    DocerBuilder sourceRelease(int sourceRelease);
+    java.util.Optional<java.lang.Integer> testRelease();
+    DocerBuilder testRelease(int testRelease);
     java.util.Optional<java.util.List<java.nio.file.Path>> upgradeModulePath();
     DocerBuilder upgradeModulePath(java.nio.file.Path... upgradeModulePath);
     DocerBuilder upgradeModulePath(java.util.List<java.nio.file.Path> upgradeModulePath);
@@ -322,6 +330,8 @@ public class Builders {
   @SuppressWarnings("exports")
   @com.github.forax.pro.api.TypeCheckedConfig
   public interface RunnerBuilder {
+    java.util.Optional<java.lang.Boolean> enablePreview();
+    RunnerBuilder enablePreview(boolean enablePreview);
     java.nio.file.Path javaCommand();
     RunnerBuilder javaCommand(java.nio.file.Path javaCommand);
     java.util.Optional<java.util.List<java.lang.String>> mainArguments();
@@ -361,6 +371,9 @@ public class Builders {
     java.util.List<java.nio.file.Path> moduleExplodedTestPath();
     TesterBuilder moduleExplodedTestPath(java.nio.file.Path... moduleExplodedTestPath);
     TesterBuilder moduleExplodedTestPath(java.util.List<java.nio.file.Path> moduleExplodedTestPath);
+    java.util.Optional<java.util.List<java.lang.String>> packages();
+    TesterBuilder packages(java.lang.String... packages);
+    TesterBuilder packages(java.util.List<java.lang.String> packages);
     boolean parallel();
     TesterBuilder parallel(boolean parallel);
     java.nio.file.Path pluginDir();
