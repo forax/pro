@@ -3,6 +3,7 @@ package com.github.forax.pro.plugin.runner;
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
+import static com.github.forax.pro.api.helper.OptionAction.exists;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 import static java.util.stream.Collectors.joining;
 
@@ -62,6 +63,7 @@ public class RunnerPlugin implements Plugin {
     MODULE_PATH(action("--module-path", Java::modulePath, File.pathSeparator)),
     UPGRADE_MODULE_PATH(actionMaybe("--upgrade-module-path", Java::upgradeModulePath, File.pathSeparator)),
     ROOT_MODULES(actionMaybe("--add-modules", Java::rootModules, ",")),
+    ENABLE_PREVIEW(exists("--enable-preview", Java::enablePreview)),
     RAW_ARGUMENTS(rawValues(Java::rawArguments)),
     MODULE_NAME(action("--module", Java::moduleName)),
     MAIN_ARGUMENTS(rawValues(Java::mainArguments)),
@@ -112,6 +114,7 @@ public class RunnerPlugin implements Plugin {
     var java = new Java(runnerConf.javaCommand(), runnerConf.modulePath(), moduleNameOpt.get());
     runnerConf.upgradeModulePath().ifPresent(java::upgradeModulePath);
     runnerConf.rootModules().ifPresent(java::rootModules);
+    runnerConf.enablePreview().ifPresent(java::enablePreview);
     runnerConf.rawArguments().ifPresent(java::rawArguments);
     runnerConf.mainArguments().ifPresent(java::mainArguments);
     

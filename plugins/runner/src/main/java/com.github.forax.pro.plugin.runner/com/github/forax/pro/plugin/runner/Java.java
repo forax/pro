@@ -10,6 +10,7 @@ class Java {
   private final List<Path> modulePath;
   private final String moduleName;
   
+  private boolean enablePreview;
   private List<Path> upgradeModulePath;
   private List<String> rootModules; 
   private List<String> rawArguments;
@@ -31,6 +32,12 @@ class Java {
     return moduleName;
   }
   
+  public boolean enablePreview() {
+    return enablePreview;
+  }
+  public void enablePreview(boolean enablePreview) {
+    this.enablePreview = enablePreview;
+  }
   public Optional<List<Path>> upgradeModulePath() {
     return Optional.ofNullable(upgradeModulePath);
   }

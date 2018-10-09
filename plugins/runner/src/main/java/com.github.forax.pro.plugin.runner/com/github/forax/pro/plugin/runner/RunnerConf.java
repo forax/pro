@@ -11,6 +11,9 @@ public interface RunnerConf {
   Path javaCommand();
   void javaCommand(Path javaCommand);
   
+  Optional<Boolean> enablePreview();
+  void enablePreview(boolean enablePreview);
+  
   List<Path> modulePath();
   void modulePath(List<Path> modulePath);
   
