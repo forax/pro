@@ -1,10 +1,13 @@
 package com.github.forax.pro.plugin.tester;
 
-import static org.junit.platform.engine.discovery.DiscoverySelectors.*;
+import static java.util.stream.Collectors.toList;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModule;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
 import java.io.PrintWriter;
 import java.util.function.IntSupplier;
 
+import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -42,8 +45,12 @@ public class TesterRunner implements IntSupplier {
     var builder = LauncherDiscoveryRequestBuilder.request();
 
     // Select from...
-    builder.selectors(selectModule(moduleName));
-    //builder.selectors(selectPackage(moduleName));
+    var packages = testConf.packages();
+    if (packages.isEmpty()) {
+      builder.selectors(selectModule(moduleName));
+    } else {
+      builder.selectors(packages.stream().map(DiscoverySelectors::selectPackage).collect(toList()));  
+    }
 
     // Apply filters...
     if (!includeTags.isEmpty()) {

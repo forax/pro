@@ -27,4 +27,6 @@ public interface TesterConf {
   void includeTags(List<String> tags);
   Optional<List<String>> excludeTags();
   void excludeTags(List<String> tags);
+  Optional<List<String>> packages();
+  void packages(List<String> tags);
 }

@@ -9,12 +9,14 @@ public class TestConf {
   private final boolean parallel;
   private final List<String> includeTags;
   private final List<String> excludeTags;
+  private final List<String> packages;
 
-  public TestConf(ModuleDescriptor moduleDescriptor, boolean parallel, List<String> includeTags, List<String> excludeTags) {
+  public TestConf(ModuleDescriptor moduleDescriptor, boolean parallel, List<String> packages, List<String> includeTags, List<String> excludeTags) {
     this.moduleDescriptor = Objects.requireNonNull(moduleDescriptor);
     this.parallel = parallel;
     this.includeTags = includeTags;
     this.excludeTags = excludeTags;
+    this.packages = packages;
   }
   
   public boolean parallel() {
@@ -31,5 +33,8 @@ public class TestConf {
   }
   public List<String> excludeTags() {
     return excludeTags;
+  }
+  public List<String> packages() {
+    return packages;
   }
 }
