@@ -81,7 +81,7 @@ public class Bootstrap {
         ));
 
     set("docer.quiet", true);
-    set("docer.link", uri("https://docs.oracle.com/javase/10/docs/api/"));
+    set("docer.link", uri("https://docs.oracle.com/en/java/javase/11/docs/api/"));
 
     set("linker.includeSystemJMODs", true);
     set("linker.launchers", list(
