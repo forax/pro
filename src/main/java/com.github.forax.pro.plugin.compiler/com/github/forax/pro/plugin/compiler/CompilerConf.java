@@ -25,6 +25,9 @@ public interface CompilerConf {
   Optional<String> lint();
   void lint(String lintOptions);
   
+  Optional<Boolean> enablePreview();
+  void enablePreview(boolean enablePreview);
+  
   Optional<List<String>> rawArguments();
   void rawArguments(List<String> rawArguments);
   

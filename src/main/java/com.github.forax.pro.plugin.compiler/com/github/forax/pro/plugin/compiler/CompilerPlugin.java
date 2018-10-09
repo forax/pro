@@ -53,7 +53,7 @@ public class CompilerPlugin implements Plugin {
   @SuppressWarnings("deprecation")
   public void init(MutableConfig config) {
     var compilerConf = config.getOrUpdate(name(), CompilerConf.class);
-    compilerConf.release(9);
+    compilerConf.release(11);
   }
   
   @Override
@@ -96,6 +96,7 @@ public class CompilerPlugin implements Plugin {
     RELEASE(action("--release", Javac::release)),
     VERBOSE(exists("-verbose", Javac::verbose)),
     LINT(javac -> javac.lint().map(lint -> line -> line.add("-Xlint:" + lint))),
+    ENABLE_PREVIEW(exists("--enable-preview", Javac::enablePreview)),
     RAW_ARGUMENTS(rawValues(Javac::rawArguments)),
     DESTINATION(actionMaybe("-d", Javac::destination)),
     MODULE_SOURCE_PATH(actionMaybe("--module-source-path", Javac::moduleSourcePath, File.pathSeparator)),
@@ -217,6 +218,7 @@ public class CompilerPlugin implements Plugin {
     var javac = new Javac(release);
     compiler.verbose().ifPresent(javac::verbose);
     compiler.lint().ifPresent(javac::lint);
+    compiler.enablePreview().ifPresent(javac::enablePreview);
     compiler.rawArguments().ifPresent(javac::rawArguments);
     compiler.upgradeModulePath().ifPresent(javac::upgradeModulePath);
     compiler.rootModules().ifPresent(javac::rootModules);

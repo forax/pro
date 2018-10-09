@@ -16,6 +16,7 @@ class Javac {
   private List<String> rootModules;
   private boolean verbose; 
   private String lint;
+  private boolean enablePreview;
   private List<String> rawArguments;
   
   Javac(int release) {
@@ -62,6 +63,13 @@ class Javac {
   }
   public void lint(String lint) {
     this.lint = Objects.requireNonNull(lint);
+  }
+  
+  public boolean enablePreview() {
+    return enablePreview;
+  }
+  public void enablePreview(boolean enablePreview) {
+    this.enablePreview = enablePreview;
   }
   
   public Optional<List<String>> rawArguments() {
