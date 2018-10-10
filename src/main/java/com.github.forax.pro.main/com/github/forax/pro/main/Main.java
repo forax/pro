@@ -106,8 +106,11 @@ public class Main {
     if (getDaemon().filter(Daemon::isStarted).isPresent()) {
       throw new InputException("shell doesn't currently support daemon mode :(");
     }
+    var isAtLeastJava11 = Runtime.version().feature() >= 11;
     var args =
         Stream.of(
+          Stream.of("-R--enable-preview").filter(__ -> isAtLeastJava11),  // always enable preview features if Java 11
+          Stream.of("--enable-preview").filter(__ -> isAtLeastJava11),
           Stream.of("-R-XX:+EnableValhalla").filter(__ -> System.getProperty("valhalla.enableValhalla") != null),
           Stream.of("-R-Dpro.exitOnError=false"),
           propertySeq.stream().map(entry -> "-D" + entry.getKey() + '=' + entry.getValue()),
