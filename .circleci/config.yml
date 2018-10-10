@@ -43,8 +43,8 @@ jobs:
       - run: wget https://github.com/tcnksm/ghr/releases/download/v0.12.0/ghr_v0.12.0_linux_amd64.tar.gz
       - run: tar xvf ghr_v0.12.0_linux_amd64.tar.gz
       - run: mv ghr_v0.12.0_linux_amd64/ghr ghr
-      - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG
-      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-lworld.zip
+      - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1 $CIRCLE_TAG
+      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 $CIRCLE_TAG pro-linux-early-access-lworld.zip
   build-loom:
     docker:
       - image: circleci/openjdk:11-ea-node-browsers
@@ -87,8 +87,8 @@ jobs:
       - run: wget https://github.com/tcnksm/ghr/releases/download/v0.12.0/ghr_v0.12.0_linux_amd64.tar.gz
       - run: tar xvf ghr_v0.12.0_linux_amd64.tar.gz
       - run: mv ghr_v0.12.0_linux_amd64/ghr ghr
-      - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG
-      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-loom.zip    
+      - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1 $CIRCLE_TAG
+      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 $CIRCLE_TAG pro-linux-early-access-loom.zip    
 
   build-amber:
     docker:
@@ -133,8 +133,8 @@ jobs:
       - run: wget https://github.com/tcnksm/ghr/releases/download/v0.12.0/ghr_v0.12.0_linux_amd64.tar.gz
       - run: tar xvf ghr_v0.12.0_linux_amd64.tar.gz
       - run: mv ghr_v0.12.0_linux_amd64/ghr ghr
-      - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG
-      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG pro-linux-early-access-amber.zip  
+      - run: echo $CIRCLE_PROJECT_USERNAME $CIRCLE_PROJECT_REPONAME $CIRCLE_SHA1 $CIRCLE_TAG
+      - run: ./ghr -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 $CIRCLE_TAG pro-linux-early-access-amber.zip  
               
 workflows:
   version: 2
