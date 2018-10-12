@@ -133,7 +133,7 @@ public class Bootstrap {
           "net.sf.jopt-simple=net.sf.jopt-simple:jopt-simple:" + joptSimpleVersion
       ));
     });
-
+    
     //    compileAndPackagePlugin("formatter", () -> {
     //      set(
     //        "resolver.remoteRepositories",
@@ -159,12 +159,15 @@ public class Bootstrap {
           location("plugins/formatter/libs"));
     });
 
+    compileAndPackagePlugin("frozer", list("resolver", "modulefixer", "compiler", "packager"), () -> { /* empty */});
+    
     run("linker" /*, "uberpackager" */);
 
     copyPackagedPluginToTargetImage("runner");
     copyPackagedPluginToTargetImage("tester");
     copyPackagedPluginToTargetImage("perfer");
     copyPackagedPluginToTargetImage("formatter");
+    copyPackagedPluginToTargetImage("frozer");
 
     // re-generate builders
     //com.github.forax.pro.Pro.loadPlugins(java.nio.file.Paths.get("target/image/plugins"));

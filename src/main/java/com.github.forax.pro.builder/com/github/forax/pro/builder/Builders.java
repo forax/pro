@@ -161,6 +161,21 @@ public class Builders {
     FormatterBuilder setExitIfChanged(boolean setExitIfChanged);
   }
   
+  public static final FrozerBuilder frozer =
+    BuilderSupport.createBuilderProxy("frozer", FrozerBuilder.class);
+  
+  @SuppressWarnings("exports")
+  @com.github.forax.pro.api.TypeCheckedConfig
+  public interface FrozerBuilder {
+    java.nio.file.Path moduleFrozenArtifactSourcePath();
+    FrozerBuilder moduleFrozenArtifactSourcePath(java.nio.file.Path moduleFrozenArtifactSourcePath);
+    java.util.List<java.nio.file.Path> modulePath();
+    FrozerBuilder modulePath(java.nio.file.Path... modulePath);
+    FrozerBuilder modulePath(java.util.List<java.nio.file.Path> modulePath);
+    java.util.Optional<java.lang.String> rootModule();
+    FrozerBuilder rootModule(java.lang.String rootModule);
+  }
+  
   public static final LinkerBuilder linker =
     BuilderSupport.createBuilderProxy("linker", LinkerBuilder.class);
   

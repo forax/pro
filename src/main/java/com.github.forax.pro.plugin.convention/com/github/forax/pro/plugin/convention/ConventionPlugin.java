@@ -37,6 +37,8 @@ public class ConventionPlugin implements Plugin {
         proConf, c -> c.currentDir().resolve("target/main/artifact-src"));
     derive(convention, ConventionConf::javaModuleDocArtifactSourcePath,
         proConf, c -> c.currentDir().resolve("target/main/artifact-doc"));
+    derive(convention, ConventionConf::javaModuleFrozenArtifactSourcePath,
+        proConf, c -> c.currentDir().resolve("target/main/artifact-frozen"));
     
     derive(convention, ConventionConf::javaModuleTestPath,
         proConf, c -> List.of(c.currentDir().resolve("src/test/java")));

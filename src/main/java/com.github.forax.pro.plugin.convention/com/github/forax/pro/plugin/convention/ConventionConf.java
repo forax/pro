@@ -24,6 +24,8 @@ public interface ConventionConf {
   void javaModuleSrcArtifactSourcePath(Path path);
   Path javaModuleDocArtifactSourcePath();
   void javaModuleDocArtifactSourcePath(Path path);
+  Path javaModuleFrozenArtifactSourcePath();
+  void javaModuleFrozenArtifactSourcePath(Path path);
 
   List<Path> javaModuleTestPath();
   void javaModuleTestPath(List<Path> path);
