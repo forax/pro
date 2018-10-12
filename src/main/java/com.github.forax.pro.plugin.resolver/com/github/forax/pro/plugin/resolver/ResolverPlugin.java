@@ -6,7 +6,9 @@ import static java.util.stream.Collectors.joining;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.module.FindException;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -233,7 +235,7 @@ public class ResolverPlugin implements Plugin {
     
     var resolvedModuleMap = resolvedArtifacts.stream()
         .peek(resolvedArtifact -> log.info(resolvedArtifact, _resolvedArtifact -> _resolvedArtifact + " downloaded from repositories"))
-        .collect(Collectors.groupingBy(resolvedArtifact -> artifactKeyToModuleMap.get(resolvedArtifact.getArtifactKey().toString())));
+        .collect(Collectors.groupingBy(resolvedArtifact -> artifactKeyToModuleMap.get(resolvedArtifact.getArtifactKey())));
     
     var undeclaredArtifactIds = resolvedModuleMap.get(null);
     if (undeclaredArtifactIds != null) {  // resolved artifacts with no module name
@@ -278,9 +280,16 @@ public class ResolverPlugin implements Plugin {
   
   private static void checkArtifactModuleName(Log log, String moduleName, ArtifactDescriptor resolvedArtifact) {
     var finder = ModuleFinder.of(resolvedArtifact.getPath());
-    var referenceOpt = finder.findAll().stream().findFirst();
+    Set<ModuleReference> moduleReferences;
+    try {
+      moduleReferences = finder.findAll();
+    } catch (FindException e) {
+      log.info(null, __ -> "WARNING! finding " + resolvedArtifact + " failed: " + e);
+      return;
+    }
+    var referenceOpt = moduleReferences.stream().findFirst();
     if (!referenceOpt.isPresent()) {
-      log.info(null, __ -> "WARNING! artifact " + resolvedArtifact + " is not a valide jar");
+      log.info(null, __ -> "WARNING! artifact " + resolvedArtifact + " is not a valid jar");
       return;
     }
     var descriptor = referenceOpt.get().descriptor();
