@@ -3,6 +3,7 @@ package com.github.forax.pro.plugin.resolver;
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.helper.util.Lazy.lazy;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -254,12 +255,14 @@ public class ResolverPlugin implements Plugin {
       switch(resolvedArtifactList.size()) {
       case 1: {
         var resolvedArtifact = resolvedArtifactList.get(0);
-        checkArtifactModuleName(log, moduleName, resolvedArtifact);
+        var moduleReferenceOpt = validateModuleReferenceFromArtifact(log, resolvedArtifact);
+        moduleReferenceOpt.ifPresent(ref -> checkArtifactModuleName(log, moduleName, ref, resolvedArtifact));
         Files.copy(resolvedArtifact.getPath(), jarPath);
         break;
       }
       default: 
-        mergeInOneJar(resolvedArtifactList.stream().map(ArtifactDescriptor::getPath).collect(Collectors.toList()), jarPath, log);
+        resolvedArtifactList.forEach(artifact -> validateModuleReferenceFromArtifact(log, artifact));
+        mergeInOneJar(resolvedArtifactList.stream().map(ArtifactDescriptor::getPath).collect(toList()), jarPath, log);
       }
     }
     
@@ -278,21 +281,25 @@ public class ResolverPlugin implements Plugin {
     }
   }
   
-  private static void checkArtifactModuleName(Log log, String moduleName, ArtifactDescriptor resolvedArtifact) {
+  private static Optional<ModuleReference> validateModuleReferenceFromArtifact(Log log, ArtifactDescriptor resolvedArtifact) {
     var finder = ModuleFinder.of(resolvedArtifact.getPath());
     Set<ModuleReference> moduleReferences;
     try {
       moduleReferences = finder.findAll();
     } catch (FindException e) {
       log.info(null, __ -> "WARNING! finding " + resolvedArtifact + " failed: " + e);
-      return;
+      return Optional.empty();
     }
     var referenceOpt = moduleReferences.stream().findFirst();
     if (!referenceOpt.isPresent()) {
       log.info(null, __ -> "WARNING! artifact " + resolvedArtifact + " is not a valid jar");
-      return;
+      return Optional.empty();
     }
-    var descriptor = referenceOpt.get().descriptor();
+    return referenceOpt;
+  }
+  
+  private static void checkArtifactModuleName(Log log, String moduleName, ModuleReference moduleReference, ArtifactDescriptor resolvedArtifact) {
+    var descriptor = moduleReference.descriptor();
     if (descriptor.isAutomatic()) {
       return;
     }
