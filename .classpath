@@ -26,26 +26,6 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/plugin/com.github.forax.pro.plugin.tester" path="plugins/tester/src/test/java/com.github.forax.pro.plugin.tester"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/integration.pro" path="src/test/java/integration.pro"/>
 	<classpathentry kind="src" path="wrapper"/>
-	<classpathentry kind="lib" path="deps/asm-6.2.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/asm-analysis-6.2.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/asm-commons-6.2.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/asm-tree-6.2.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="deps/org.json-20160810.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
@@ -63,6 +43,10 @@
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.commons.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.opentest4j.jar"/>
 	<classpathentry kind="lib" path="deps/com.github.forax.pro.aether.jar"/>
+	<classpathentry kind="lib" path="deps/asm-7.0-beta.jar"/>
+	<classpathentry kind="lib" path="deps/asm-analysis-7.0-beta.jar"/>
+	<classpathentry kind="lib" path="deps/asm-commons-7.0-beta.jar"/>
+	<classpathentry kind="lib" path="deps/asm-tree-7.0-beta.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
 		<attributes>
 			<attribute name="module" value="true"/>
