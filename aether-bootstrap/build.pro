@@ -1,7 +1,21 @@
 import static com.github.forax.pro.Pro.*;
 import static com.github.forax.pro.builder.Builders.*;
+import static java.nio.file.Files.*;
+import static java.nio.file.StandardCopyOption.*;
+
+// In order to bootstrap pro, we first need to create a wrapper around Eclipse Aether
+// this build script generate a jar com.github.forax.pro.aether.jar
+// in target/main/artifact-frozen
+//
+// this jar is then copied in the deps folder of pro
 
 var version = Runtime.version().feature();
+
+var install = command("install", () -> {
+  copy(location("target/main/artifact-frozen/com.github.forax.pro.aether.jar"),
+       location("../deps/com.github.forax.pro.aether.jar"),
+       REPLACE_EXISTING);
+})
 
 resolver.
     //checkForUpdate(true).
@@ -48,6 +62,6 @@ packager.modules(
 
 frozer.rootModule("com.github.forax.pro.aether")
 
-run(resolver, modulefixer, compiler, packager, /*runner,*/ frozer)
+run(resolver, modulefixer, compiler, packager, /*runner,*/ frozer, install)
 
 /exit
