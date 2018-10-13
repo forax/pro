@@ -392,7 +392,7 @@ public class ModuleFixerPlugin implements Plugin {
           if (delegate == null) {
             return null;
           }
-          return new MethodNode(Opcodes.ASM6, access, packageName, desc, signature, exceptions) {
+          return new MethodNode(Opcodes.ASM7, access, packageName, desc, signature, exceptions) {
             final ArrayList<MethodInsnNode> nodes = new ArrayList<>();
             
             @Override

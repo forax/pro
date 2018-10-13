@@ -1,6 +1,6 @@
 package com.github.forax.pro.plugin.modulefixer.impl;
 
-import static org.objectweb.asm.Opcodes.ASM6;
+import static org.objectweb.asm.Opcodes.ASM7;
 import static org.objectweb.asm.Opcodes.D2L;
 import static org.objectweb.asm.Opcodes.DADD;
 import static org.objectweb.asm.Opcodes.DALOAD;
@@ -75,7 +75,7 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
   }
   
   public ConstInterpreter() {
-    super(ASM6);
+    super(ASM7);
   }
 
   @Override

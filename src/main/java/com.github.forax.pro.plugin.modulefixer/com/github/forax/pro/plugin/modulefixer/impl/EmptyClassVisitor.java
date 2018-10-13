@@ -1,5 +1,7 @@
 package com.github.forax.pro.plugin.modulefixer.impl;
 
+import static org.objectweb.asm.Opcodes.ASM7;
+
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -9,14 +11,14 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.TypePath;
 
 public final class EmptyClassVisitor extends ClassVisitor {
-  static final AnnotationVisitor EMPTY_ANNOTATION_VISITOR = new AnnotationVisitor(Opcodes.ASM6) {
+  static final AnnotationVisitor EMPTY_ANNOTATION_VISITOR = new AnnotationVisitor(ASM7) {
     @Override
     public AnnotationVisitor visitAnnotation(String name, String desc) {
       return this;
     }
   };
   
-  private static final FieldVisitor EMPTY_FIELD_VISITOR = new FieldVisitor(Opcodes.ASM6) {
+  private static final FieldVisitor EMPTY_FIELD_VISITOR = new FieldVisitor(ASM7) {
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
       return EMPTY_ANNOTATION_VISITOR;
@@ -27,7 +29,7 @@ public final class EmptyClassVisitor extends ClassVisitor {
     }
   };
   
-  private static final MethodVisitor EMPTY_METHOD_VISITOR = new MethodVisitor(Opcodes.ASM6) {
+  private static final MethodVisitor EMPTY_METHOD_VISITOR = new MethodVisitor(ASM7) {
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
       return EMPTY_ANNOTATION_VISITOR;
@@ -66,7 +68,7 @@ public final class EmptyClassVisitor extends ClassVisitor {
   }
   
   private EmptyClassVisitor() {
-    super(Opcodes.ASM6);
+    super(ASM7);
   }
 
   @Override
