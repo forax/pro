@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro" path="src/main/java/com.github.forax.pro"/>
-	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.aether" path="src/main/java/com.github.forax.pro.aether"/>
-	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.aether.fakeguava" path="src/main/java/com.github.forax.pro.aether.fakeguava"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.api" path="src/main/java/com.github.forax.pro.api"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.builder" path="src/main/java/com.github.forax.pro.builder"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/com.github.forax.pro.helper" path="src/main/java/com.github.forax.pro.helper"/>
@@ -28,47 +26,6 @@
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/plugin/com.github.forax.pro.plugin.tester" path="plugins/tester/src/test/java/com.github.forax.pro.plugin.tester"/>
 	<classpathentry excluding="module-info.java" kind="src" output="output-eclipse/modules/integration.pro" path="src/test/java/integration.pro"/>
 	<classpathentry kind="src" path="wrapper"/>
-	
-	<classpathentry kind="lib" path="deps/aether.api-1.0.1.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/aether.connector.basic-1.0.1.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/aether.impl-1.0.1.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/aether.spi-1.0.1.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/aether.transport.file-1.0.1.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/aether.transport.http-1.0.1.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/maven.aether.provider-3.3.9.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="lib" path="deps/aether.util-1.0.1.jar">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="deps/asm-6.2.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
@@ -105,6 +62,7 @@
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.launcher.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.commons.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.opentest4j.jar"/>
+	<classpathentry kind="lib" path="deps/com.github.forax.pro.aether.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
 		<attributes>
 			<attribute name="module" value="true"/>
