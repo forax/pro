@@ -1,6 +1,7 @@
 package com.github.forax.pro.plugin.frozer;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
+import static java.lang.Character.isJavaIdentifierStart;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
 
@@ -11,6 +12,7 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -162,7 +164,7 @@ public class FrozerPlugin implements Plugin {
                 continue;
               }
             
-              var newFilename = interpolate(internalPackageNameMap, filename);
+              var newFilename = interpolateInternalName(internalPackageNameMap, filename);
               getPackage(newFilename).ifPresent(newPackages::add);
               outputStream.putNextEntry(new JarEntry(newFilename));
               outputStream.write(rewriteBytecode(internalPackageNameMap, inputStream.readAllBytes()));
@@ -186,12 +188,15 @@ public class FrozerPlugin implements Plugin {
       dependencies.stream()
         .flatMap(name -> finder.find(name).stream())
         .map(ModuleReference::descriptor)
-        .forEach(descriptor -> descriptor.provides().forEach(provides -> {
-          builder.provides(
-              interpolateClassName(internalPackageNameMap, provides.service()),
-              provides.providers().stream().map(provider -> interpolateClassName(internalPackageNameMap, provider)).collect(toList())
-              );
-        }));
+        .forEach(descriptor -> {
+          descriptor.provides().forEach(provides -> {
+            builder.provides(
+                interpolateClassName(internalPackageNameMap, provides.service()),
+                provides.providers().stream().map(provider -> interpolateClassName(internalPackageNameMap, provider)).collect(toList())
+                );
+          });
+          descriptor.uses().forEach(uses -> builder.uses(interpolateClassName(internalPackageNameMap, uses)));
+        });
       builder.packages(newPackages);
       var moduleDescriptor = builder.build();
       
@@ -203,13 +208,13 @@ public class FrozerPlugin implements Plugin {
     return Optional.of(resource.lastIndexOf('/')).filter(index -> index != -1).map(index -> resource.substring(0, index).replace('/', '.'));
   }
   
-  private static String interpolate(Map<String, String> internalPackageNameMap, String internalName) {
+  private static String interpolateInternalName(Map<String, String> internalPackageNameMap, String internalName) {
     var index = internalName.lastIndexOf('/');
     if (index == -1) {
       return internalName;
     }
     var internalPackageName = internalName.substring(0, index);
-    return Optional.ofNullable(internalPackageNameMap.get(internalPackageName))
+    return matchInternalPackagePrefix(internalPackageNameMap, internalPackageName)
         .map(packageName -> packageName + '/' + internalName.substring(index + 1))
         .orElse(internalName);
   }
@@ -220,13 +225,10 @@ public class FrozerPlugin implements Plugin {
       return className;
     }
     var internalPackageName = className.substring(0, index).replace('.', '/');
-    return Optional.ofNullable(internalPackageNameMap.get(internalPackageName))
+    return matchInternalPackagePrefix(internalPackageNameMap, internalPackageName)
         .map(packageName -> packageName.replace('/', '.') + '.' + className.substring(index + 1))
         .orElse(className);
   }
-  
-  private static final Pattern QUALIFIED = Pattern.compile("\\p{Alpha}\\p{Alnum}*(\\.\\p{Alpha}\\p{Alnum}*)*\\.\\p{Upper}\\p{Alnum}*");
-  private static final Pattern SLASHIFIED = Pattern.compile("\\p{Alpha}\\p{Alnum}*(/\\p{Alpha}\\p{Alnum}*)*/\\p{Upper}\\p{Alnum}*");
   
   private static byte[] rewriteBytecode(Map<String, String> internalPackageNameMap, byte[] bytecode) {
     ClassReader classReader = new ClassReader(bytecode);
@@ -234,11 +236,11 @@ public class FrozerPlugin implements Plugin {
     classReader.accept(new ClassRemapper(classWriter, new Remapper() {
       @Override
       public String map(String internalName) {
-        return interpolate(internalPackageNameMap, internalName);
+        return interpolateInternalName(internalPackageNameMap, internalName);
       }
       @Override
       public String mapPackageName(String internalPackageName) {
-        return Optional.ofNullable(internalPackageNameMap.get(internalPackageName))
+        return matchInternalPackagePrefix(internalPackageNameMap, internalPackageName)
             .orElse(internalPackageName);
       }
       @Override
@@ -249,17 +251,11 @@ public class FrozerPlugin implements Plugin {
 
         // try to patch if it's like a class name (dot form and slash form)
         var string = (String)value;
-        if (QUALIFIED.matcher(string).matches()) {
+        
+        if (lookLikeAClassName(string)) {
           var index = string.lastIndexOf('.');
-          return Optional.ofNullable(internalPackageNameMap.get(string.substring(0, index).replace('.', '/')))
+          return matchInternalPackagePrefix(internalPackageNameMap, string.substring(0, index).replace('.', '/'))
               .map(packageName -> packageName.replace('/', '.') + '.' + string.substring(index + 1))
-              .map(result -> { System.out.println("literal constant string " + string +" as " + result); return result;})
-              .orElse(string);
-        }
-        if (SLASHIFIED.matcher(string).matches()) {
-          var index = string.lastIndexOf('/');
-          return Optional.ofNullable(internalPackageNameMap.get(string.substring(0, index)))
-              .map(packageName -> packageName + '/' + string.substring(index + 1))
               .map(result -> { System.out.println("literal constant string " + string +" as " + result); return result;})
               .orElse(string);
         }
@@ -267,5 +263,37 @@ public class FrozerPlugin implements Plugin {
       }
     }), 0);
     return classWriter.toByteArray();
+  }
+  
+  private static Optional<String> matchInternalPackagePrefix(Map<String, String> internalPackageNameMap, String internalPackageName) {
+    var newPackageName = internalPackageNameMap.get(internalPackageName);
+    if (newPackageName != null) {
+      return Optional.of(newPackageName);
+    }
+    var index = internalPackageName.lastIndexOf('/');
+    if (index == -1) {
+      return Optional.empty();
+    }
+    return matchInternalPackagePrefix(internalPackageNameMap, internalPackageName.substring(0, index))
+        .map(name -> name + '/' + internalPackageName.substring(index + 1));
+  }
+  
+  private static boolean lookLikeAClassName(String name) {
+    var index = name.indexOf('.');
+    if (index == -1 || index == name.length() - 1) {
+      return false;
+    }
+    var tokens = name.split("\\.");
+    if (tokens.length == 0) {
+      return false;
+    }
+    return Arrays.stream(tokens).allMatch(token -> isAJavaIdentifier(token)) && startWithAnUpperCaseLetter(tokens[tokens.length - 1]);
+  }
+  
+  private static boolean isAJavaIdentifier(String token) {
+    return token.length() >=1 && isJavaIdentifierStart(token.charAt(0)) && token.chars().skip(1).allMatch(Character::isJavaIdentifierPart);
+  }
+  private static boolean startWithAnUpperCaseLetter(String token) {
+    return Character.isUpperCase(token.charAt(0));
   }
 }
