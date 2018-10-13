@@ -10,7 +10,6 @@ public class Log {
   /**
    * Log levels.
    */
-  @SuppressWarnings("hiding")
   public enum Level {
     DEBUG, VERBOSE, INFO, QUIET
     ;
@@ -37,9 +36,9 @@ public class Log {
     this.level = level;
   }
   
-  private static final int DEBUG = Level.DEBUG.level;
-  private static final int VERBOSE = Level.VERBOSE.level;
-  private static final int INFO = Level.INFO.level;
+  private static final int DEBUG_LEVEL = Level.DEBUG.level;
+  private static final int VERBOSE_LEVEL = Level.VERBOSE.level;
+  private static final int INFO_LEVEL = Level.INFO.level;
   
   /**
    * Creates a logger with a name and a level.
@@ -76,7 +75,7 @@ public class Log {
    * @param exception the exception to log. 
    */
   public void error(Throwable exception) {
-    if (level == DEBUG) {
+    if (level == DEBUG_LEVEL) {
       exception.printStackTrace();
     } else {
       System.err.println(name + exception.getMessage());
@@ -90,7 +89,7 @@ public class Log {
    * @param messageFactory function that will creates the error message. 
    */
   public <T> void debug(T value, Function<? super T, String> messageFactory) {
-    if (level == DEBUG) {
+    if (level == DEBUG_LEVEL) {
       System.out.println(name + messageFactory.apply(value));
     }
   }
@@ -102,7 +101,7 @@ public class Log {
    * @param messageFactory function that will creates the error message. 
    */
   public <T> void verbose(T value, Function<? super T, String> messageFactory) {
-    if (level <= VERBOSE) {
+    if (level <= VERBOSE_LEVEL) {
       System.out.println(name + messageFactory.apply(value));
     }
   }
@@ -114,7 +113,7 @@ public class Log {
    * @param messageFactory function that will creates the error message. 
    */
   public <T> void info(T value, Function<? super T, String> messageFactory) {
-    if (level <= INFO) {
+    if (level <= INFO_LEVEL) {
       System.out.println(name + messageFactory.apply(value));
     }
   }
