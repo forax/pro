@@ -2,9 +2,11 @@ package com.github.forax.pro.plugin.frozer;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static java.util.function.Predicate.not;
+import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.nio.file.Files;
@@ -14,9 +16,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -98,39 +103,20 @@ public class FrozerPlugin implements Plugin {
     //System.out.println("dependencies " + dependencies);
     //System.out.println("notFounds " + requires);
     
+    
     // packages that need to be renamed
-    var packages = new HashSet<String>();
-    
-    // create the new module descriptor
-    var builder = ModuleDescriptor.newOpenModule(rootModuleName);
-    var rootModuleDescriptor = rootModule.descriptor();
-    
-    rootModuleDescriptor.version().ifPresent(builder::version);
-    requires.forEach(builder::requires);
-    rootModuleDescriptor.exports().forEach(builder::exports);
-    rootModuleDescriptor.opens().forEach(builder::opens);
-    builder.packages(rootModuleDescriptor.packages());
-    rootModuleDescriptor.provides().forEach(builder::provides);
-    
-    dependencies.stream()
+    var packages = dependencies.stream()
       .filter(not(rootModuleName::equals))
       .flatMap(name -> finder.find(name).stream())
       .map(ModuleReference::descriptor)
-      .forEach(descriptor -> {
-        //descriptor.exports().forEach(builder::exports);
-        //descriptor.opens().forEach(builder::opens);
-        
-        builder.packages(descriptor.packages());
-        packages.addAll(descriptor.packages());
-        descriptor.provides().forEach(builder::provides);
-      });
-    var moduleDescriptor = builder.build();
+      .flatMap(descriptor -> Stream.<String>concat(descriptor.exports().stream().map(Exports::source), descriptor.packages().stream()))
+      .collect(Collectors.toSet());
     
-    rewrite(rootModule, dependencies, packages, finder, moduleDescriptor, frozerConf.moduleFrozenArtifactSourcePath());
+    rewrite(rootModule, dependencies, requires, packages, finder, frozerConf.moduleFrozenArtifactSourcePath());
     return 0;
   }
 
-  private static void rewrite(ModuleReference rootModule, LinkedHashSet<String> dependencies, HashSet<String> packages, ModuleFinder finder, ModuleDescriptor moduleDescriptor, Path destination) throws IOException {
+  private static void rewrite(ModuleReference rootModule, LinkedHashSet<String> dependencies, LinkedHashSet<String> requires, Set<String> packages, ModuleFinder finder, Path destination) throws IOException {
     // create a map old package name -> new package name
     var rootModuleName = rootModule.descriptor().name();
     var internalRootModuleName = rootModuleName.replace('.', '/');
@@ -139,14 +125,12 @@ public class FrozerPlugin implements Plugin {
         .collect(Collectors.toMap(name -> name, name -> internalRootModuleName + '/' + name));
     //System.out.println(internalPackageNameMap);
     
+    var newPackages = new HashSet<String>();
+    
     Path path = destination.resolve(rootModuleName + ".jar");
     Files.createDirectories(path.getParent());
     try(var output = Files.newOutputStream(path);
         var outputStream = new JarOutputStream(output)) {
-      
-      // insert new module-info and interpolate it
-      outputStream.putNextEntry(new JarEntry("module-info.class"));
-      outputStream.write(rewriteBytecode(internalPackageNameMap, ModuleHelper.moduleDescriptorToBinary(moduleDescriptor)));
       
       // rewrite all the classes of the dependencies
       var entryNames = new HashSet<>();
@@ -170,19 +154,53 @@ public class FrozerPlugin implements Plugin {
             try(var inputStream = reader.open(filename).orElseThrow(() -> new IOException("can not read " + filename))) {
               if (!filename.endsWith(".class")) {  // only rewrite .class
                                                    // otherwise copy the resources
+                
+                getPackage(filename).ifPresent(newPackages::add);
+                
                 outputStream.putNextEntry(new JarEntry(filename));
                 inputStream.transferTo(outputStream);
                 continue;
               }
             
               var newFilename = interpolate(internalPackageNameMap, filename);
+              getPackage(newFilename).ifPresent(newPackages::add);
               outputStream.putNextEntry(new JarEntry(newFilename));
               outputStream.write(rewriteBytecode(internalPackageNameMap, inputStream.readAllBytes()));
             }
           }
         }
       }
+      
+      // then insert the new module-info and interpolate it
+      outputStream.putNextEntry(new JarEntry("module-info.class"));
+      
+      var builder = ModuleDescriptor.newOpenModule(rootModuleName);
+      var rootModuleDescriptor = rootModule.descriptor();
+      
+      rootModuleDescriptor.version().ifPresent(builder::version);
+      requires.forEach(builder::requires);
+      rootModuleDescriptor.exports().forEach(builder::exports);
+      rootModuleDescriptor.opens().forEach(builder::opens);
+      builder.packages(rootModuleDescriptor.packages());
+      
+      dependencies.stream()
+        .flatMap(name -> finder.find(name).stream())
+        .map(ModuleReference::descriptor)
+        .forEach(descriptor -> descriptor.provides().forEach(provides -> {
+          builder.provides(
+              interpolateClassName(internalPackageNameMap, provides.service()),
+              provides.providers().stream().map(provider -> interpolateClassName(internalPackageNameMap, provider)).collect(toList())
+              );
+        }));
+      builder.packages(newPackages);
+      var moduleDescriptor = builder.build();
+      
+      outputStream.write(ModuleHelper.moduleDescriptorToBinary(moduleDescriptor));
     }
+  }
+  
+  private static Optional<String> getPackage(String resource) {
+    return Optional.of(resource.lastIndexOf('/')).filter(index -> index != -1).map(index -> resource.substring(0, index).replace('/', '.'));
   }
   
   private static String interpolate(Map<String, String> internalPackageNameMap, String internalName) {
@@ -196,6 +214,20 @@ public class FrozerPlugin implements Plugin {
         .orElse(internalName);
   }
   
+  private static String interpolateClassName(Map<String, String> internalPackageNameMap, String className) {
+    var index = className.lastIndexOf('.');
+    if (index == -1) {
+      return className;
+    }
+    var internalPackageName = className.substring(0, index).replace('.', '/');
+    return Optional.ofNullable(internalPackageNameMap.get(internalPackageName))
+        .map(packageName -> packageName.replace('/', '.') + '.' + className.substring(index + 1))
+        .orElse(className);
+  }
+  
+  private static final Pattern QUALIFIED = Pattern.compile("\\p{Alpha}\\p{Alnum}*(\\.\\p{Alpha}\\p{Alnum}*)*\\.\\p{Upper}\\p{Alnum}*");
+  private static final Pattern SLASHIFIED = Pattern.compile("\\p{Alpha}\\p{Alnum}*(/\\p{Alpha}\\p{Alnum}*)*/\\p{Upper}\\p{Alnum}*");
+  
   private static byte[] rewriteBytecode(Map<String, String> internalPackageNameMap, byte[] bytecode) {
     ClassReader classReader = new ClassReader(bytecode);
     ClassWriter classWriter = new ClassWriter(0);
@@ -208,6 +240,30 @@ public class FrozerPlugin implements Plugin {
       public String mapPackageName(String internalPackageName) {
         return Optional.ofNullable(internalPackageNameMap.get(internalPackageName))
             .orElse(internalPackageName);
+      }
+      @Override
+      public Object mapValue(Object value) {
+        if (!(value instanceof String)) {  
+          return super.mapValue(value);
+        }
+
+        // try to patch if it's like a class name (dot form and slash form)
+        var string = (String)value;
+        if (QUALIFIED.matcher(string).matches()) {
+          var index = string.lastIndexOf('.');
+          return Optional.ofNullable(internalPackageNameMap.get(string.substring(0, index).replace('.', '/')))
+              .map(packageName -> packageName.replace('/', '.') + '.' + string.substring(index + 1))
+              .map(result -> { System.out.println("literal constant string " + string +" as " + result); return result;})
+              .orElse(string);
+        }
+        if (SLASHIFIED.matcher(string).matches()) {
+          var index = string.lastIndexOf('/');
+          return Optional.ofNullable(internalPackageNameMap.get(string.substring(0, index)))
+              .map(packageName -> packageName + '/' + string.substring(index + 1))
+              .map(result -> { System.out.println("literal constant string " + string +" as " + result); return result;})
+              .orElse(string);
+        }
+        return string;
       }
     }), 0);
     return classWriter.toByteArray();
