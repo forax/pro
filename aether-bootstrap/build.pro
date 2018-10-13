@@ -53,8 +53,7 @@ resolver.
       "org.apache.maven.artifact=org.apache.maven:maven-artifact:3.5.4,org.apache.maven:maven-repository-metadata:3.5.4"
     )
 
-//compiler.sourceRelease(version) // avoid to generate nest-mate attributes
-compiler.sourceRelease(10)
+compiler.sourceRelease(version)
 
 packager.modules(
       "com.github.forax.pro.aether@0." + version + "/com.github.forax.pro.aether.bootstrap.Main"
