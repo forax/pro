@@ -258,7 +258,7 @@ public class ImpDaemon implements Daemon {
   @SuppressWarnings("serial")
   static class ExitException extends RuntimeException {
     ExitException() {
-      // empty
+      super(null, null, false, false);
     }
   }
   
