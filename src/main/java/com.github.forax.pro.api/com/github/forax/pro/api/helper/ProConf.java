@@ -20,6 +20,9 @@ public interface ProConf {
   boolean exitOnError();
   void exitOnError(boolean exitOnError);
   
+  int errorCode();
+  void errorCode(int errorCode);
+  
   List<String> arguments();
   void arguments(List<String> arguments);
   

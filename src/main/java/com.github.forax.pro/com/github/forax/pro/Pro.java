@@ -24,9 +24,9 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.github.forax.pro.api.Command;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
-import com.github.forax.pro.api.Command;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.impl.Configs.Query;
 import com.github.forax.pro.api.impl.DefaultConfig;
@@ -54,6 +54,7 @@ public class Pro {
         .orElse(Log.Level.INFO);
       proConf.loglevel(logLevel.name().toLowerCase());
       proConf.exitOnError(Boolean.valueOf(System.getProperty("pro.exitOnError", "true")));
+      proConf.errorCode(0);
       var arguments = Optional.ofNullable(System.getProperty("pro.arguments", null))
           .map(value -> List.of(value.split(",")))
           .orElse(List.of());
@@ -468,6 +469,21 @@ public class Pro {
   }
   
   /**
+   * Returns the current errorCode.
+   * 
+   * The implementation is equivalent to
+   * {@code
+   *   getOrElseThrow("pro.errorCode", Integer.class);
+   * }
+   * 
+   * @return the current errorCode.
+   */
+  public static int errorCode() {
+    var proConf = CONFIG.get().getOrThrow("pro", ProConf.class);
+    return proConf.errorCode();
+  }
+  
+  /**
    * Execute all commands, {@link #command(Action) user-defined} or {@link Plugin plugins},
    * one after another in the array order with the current configuration. 
    * 
@@ -502,7 +518,8 @@ public class Pro {
         if (!pluginOpt.isPresent()) {
           var log = Log.create("pro", proConf.loglevel());
           log.error(pluginName, name -> "unknown plugin " + name);  
-          throw exit(proConf.exitOnError(), "pro", 1);  //FIXME
+          mayExit(proConf.exitOnError(), "pro", 1);  //FIXME
+          return;
         }
         
         commandList.add(pluginOpt.get());
@@ -513,26 +530,30 @@ public class Pro {
   }
   
   private static void runAll(DefaultConfig config, List<Command> commands) {
-    var commandConfig = config.duplicate();
-    
     var daemonOpt = ServiceLoader.load(Daemon.class, ClassLoader.getSystemClassLoader()).findFirst();
     var consumer = daemonOpt
         .filter(Daemon::isStarted)
-        .<BiConsumer<List<Command>, Config>>map(daemon -> daemon::execute)
+        .<BiConsumer<List<Command>, DefaultConfig>>map(daemon -> (_commands, _config) -> daemon.execute(_commands, _config.duplicate()))
         .orElse(Pro::executeAll);
-    consumer.accept(commands, commandConfig);
+    consumer.accept(commands, config);
   }
   
-  private static void executeAll(List<Command> commands, Config config) {
+  private static void executeAll(List<Command> commands, DefaultConfig config) {
     var proConf = config.getOrThrow("pro", ProConf.class);
+    var log = Log.create("pro", proConf.loglevel());
     var exitOnError = proConf.exitOnError();
+    var errorCode = proConf.errorCode();
+    if (errorCode != 0) {
+      log.error(errorCode, _errorCode -> "previous command failed, errrorCode() is " + _errorCode);
+      return;
+    }
     
-    var errorCode = 0;
     var failedCommandName = "";
     var start = System.currentTimeMillis();
     for(var command: commands) {
-      errorCode = execute(command, config);
+      errorCode = execute(command, config.duplicate());
       if (errorCode != 0) {
+        config.getOrUpdate("pro", ProConf.class).errorCode(errorCode);
         failedCommandName = command.name();
         break;
       }
@@ -540,7 +561,6 @@ public class Pro {
     var end = System.currentTimeMillis();
     var elapsed = end - start;
     
-    var log = Log.create("pro", proConf.loglevel());
     if (errorCode == 0) {
       log.info(elapsed, time -> String.format("DONE !          elapsed time %,d ms", time));
     } else {
@@ -548,7 +568,7 @@ public class Pro {
     }
     
     if (errorCode != 0) {
-      throw exit(exitOnError, failedCommandName, errorCode);
+      mayExit(exitOnError, failedCommandName, errorCode);
     }
   }
   
@@ -564,12 +584,11 @@ public class Pro {
     }
   }
   
-  private static Error exit(boolean exitOnError, String failedCommandName, int errorCode) {
+  private static void mayExit(boolean exitOnError, String failedCommandName, int errorCode) {
     String errorMessage = "command '" + failedCommandName + "' exit with code " + errorCode;
+    System.err.println(errorMessage);
     if (exitOnError) {
-      System.err.println(errorMessage);
       System.exit(errorCode);
     }
-    throw new Error(errorMessage);
   }
 }

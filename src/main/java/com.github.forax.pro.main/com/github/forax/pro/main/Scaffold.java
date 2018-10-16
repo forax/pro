@@ -46,7 +46,8 @@ class Scaffold {
         "//        \"org.openjdk.jmh.generator=org.openjdk.jmh:jmh-generator-annprocess:1.21\"\n" +
         "    )\n" + 
         "\n" + 
-        "// compiler.\n" + 
+        "compiler.\n" + 
+        "    sourceRelease(11)/*.*/\n" +
         "//     rawArguments(\n" + 
         "//         \"--processor-module-path\", \"deps\"   // enable JMH annotation processor\n" + 
         "//     )\n" + 
@@ -62,7 +63,7 @@ class Scaffold {
         "    \n" + 
         "run(resolver, modulefixer, compiler, tester, docer, packager, runner /*, perfer */)\n" + 
         "\n" + 
-        "/exit\n";
+        "/exit errorCode()\n";
     
     var eclipseClassPath =
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + 
