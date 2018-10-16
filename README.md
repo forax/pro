@@ -21,11 +21,60 @@ The build model of Maven is not well suited to describe this new world.
   - external dependencies are in plain sight
 
 
-# architectures
+# anatomy of a build.pro
+
+Pro uses a file named `build.pro` as build script, which is composed of two parts, the configuration part and the run part.
+In the configuration part, you can set the properties of a specific plugin, by example, this how to set the release version of the source to Java 11 for the compiler
+```
+  compiler.sourceRelease(11)
+```
+you can chain the calls, by example to set the source release and use the preview features
+```
+  compiler.
+    sourceRelease(11).
+```
+Note: Pro uses jshell to parse the build.pro, this tool is line oriented so you have to put the dot '.' at the end of
+      the line to ask for the parsing of the next line.
+      
+Then you have to call `run()` with all the command you want to execute, by example,
+```
+  run(compiler, packager)
+```
+to run the `compiler` on the sources and uses the `packager` to create a jar.
+
+Here is a list of the main plugins
+ - `resolver`  use Maven artifact coordinate to download the dependencies 
+ - `modulefixer` patch the artifacts downloaded to make them fully compatible with the module-path 
+ - `compiler` compile the sources and the tests
+ - `tester` run the JUnit 5 tests
+ - `docer` generate the javadoc
+ - `runner` run the `main()` of the main class of the main module.
+
+
+
+# getting started
   
+To create a minimal project that uses Pro, you can use the option `scaffold`
+```
+  mkdir myproject
+  cd myproject
+  pro scaffold 
+```
+
+`scaffold` will ask for a module name (a name in reverse DNS form like a kind of root package) and will generate a skeleton of the folders.
+
+Then you can then run Pro to build your project
+```
+  pro
+```
+
+
 
 # demo
 There is a small demo in the github project [pro-demo](https://github.com/forax/pro-demo/).
+
+
+
 
 # build instructions
 To compile and build pro, run:
