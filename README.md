@@ -44,7 +44,7 @@ Then you have to call `run()` with all the commands you want to execute, by exam
 to run the `compiler` on the sources and uses the `packager` to create a jar.
 
 Here is a list of the main plugins
- - `resolver`  use Maven artifact coordinate to download the dependencies 
+ - `resolver`  use Maven artifact coordinates to download the dependencies 
  - `modulefixer` patch the artifacts downloaded to make them fully compatible with the module-path 
  - `compiler` compile the sources and the tests
  - `tester` run the JUnit 5 tests
