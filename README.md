@@ -55,7 +55,7 @@ Here is a list of the main plugins
 
 # getting started
   
-To create a minimal project that uses pro, you can use the option `scaffold`
+To create the layout of a minimal project, you can use the option `scaffold`
 ```
   mkdir myproject
   cd myproject
