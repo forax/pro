@@ -32,6 +32,7 @@ you can chain the calls, by example to set the source release and use the previe
 ```
   compiler.
     sourceRelease(11).
+    enablePreview(true)
 ```
 Note: pro uses jshell to parse the build.pro, this tool is line oriented so you have to put the dot '.' at the end of
       the line to ask for the parsing of the next line.
