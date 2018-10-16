@@ -23,4 +23,4 @@ run(test(false), test(true))
 tester.moduleExplodedTestPath(path("plugins/tester/target/test/exploded"))
 run(test(false), test(true))
 
-/exit
+/exit errorCode()
