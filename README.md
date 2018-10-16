@@ -34,7 +34,7 @@ build.sh
 ```
 pro will bootstrap itself.
 
-To build pro you need the [jdk10](http://jdk.java.net/10/) or a more recent version,
+To build pro you need the [jdk11](http://jdk.java.net/11/) or a more recent version,
 you may have to change the value of the variable JAVA_HOME at the start of the script build.sh.
 
 Once built, you have an image of the tool in target/pro.
