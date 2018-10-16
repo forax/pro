@@ -23,7 +23,7 @@ The build model of Maven is not well suited to describe this new world.
 
 # anatomy of a build.pro
 
-Pro uses a file named `build.pro` as build script, which is composed of two parts, the configuration part and the run part.
+pro uses a file named `build.pro` as build script, which is composed of two parts, the configuration part and the run part.
 In the configuration part, you can set the properties of a specific plugin, by example, this how to set the release version of the source to Java 11 for the compiler
 ```
   compiler.sourceRelease(11)
@@ -33,7 +33,7 @@ you can chain the calls, by example to set the source release and use the previe
   compiler.
     sourceRelease(11).
 ```
-Note: Pro uses jshell to parse the build.pro, this tool is line oriented so you have to put the dot '.' at the end of
+Note: pro uses jshell to parse the build.pro, this tool is line oriented so you have to put the dot '.' at the end of
       the line to ask for the parsing of the next line.
       
 Then you have to call `run()` with all the command you want to execute, by example,
@@ -54,7 +54,7 @@ Here is a list of the main plugins
 
 # getting started
   
-To create a minimal project that uses Pro, you can use the option `scaffold`
+To create a minimal project that uses pro, you can use the option `scaffold`
 ```
   mkdir myproject
   cd myproject
@@ -63,7 +63,7 @@ To create a minimal project that uses Pro, you can use the option `scaffold`
 
 `scaffold` will ask for a module name (a name in reverse DNS form like a kind of root package) and will generate a skeleton of the folders.
 
-Then you can then run Pro to build your project
+Then you can then run pro to build your project
 ```
   pro
 ```
