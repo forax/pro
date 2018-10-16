@@ -64,7 +64,7 @@ To create the layout of a minimal project, you can use the option `scaffold`
 
 `scaffold` will ask for a module name (a name in reverse DNS form like a kind of root package) and will generate a skeleton of the folders.
 
-Then you can then run pro to build your project
+Then you can run pro to build your project
 ```
   pro
 ```
