@@ -37,7 +37,7 @@ you can chain the calls, by example to set the source release and use the previe
 Note: pro uses jshell to parse the build.pro, this tool is line oriented so you have to put the dot '.' at the end of
       the line to ask for the parsing of the next line.
       
-Then you have to call `run()` with all the command you want to execute, by example,
+Then you have to call `run()` with all the commands you want to execute, by example,
 ```
   run(compiler, packager)
 ```
