@@ -66,10 +66,9 @@ public class FormatterPlugin implements Plugin {
 
     var cmdLine = new CmdLine();
     cmdLine.add(convention.javaHome().resolve("bin").resolve(Platform.current().javaExecutableName()));
-    cmdLine.add("--module-path");
-    cmdLine.add(convention.javaHome().resolve("plugins").resolve(name()).resolve("libs"));
-    cmdLine.add("--module").add("google.java.format");
-    
+    cmdLine.add("-jar");
+    cmdLine.add(convention.javaHome().resolve("plugins").resolve(name()).resolve("libs").resolve("google-java-format-1.6-all-deps.jar"));
+
     Optional.of("--replace").filter(__ -> formatterConf.replace()).ifPresent(cmdLine::add);
     Optional.of("--dry-run").filter(__ -> formatterConf.dryRun()).ifPresent(cmdLine::add);
     Optional.of("--set-exit-if-changed").filter(__ -> formatterConf.setExitIfChanged()).ifPresent(cmdLine::add);
