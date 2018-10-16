@@ -2,7 +2,6 @@ package com.github.forax.pro.plugin.tester;
 
 import static java.util.stream.Collectors.toList;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModule;
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectPackage;
 
 import java.io.PrintWriter;
 import java.util.function.IntSupplier;
