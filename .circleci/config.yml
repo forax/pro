@@ -13,7 +13,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/java-next/releases/download/untagged-fe8266aa490e5257028e/jdk-12-lworld.tar.gz
+          wget https://github.com/forax/java-next/releases/download/untagged-45abf827019d06512ebc/jdk-12-lworld.tar.gz
           tar zxvf jdk-12-lworld.tar.gz
           $JAVA_HOME/bin/java --version
           
@@ -58,7 +58,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/java-next/releases/download/untagged-8fa13456b9e58785a563/jdk-12-loom.tar.gz
+          wget https://github.com/forax/java-next/releases/download/untagged-45abf827019d06512ebc/jdk-12-loom.tar.gz
           tar zxvf jdk-12-loom.tar.gz
           $JAVA_HOME/bin/java --version
           
@@ -103,7 +103,7 @@ jobs:
       - checkout
       # install
       - run: |
-          wget https://github.com/forax/java-next/releases/download/untagged-fe8266aa490e5257028e/jdk-12-amber.tar.gz
+          wget https://github.com/forax/java-next/releases/download/untagged-45abf827019d06512ebc/jdk-12-amber.tar.gz
           tar zxvf jdk-12-amber.tar.gz
           $JAVA_HOME/bin/java --version
           
