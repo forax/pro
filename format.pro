@@ -18,4 +18,4 @@ set("formatter.rawArguments", list("--dry-run"))
 
 run("formatter")
 
-/exit
+/exit errorCode()
