@@ -19,6 +19,8 @@ public class Builders {
     ProBuilder commands(java.util.List<java.lang.String> commands);
     java.nio.file.Path currentDir();
     ProBuilder currentDir(java.nio.file.Path currentDir);
+    int errorCode();
+    ProBuilder errorCode(int errorCode);
     boolean exitOnError();
     ProBuilder exitOnError(boolean exitOnError);
     java.lang.String loglevel();
@@ -64,6 +66,12 @@ public class Builders {
     java.util.List<java.nio.file.Path> moduleTestResourcesPath();
     CompilerBuilder moduleTestResourcesPath(java.nio.file.Path... moduleTestResourcesPath);
     CompilerBuilder moduleTestResourcesPath(java.util.List<java.nio.file.Path> moduleTestResourcesPath);
+    java.util.List<java.nio.file.Path> processorModuleSourcePath();
+    CompilerBuilder processorModuleSourcePath(java.nio.file.Path... processorModuleSourcePath);
+    CompilerBuilder processorModuleSourcePath(java.util.List<java.nio.file.Path> processorModuleSourcePath);
+    java.util.List<java.nio.file.Path> processorModuleTestPath();
+    CompilerBuilder processorModuleTestPath(java.nio.file.Path... processorModuleTestPath);
+    CompilerBuilder processorModuleTestPath(java.util.List<java.nio.file.Path> processorModuleTestPath);
     java.util.Optional<java.util.List<java.lang.String>> rawArguments();
     CompilerBuilder rawArguments(java.lang.String... rawArguments);
     CompilerBuilder rawArguments(java.util.List<java.lang.String> rawArguments);

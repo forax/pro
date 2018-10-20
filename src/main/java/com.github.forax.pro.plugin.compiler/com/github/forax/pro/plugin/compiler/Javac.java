@@ -13,6 +13,8 @@ class Javac {
   private List<Path> modulePath;
   private List<Path> classPath;
   private List<Path> upgradeModulePath;
+  private List<Path> processorModulePath;
+  private List<Path> processorPath;
   private List<String> rootModules;
   private boolean verbose; 
   private String lint;
@@ -82,8 +84,21 @@ class Javac {
   public Optional<List<Path>> upgradeModulePath() {
     return Optional.ofNullable(upgradeModulePath);
   }
-  public void upgradeModulePath(List<Path> modulePath) {
-    this.upgradeModulePath = Objects.requireNonNull(modulePath);
+  public void upgradeModulePath(List<Path> upgradeModulePath) {
+    this.upgradeModulePath = Objects.requireNonNull(upgradeModulePath);
+  }
+  
+  public Optional<List<Path>> processorModulePath() {
+    return Optional.ofNullable(processorModulePath);
+  }
+  public void processorModulePath(List<Path> processorModulePath) {
+    this.processorModulePath = Objects.requireNonNull(processorModulePath);
+  }
+  public Optional<List<Path>> processorPath() {
+    return Optional.ofNullable(processorPath);
+  }
+  public void processorPath(List<Path> processorPath) {
+    this.processorPath = Objects.requireNonNull(processorPath);
   }
   
   public Optional<List<Path>> modulePath() {

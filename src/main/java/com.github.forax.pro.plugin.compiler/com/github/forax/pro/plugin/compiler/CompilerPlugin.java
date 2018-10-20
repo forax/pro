@@ -11,6 +11,7 @@ import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEquals;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -54,6 +55,8 @@ public class CompilerPlugin implements Plugin {
   public void init(MutableConfig config) {
     var compilerConf = config.getOrUpdate(name(), CompilerConf.class);
     compilerConf.release(11);
+    compilerConf.processorModuleSourcePath(List.of());
+    compilerConf.processorModuleTestPath(List.of());
   }
   
   @Override
@@ -80,8 +83,10 @@ public class CompilerPlugin implements Plugin {
     compilerConf.moduleDependencyPath().forEach(registry::watch);
     compilerConf.moduleSourcePath().forEach(registry::watch);
     compilerConf.moduleSourceResourcesPath().forEach(registry::watch);
+    compilerConf.processorModuleSourcePath().forEach(registry::watch);
     compilerConf.moduleTestPath().forEach(registry::watch);
     compilerConf.moduleTestResourcesPath().forEach(registry::watch);
+    compilerConf.processorModuleTestPath().forEach(registry::watch);
   }
   
   static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
@@ -103,8 +108,11 @@ public class CompilerPlugin implements Plugin {
     SOURCE_PATH(actionMaybe("-sourcepath", Javac::sourcePath, File.pathSeparator)),
     ROOT_MODULES(actionMaybe("--add-modules", Javac::rootModules, ",")),
     UPGRADE_MODULE_PATH(actionMaybe("--upgrade-module-path", Javac::upgradeModulePath, File.pathSeparator)),
+    PROCESSOR_MODULE_PATH(actionMaybe("--processor-module-path", Javac::processorModulePath, File.pathSeparator)),
     MODULE_PATH(actionMaybe("--module-path", Javac::modulePath, File.pathSeparator)),
+    
     CLASS_PATH(actionMaybe("-classpath", Javac::classPath, File.pathSeparator)),
+    PROCESSOR_PATH(actionMaybe("--processor-path", Javac::processorPath, File.pathSeparator))
     ;
     
     final OptionAction<Javac> action;
@@ -131,6 +139,7 @@ public class CompilerPlugin implements Plugin {
         moduleSourceFinder,
         List.of(),
         compiler.moduleSourceResourcesPath(),
+        compiler.processorModuleSourcePath(),
         sourceRelease,
         compiler.moduleExplodedSourcePath(),
         "source:");
@@ -162,12 +171,17 @@ public class CompilerPlugin implements Plugin {
         moduleMergedTestFinder,
         List.of(compiler.moduleExplodedSourcePath()),
         StableList.<Path>of().appendAll(compiler.moduleSourceResourcesPath()).appendAll(compiler.moduleTestResourcesPath()),
+        compiler.processorModuleTestPath(),
         compiler.testRelease().orElse(sourceRelease),
         compiler.moduleExplodedTestPath(),
         "test:");
   }
 
-  private static int compile(Log log, ToolProvider javacTool, CompilerConf compiler, List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, List<Path> resourcesPath, int release, Path destination, String pass) throws IOException {
+  private static int compile(Log log, ToolProvider javacTool, CompilerConf compiler,
+      List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, List<Path> resourcesPath,
+      List<Path> processorModulePath,
+      int release, Path destination, String pass) throws IOException {
+    
     Optional<List<Path>> modulePath = modulePathOrDependencyPath(compiler.modulePath(),
         compiler.moduleDependencyPath(), additionalSourcePath);
     
@@ -223,11 +237,13 @@ public class CompilerPlugin implements Plugin {
     compiler.upgradeModulePath().ifPresent(javac::upgradeModulePath);
     compiler.rootModules().ifPresent(javac::rootModules);
     
+    
     var compatibilityMode = release <= 8;
     if (!compatibilityMode) {
       // module mode, compile all java files at once using moduleSourcePath
       javac.moduleSourcePath(moduleSourcePath);
       modulePath.ifPresent(javac::modulePath);
+      Optional.of(processorModulePath).filter(not(List::isEmpty)).ifPresent(javac::processorModulePath);
       javac.destination(destination);
       
       var errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, rootSourceNames, javac, release, __ -> true);
@@ -237,6 +253,8 @@ public class CompilerPlugin implements Plugin {
     } else {
       // compatibility mode, do a topological sort first, and compile modules one by one
       modulePath.ifPresent(paths -> javac.classPath(paths.stream().flatMap(path -> asClassPath(path)).collect(toList())));
+      Optional.of(processorModulePath).filter(not(List::isEmpty)).ifPresent(paths -> javac.processorPath(paths.stream().flatMap(path -> asClassPath(path)).collect(toList())));
+      
       var moduleNames = ModuleHelper.topologicalSort(moduleFinder, rootSourceNames);
       for(var moduleName: moduleNames) {
         // compile modules one by one using the sourcePath, without the module-info
@@ -245,7 +263,7 @@ public class CompilerPlugin implements Plugin {
         javac.destination(destination.resolve(moduleName));
         
         var moduleInfoFilter = pathFilenameEquals("module-info.java");
-        var errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, List.of(moduleName), javac, release, moduleInfoFilter.negate());
+        var errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, List.of(moduleName), javac, release, not(moduleInfoFilter));
         if (errorCode != 0) {
           return errorCode;
         }
@@ -336,7 +354,7 @@ public class CompilerPlugin implements Plugin {
                            Path moduleMergedTestPath) throws IOException {
     Files.createDirectories(moduleMergedTestPath);
     
-    var skipModuleInfoDotJava = pathFilenameEquals("module-info.java").negate();
+    var skipModuleInfoDotJava = not(pathFilenameEquals("module-info.java"));
     
     for(var testRef: moduleTestFinder.findAll()) {
       var moduleName = testRef.descriptor().name();

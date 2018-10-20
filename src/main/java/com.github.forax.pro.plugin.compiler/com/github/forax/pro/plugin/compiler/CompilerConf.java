@@ -35,6 +35,8 @@ public interface CompilerConf {
   void moduleSourcePath(List<Path> modulePath);
   List<Path> moduleSourceResourcesPath();
   void moduleSourceResourcesPath(List<Path> modulePath);
+  List<Path> processorModuleSourcePath();
+  void processorModuleSourcePath(List<Path> modulePath);
   Path moduleExplodedSourcePath();
   void moduleExplodedSourcePath(Path destination);
   
@@ -42,6 +44,8 @@ public interface CompilerConf {
   void moduleTestPath(List<Path> modulePath);
   List<Path> moduleTestResourcesPath();
   void moduleTestResourcesPath(List<Path> modulePath);
+  List<Path> processorModuleTestPath();
+  void processorModuleTestPath(List<Path> modulePath);
   Path moduleMergedTestPath();
   void moduleMergedTestPath(Path modulePath);
   Path moduleExplodedTestPath();
