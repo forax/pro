@@ -6,6 +6,7 @@ import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
@@ -83,7 +83,7 @@ public class RunnerPlugin implements Plugin {
       var mainClasses = finder.findAll().stream()
         .map(ModuleReference::descriptor)
         .flatMap(desc -> desc.mainClass().map(mainClass -> desc.name() + '/' + mainClass).stream())
-        .collect(Collectors.toSet());
+        .collect(toUnmodifiableSet());
       
       switch(mainClasses.size()) {
       case 0:

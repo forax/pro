@@ -1,8 +1,11 @@
 package com.github.forax.pro.plugin.modulefixer;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toUnmodifiableList;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -181,7 +184,8 @@ public class ModuleFixerPlugin implements Plugin {
     // calculated module dependencies
     var unknownRequiredPackages = new HashMap<String, List<ModuleReference>>();
     moduleInfoMap.forEach((ref, info) -> {
-      var calculatedRequires = info.requirePackages.stream()
+      // merge calculated requires with explicitly declared requires
+      info.requirePackages.stream()
           .flatMap(requireName -> {
             var refs = exportMap.get(requireName);
             if (refs == null) {
@@ -190,12 +194,10 @@ public class ModuleFixerPlugin implements Plugin {
             }
             return Stream.of(refs.get(0).descriptor().name());
           })
-          .collect(Collectors.toSet());
-      
-      // merge calculated requires with explicitly declared requires
-      calculatedRequires.forEach(require -> {
-        info.requireModuleMap.merge(require, RequireModifier.PLAIN, RequireModifier::or);
-      });
+          .distinct()
+          .forEach(require -> {
+            info.requireModuleMap.merge(require, RequireModifier.PLAIN, RequireModifier::or);
+          });
     });
     unknownRequiredPackages.forEach((unknownRequiredPackage, modules) -> {
       var moduleNames = modules.stream().map(ref -> ref.descriptor().name()).collect(joining(", "));
@@ -474,9 +476,9 @@ public class ModuleFixerPlugin implements Plugin {
     return additionals.orElse(List.of())
         .stream()
         .map(line -> line.split("="))
-        .collect(Collectors.groupingBy(tokens -> tokens[0],
-            Collectors.mapping(tokens -> tokens[1].split("/"),
-                Collectors.toMap(values -> values[0], values -> values.length == 0? RequireModifier.PLAIN: RequireModifier.STATIC))));
+        .collect(groupingBy(tokens -> tokens[0],
+                   mapping(tokens -> tokens[1].split("/"),
+                     toUnmodifiableMap(values -> values[0], values -> values.length == 0? RequireModifier.PLAIN: RequireModifier.STATIC))));
   }
   
   static String packageOf(String typeName) {

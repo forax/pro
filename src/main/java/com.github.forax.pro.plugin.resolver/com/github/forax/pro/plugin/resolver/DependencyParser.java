@@ -1,7 +1,7 @@
 package com.github.forax.pro.plugin.resolver;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,7 +36,7 @@ class DependencyParser {
           var lines = buffered.lines()) {
         moduleNameMap = lines
             .map(line -> line.split("="))
-            .collect(toMap(tokens -> tokens[0], tokens -> tokens[1]));
+            .collect(toUnmodifiableMap(tokens -> tokens[0], tokens -> tokens[1]));
       } catch(IOException e) {
         throw new UncheckedIOException(e);
       }

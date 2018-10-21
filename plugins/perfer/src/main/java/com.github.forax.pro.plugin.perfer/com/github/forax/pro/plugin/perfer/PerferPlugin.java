@@ -2,7 +2,7 @@ package com.github.forax.pro.plugin.perfer;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
@@ -86,7 +86,7 @@ public class PerferPlugin implements Plugin {
       }
       
       var list = BenchmarkList.readBenchmarkList(inputOpt.get());
-      var classNames = list.stream().map(BenchmarkListEntry::getUserClassQName).collect(toSet());
+      var classNames = list.stream().map(BenchmarkListEntry::getUserClassQName).collect(toUnmodifiableSet());
       log.debug(classNames, names -> "benchmarks " + classNames);
       
       for(var className: classNames) {

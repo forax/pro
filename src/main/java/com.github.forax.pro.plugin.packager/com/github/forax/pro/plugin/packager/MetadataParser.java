@@ -1,7 +1,7 @@
 package com.github.forax.pro.plugin.packager;
 
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 
 import java.util.List;
 import java.util.Map;
@@ -52,6 +52,6 @@ class MetadataParser {
   static Map<String, Metadata> parse(List<String> moduleMetadata) {
     return moduleMetadata.stream()
       .map(Metadata::parse)
-      .collect(toMap(Metadata::moduleName, identity()));
+      .collect(toUnmodifiableMap(Metadata::moduleName, identity()));
   }
 }

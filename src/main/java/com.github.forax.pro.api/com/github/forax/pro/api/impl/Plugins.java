@@ -1,7 +1,7 @@
 package com.github.forax.pro.api.impl;
 
 import static java.util.stream.Collectors.toUnmodifiableList;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
@@ -25,7 +25,7 @@ public class Plugins {
   
   private static Stream<Provider<Plugin>> findDynamicPlugins(Path path) {
     var finder = ModuleFinder.of(path);
-    var moduleNames = finder.findAll().stream().map(ref -> ref.descriptor().name()).collect(toSet());
+    var moduleNames = finder.findAll().stream().map(ref -> ref.descriptor().name()).collect(toUnmodifiableSet());
     
     var boot = ModuleLayer.boot();
     var cf = boot.configuration().resolve(finder, ModuleFinder.of(), moduleNames);

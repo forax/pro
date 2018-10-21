@@ -1,6 +1,7 @@
 package com.github.forax.pro.helper.parser;
 
 
+import static java.util.stream.Collectors.toUnmodifiableMap;
 import static org.objectweb.asm.Opcodes.ACC_OPEN;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
@@ -14,7 +15,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.tools.ToolProvider;
 
@@ -139,7 +139,7 @@ public class JavacModuleParser {
       METHOD_MAP =
         Arrays.stream(ModuleHandler.class.getMethods())
         .filter(m -> m.getDeclaringClass() == ModuleHandler.class)
-        .collect(Collectors.toMap(Method::getName, ModuleHandler.Visitee::of));
+        .collect(toUnmodifiableMap(Method::getName, ModuleHandler.Visitee::of));
     }
   }
   

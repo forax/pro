@@ -4,6 +4,8 @@ import static com.github.forax.pro.api.MutableConfig.derive;
 import static java.lang.Character.isJavaIdentifierStart;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toUnmodifiableList;
+import static java.util.stream.Collectors.toUnmodifiableMap;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
@@ -21,7 +23,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.objectweb.asm.ClassReader;
@@ -111,7 +112,7 @@ public class FrozerPlugin implements Plugin {
       .flatMap(name -> finder.find(name).stream())
       .map(ModuleReference::descriptor)
       .flatMap(descriptor -> Stream.<String>concat(descriptor.exports().stream().map(Exports::source), descriptor.packages().stream()))
-      .collect(Collectors.toSet());
+      .collect(toUnmodifiableSet());
     
     rewrite(rootModule, dependencies, requires, packages, finder, frozerConf.moduleFrozenArtifactSourcePath());
     return 0;
@@ -123,7 +124,7 @@ public class FrozerPlugin implements Plugin {
     var internalRootModuleName = rootModuleName.replace('.', '/');
     var internalPackageNameMap = packages.stream()
         .map(name -> name.replace('.', '/'))
-        .collect(Collectors.toMap(name -> name, name -> internalRootModuleName + '/' + name));
+        .collect(toUnmodifiableMap(name -> name, name -> internalRootModuleName + '/' + name));
     //System.out.println(internalPackageNameMap);
     
     var newPackages = new HashSet<String>();
