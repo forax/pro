@@ -469,11 +469,11 @@ public class ModuleHelper {
     });
     descriptor.exports().forEach(export -> {
       int modifiers = export.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
-      mv.visitExport(export.source().replace('.', '/'), modifiers, export.targets().toArray(new String[0]));
+      mv.visitExport(export.source().replace('.', '/'), modifiers, export.targets().toArray(String[]::new));
     });
     descriptor.opens().forEach(open -> {
       int modifiers = open.modifiers().stream().mapToInt(ModuleHelper::modifierToInt).reduce(0, (a, b) -> a | b);
-      mv.visitExport(open.source().replace('.', '/'), modifiers, open.targets().toArray(new String[0]));
+      mv.visitExport(open.source().replace('.', '/'), modifiers, open.targets().toArray(String[]::new));
     });
     descriptor.uses().forEach(service -> mv.visitUse(service.replace('.', '/')));
     descriptor.provides().forEach(provide -> {

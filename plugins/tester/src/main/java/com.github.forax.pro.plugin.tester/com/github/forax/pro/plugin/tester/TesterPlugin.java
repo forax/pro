@@ -58,7 +58,7 @@ public class TesterPlugin implements Plugin {
   }
 
   private static List<ModuleReference> modules(List<Path> paths) {
-    return ModuleFinder.of(paths.toArray(new Path[0]))
+    return ModuleFinder.of(paths.toArray(Path[]::new))
         .findAll()
         .stream()
         .filter(ref -> ref.location().isPresent())

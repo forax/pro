@@ -33,7 +33,7 @@ public final class CmdLine {
   }
   
   public String[] toArguments() {
-    return arguments.toArray(new String[0]);
+    return arguments.toArray(String[]::new);
   }
   
   @Override

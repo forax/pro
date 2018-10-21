@@ -80,7 +80,7 @@ public class FrozerPlugin implements Plugin {
     
     String rootModuleName = frozerConf.rootModule().orElseThrow(() -> new IllegalArgumentException("no root module specified"));
     
-    ModuleFinder finder = ModuleFinder.of(frozerConf.modulePath().toArray(new Path[0]));
+    ModuleFinder finder = ModuleFinder.of(frozerConf.modulePath().toArray(Path[]::new));
     
     var rootModule = finder.find(rootModuleName).orElseThrow(() -> new IllegalStateException("no root module " + rootModuleName + " not found"));
     

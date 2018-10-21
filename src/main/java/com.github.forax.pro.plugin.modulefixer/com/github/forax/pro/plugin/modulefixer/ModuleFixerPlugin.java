@@ -138,7 +138,7 @@ public class ModuleFixerPlugin implements Plugin {
     var moduleInfoMap = new HashMap<ModuleReference, Info>();
     var exportMap = new HashMap<String, List<ModuleReference>>();
     var moduleFinder = ModuleFinder.compose(
-        ModuleFinder.of(moduleDependencyPath.toArray(new Path[0])),
+        ModuleFinder.of(moduleDependencyPath.toArray(Path[]::new)),
         ModuleHelper.systemModulesFinder());
     for(var moduleRef: moduleFinder.findAll()) {
       Set<String> exports;

@@ -160,6 +160,7 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
    * @param factory a function which produces a new array from a provided length
    * @return the array created by the factory populated with the values
    */
+  @Override
   public <T> T[] toArray(IntFunction<T[]> factory) {
     var array = factory.apply(size);
     System.arraycopy(this.array, 0, array, 0, size);
@@ -214,7 +215,7 @@ public final class StableList<E> extends AbstractList<E> implements RandomAccess
     if (collection instanceof StableList<?>) {
       return (StableList<E>)collection;
     }
-    return fromTrustedArray((E[])collection.toArray(new Object[0]));
+    return fromTrustedArray((E[])collection.toArray(Object[]::new));
   }
   
   /**
