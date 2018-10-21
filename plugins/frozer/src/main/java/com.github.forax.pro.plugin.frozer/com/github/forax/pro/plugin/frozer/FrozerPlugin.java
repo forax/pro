@@ -3,7 +3,7 @@ package com.github.forax.pro.plugin.frozer;
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static java.lang.Character.isJavaIdentifierStart;
 import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
@@ -191,7 +191,7 @@ public class FrozerPlugin implements Plugin {
           descriptor.provides().forEach(provides -> {
             builder.provides(
                 interpolateClassName(internalPackageNameMap, provides.service()),
-                provides.providers().stream().map(provider -> interpolateClassName(internalPackageNameMap, provider)).collect(toList())
+                provides.providers().stream().map(provider -> interpolateClassName(internalPackageNameMap, provider)).collect(toUnmodifiableList())
                 );
           });
           descriptor.uses().forEach(uses -> builder.uses(interpolateClassName(internalPackageNameMap, uses)));

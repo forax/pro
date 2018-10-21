@@ -8,7 +8,7 @@ import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.File;
 import java.io.IOException;
@@ -134,7 +134,7 @@ public class DocerPlugin implements Plugin {
     FileHelper.deleteAllFiles(output, false);
     Files.createDirectories(output);
     
-    var modules = finder.findAll().stream().flatMap(module -> module.location().stream()).collect(toList());
+    var modules = finder.findAll().stream().flatMap(module -> module.location().stream()).collect(toUnmodifiableList());
     return modules.parallelStream()
         .mapToInt(location -> action.apply(Path.of(location), output))
         .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);

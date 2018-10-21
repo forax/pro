@@ -2,7 +2,7 @@ package com.github.forax.pro.plugin.modulefixer;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -164,7 +164,7 @@ public class ModuleFixerPlugin implements Plugin {
     var errorCode = 0;
     for(var entry: exportMap.entrySet()) {
       var packageName = entry.getKey();
-      var refs = entry.getValue().stream().map(ref -> ref.descriptor().toNameAndVersion()).collect(toList());
+      var refs = entry.getValue().stream().map(ref -> ref.descriptor().toNameAndVersion()).collect(toUnmodifiableList());
       if (refs.size() != 1) {
         System.err.println("[modulefixer] multiple modules " + refs + " contains package " + packageName);
         errorCode = 1;

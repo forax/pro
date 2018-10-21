@@ -2,6 +2,7 @@ package com.github.forax.pro.helper;
 
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.WRITE;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -17,7 +18,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileHelper {
@@ -141,7 +141,7 @@ public class FileHelper {
                    }
                    return Files.walk(path).filter(filter);
                }))
-               .collect(Collectors.toList());
+               .collect(toUnmodifiableList());
   }
   
   public static void walkAndFindCounterpart(Path srcPath, Path dstPath, Function<Stream<Path>, Stream<Path>> configure, IOBiConsumer<Path, Path> consumer) {

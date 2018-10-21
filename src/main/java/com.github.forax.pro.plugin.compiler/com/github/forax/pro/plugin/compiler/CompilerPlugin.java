@@ -13,7 +13,7 @@ import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.File;
 import java.io.IOException;
@@ -192,7 +192,7 @@ public class CompilerPlugin implements Plugin {
             .toArray(ModuleFinder[]::new));
     var rootSourceNames = moduleFinder.findAll().stream()
             .map(ref -> ref.descriptor().name())
-            .collect(toList());
+            .collect(toUnmodifiableList());
     if (rootSourceNames.isEmpty()) {
       log.error(moduleSourcePath, sourcePath -> pass + " can not find any modules in " + sourcePath.stream().map(Path::toString).collect(joining(", ")));
       return 1; //FIXME
@@ -251,13 +251,13 @@ public class CompilerPlugin implements Plugin {
       }
     } else {
       // compatibility mode, do a topological sort first, and compile modules one by one
-      modulePath.ifPresent(paths -> javac.classPath(paths.stream().flatMap(path -> asClassPath(path)).collect(toList())));
-      Optional.of(processorModulePath).filter(not(List::isEmpty)).ifPresent(paths -> javac.processorPath(paths.stream().flatMap(path -> asClassPath(path)).collect(toList())));
+      modulePath.ifPresent(paths -> javac.classPath(paths.stream().flatMap(path -> asClassPath(path)).collect(toUnmodifiableList())));
+      Optional.of(processorModulePath).filter(not(List::isEmpty)).ifPresent(paths -> javac.processorPath(paths.stream().flatMap(path -> asClassPath(path)).collect(toUnmodifiableList())));
       
       var moduleNames = ModuleHelper.topologicalSort(moduleFinder, rootSourceNames);
       for(var moduleName: moduleNames) {
         // compile modules one by one using the sourcePath, without the module-info
-        List<Path> sourcePath = moduleSourcePath.stream().map(path -> path.resolve(moduleName)).filter(Files::exists).collect(toList());
+        List<Path> sourcePath = moduleSourcePath.stream().map(path -> path.resolve(moduleName)).filter(Files::exists).collect(toUnmodifiableList());
         javac.sourcePath(sourcePath);
         javac.destination(destination.resolve(moduleName));
         
@@ -317,7 +317,7 @@ public class CompilerPlugin implements Plugin {
   private static Stream<Path> asClassPath(Path path) {
     try {
       if (Files.isDirectory(path)) {
-        var jars = Files.walk(path).filter(p -> p.getFileName().toString().endsWith(".jar")).collect(toList());
+        var jars = Files.walk(path).filter(p -> p.getFileName().toString().endsWith(".jar")).collect(toUnmodifiableList());
         if (!jars.isEmpty()) {
           return jars.stream();  
         }
@@ -331,7 +331,7 @@ public class CompilerPlugin implements Plugin {
   private static List<Path> findSourcePathOfModules(List<Path> moduleSourcePath, List<String> moduleNames) {
     return moduleSourcePath.stream()
         .flatMap(sourcePath -> moduleNames.stream().map(moduleName -> sourcePath.resolve(moduleName)))
-        .collect(toList());
+        .collect(toUnmodifiableList());
   }
   
   private static int compileAllFiles(Log log, ToolProvider javacTool, CompilerConf compiler,

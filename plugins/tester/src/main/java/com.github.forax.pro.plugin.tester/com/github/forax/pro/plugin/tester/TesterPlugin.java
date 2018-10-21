@@ -1,6 +1,7 @@
 package com.github.forax.pro.plugin.tester;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
@@ -16,7 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.IntSupplier;
-import java.util.stream.Collectors;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
@@ -63,7 +63,7 @@ public class TesterPlugin implements Plugin {
         .stream()
         .filter(ref -> ref.location().isPresent())
         .sorted(Comparator.comparing(ref -> ref.descriptor().name()))
-        .collect(Collectors.toList());
+        .collect(toUnmodifiableList());
   }
 
   @Override

@@ -1,6 +1,6 @@
 package com.github.forax.pro.plugin.tester;
 
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectModule;
 
 import java.io.PrintWriter;
@@ -48,7 +48,7 @@ public class TesterRunner implements IntSupplier {
     if (packages.isEmpty()) {
       builder.selectors(selectModule(moduleName));
     } else {
-      builder.selectors(packages.stream().map(DiscoverySelectors::selectPackage).collect(toList()));  
+      builder.selectors(packages.stream().map(DiscoverySelectors::selectPackage).collect(toUnmodifiableList()));  
     }
 
     // Apply filters...

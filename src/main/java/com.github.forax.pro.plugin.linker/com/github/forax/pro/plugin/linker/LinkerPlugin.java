@@ -5,6 +5,7 @@ import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionLoop;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.File;
 import java.io.IOException;
@@ -93,7 +94,7 @@ public class LinkerPlugin implements Plugin {
              .flatMap(root -> moduleFinder.find(root).stream())
              .map(ModuleReference::descriptor)
              .flatMap(desc -> desc.mainClass().map(main -> desc.name() + '=' + desc.name() + '/' + main).stream())
-             .collect(Collectors.toList());
+             .collect(toUnmodifiableList());
   }
   
   @Override

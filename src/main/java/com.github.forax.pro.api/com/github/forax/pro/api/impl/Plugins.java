@@ -1,6 +1,6 @@
 package com.github.forax.pro.api.impl;
 
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.stream.Collectors.toSet;
 
 import java.io.IOException;
@@ -67,6 +67,6 @@ public class Plugins {
     
     return pluginMap.values().stream()
         .sorted(Comparator.comparing(Plugin::name))   // have a stable order
-        .collect(toList());
+        .collect(toUnmodifiableList());
   }
 }

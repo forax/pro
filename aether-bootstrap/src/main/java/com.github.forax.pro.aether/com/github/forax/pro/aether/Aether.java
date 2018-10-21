@@ -72,7 +72,7 @@ public class Aether {
           remoteRepositories.stream().map(uri -> new RemoteRepository.Builder(null, "default", uri.toString()).build()),
           Stream.of(central)
         )
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
     
     return new Aether(system, session, remotes);
   }
@@ -140,7 +140,7 @@ public class Aether {
           artifactRequest.setRepositories(repositories);
           return artifactRequest;
         })
-        .collect(Collectors.toList());
+        .collect(Collectors.toUnmodifiableList());
 
     List<ArtifactResult> artifactResults;
     try {
@@ -151,6 +151,6 @@ public class Aether {
     
     return artifactResults.stream()
       .map(result -> new ArtifactDescriptor(result.getArtifact()))
-      .collect(Collectors.toList());
+      .collect(Collectors.toUnmodifiableList());
   }
 }

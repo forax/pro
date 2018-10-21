@@ -3,7 +3,7 @@ package com.github.forax.pro.plugin.resolver;
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.helper.util.Lazy.lazy;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -101,7 +101,7 @@ public class ResolverPlugin implements Plugin {
   private static boolean resolveModuleDependencies(ModuleFinder moduleFinder, ModuleFinder dependencyFinder, LinkedHashSet<String> foundModules, LinkedHashSet<String> unresolvedModules) {
     var rootSourceNames = moduleFinder.findAll().stream()
         .map(ref -> ref.descriptor().name())
-        .collect(Collectors.toList());
+        .collect(toUnmodifiableList());
     var allFinder = ModuleFinder.compose(moduleFinder, dependencyFinder, ModuleHelper.systemModulesFinder());
     return ModuleHelper.resolveOnlyRequires(allFinder, rootSourceNames,
         new ResolverListener() {
@@ -212,7 +212,7 @@ public class ResolverPlugin implements Plugin {
     
     var unresolvedRootArtifacts = unresolvedModules.stream()
         .flatMap(unresolveModule -> moduleToArtifactMap.get(unresolveModule).stream())
-        .collect(Collectors.toList());
+        .collect(toUnmodifiableList());
     log.debug(unresolvedRootArtifacts, unresolvedRootArtifactList -> "unresolved root artifacts " + unresolvedRootArtifactList);
     
     // find all resolved artifacts
@@ -262,7 +262,7 @@ public class ResolverPlugin implements Plugin {
       }
       default: 
         resolvedArtifactList.forEach(artifact -> validateModuleReferenceFromArtifact(log, artifact));
-        mergeInOneJar(resolvedArtifactList.stream().map(ArtifactDescriptor::getPath).collect(toList()), jarPath, log);
+        mergeInOneJar(resolvedArtifactList.stream().map(ArtifactDescriptor::getPath).collect(toUnmodifiableList()), jarPath, log);
       }
     }
     

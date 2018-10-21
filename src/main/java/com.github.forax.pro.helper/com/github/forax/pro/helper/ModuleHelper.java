@@ -3,6 +3,7 @@ package com.github.forax.pro.helper;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.objectweb.asm.Opcodes.ACC_MANDATED;
 import static org.objectweb.asm.Opcodes.ACC_MODULE;
 import static org.objectweb.asm.Opcodes.ACC_OPEN;
@@ -183,8 +184,8 @@ public class ModuleHelper {
 
     var moduleDirectory = moduleInfoPath.getParent();
     var javaPackages = findJavaPackages(moduleDirectory);
-    javaPackages.removeAll(moduleNode.exports.stream().map(export -> export.packaze).collect(Collectors.toList()));
-    javaPackages.removeAll(moduleNode.opens.stream().map(export -> export.packaze).collect(Collectors.toList()));
+    javaPackages.removeAll(moduleNode.exports.stream().map(export -> export.packaze).collect(toList()));
+    javaPackages.removeAll(moduleNode.opens.stream().map(export -> export.packaze).collect(toList()));
     builder.packages(javaPackages);
 
     ModuleDescriptor descriptor = builder.build();
@@ -373,7 +374,7 @@ public class ModuleHelper {
       }
     });
     uses.keySet().forEach(builder::uses);
-    provides.forEach((service, providers) -> builder.provides(service, providers.stream().collect(toList())));
+    provides.forEach((service, providers) -> builder.provides(service, providers.stream().collect(toUnmodifiableList())));
 
     return builder.build();
   }
