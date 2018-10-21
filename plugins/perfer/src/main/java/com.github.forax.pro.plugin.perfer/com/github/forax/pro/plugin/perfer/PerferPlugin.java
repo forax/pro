@@ -7,7 +7,6 @@ import static java.util.stream.Collectors.toSet;
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -67,7 +66,7 @@ public class PerferPlugin implements Plugin {
     
     var finder = ModuleFinder.of(perfer.moduleArtifactTestPath());
     for(var module :finder.findAll()) {
-      int exitCode = module.location().map(Paths::get).map(testPath -> execute(log, testPath, modulePath, javaCommand)).orElse(0);
+      int exitCode = module.location().map(Path::of).map(testPath -> execute(log, testPath, modulePath, javaCommand)).orElse(0);
       if (exitCode != 0) {
         return exitCode;
       }

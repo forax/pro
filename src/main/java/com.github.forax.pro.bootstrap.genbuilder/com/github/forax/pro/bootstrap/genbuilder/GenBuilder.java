@@ -9,7 +9,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -116,9 +115,9 @@ public class GenBuilder {
   }
 
   public static void generate() throws IOException {
-    var pluginDir = Paths.get("target/image/plugins");
+    var pluginDir = Path.of("target/image/plugins");
     var invalidPlugins = Set.of("convention", "uberpackager");
-    var directory = Paths.get("src/main/java/com.github.forax.pro.builder/com/github/forax/pro/builder");
+    var directory = Path.of("src/main/java/com.github.forax.pro.builder/com/github/forax/pro/builder");
 
     var plugins = Plugins.getAllPlugins(pluginDir);
 

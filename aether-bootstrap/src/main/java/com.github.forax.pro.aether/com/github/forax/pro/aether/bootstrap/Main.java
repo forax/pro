@@ -1,7 +1,7 @@
 package com.github.forax.pro.aether.bootstrap;
 
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +9,7 @@ import com.github.forax.pro.aether.Aether;
 
 public class Main {
   public static void main(String[] args) throws IOException {
-    var mavenLocalRepository = Paths.get("target/deps/maven-local");
+    var mavenLocalRepository = Path.of("target/deps/maven-local");
     var aether = Aether.create(mavenLocalRepository, List.of());
     
     var artifactQuery = aether.createArtifactQuery("org.ow2.asm:asm-util:7.0-beta");

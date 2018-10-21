@@ -17,7 +17,6 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
@@ -137,7 +136,7 @@ public class DocerPlugin implements Plugin {
     
     var modules = finder.findAll().stream().flatMap(module -> module.location().stream()).collect(toList());
     return modules.parallelStream()
-        .mapToInt(location -> action.apply(Paths.get(location), output))
+        .mapToInt(location -> action.apply(Path.of(location), output))
         .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
   }
   

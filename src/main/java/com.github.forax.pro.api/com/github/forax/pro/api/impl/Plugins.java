@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -21,7 +20,7 @@ import com.github.forax.pro.api.Plugin;
 
 public class Plugins {
   public static Path defaultPluginDir() {
-    return Paths.get(System.getProperty("sun.boot.library.path")).resolveSibling("plugins");
+    return Path.of(System.getProperty("sun.boot.library.path")).resolveSibling("plugins");
   }
   
   private static Stream<Provider<Plugin>> findDynamicPlugins(Path path) {

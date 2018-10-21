@@ -6,7 +6,7 @@ import static java.util.Map.entry;
 
 import java.io.IOException;
 import java.lang.module.ModuleFinder;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +17,7 @@ import com.github.forax.pro.aether.ArtifactDescriptor;
 
 class MavenArtifactResolver {
   public static void resolve(String mavenId) throws IOException {
-    var mavenLocalRepository = Paths.get("target/deps/maven-local");
+    var mavenLocalRepository = Path.of("target/deps/maven-local");
     
     var aether = Aether.create(mavenLocalRepository, List.of());
     

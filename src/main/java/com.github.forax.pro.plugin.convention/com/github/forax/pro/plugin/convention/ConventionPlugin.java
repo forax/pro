@@ -2,7 +2,7 @@ package com.github.forax.pro.plugin.convention;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
 
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.List;
 
 import com.github.forax.pro.api.Config;
@@ -21,7 +21,7 @@ public class ConventionPlugin implements Plugin {
   public void init(MutableConfig config) {
     var convention = config.getOrUpdate(name(), ConventionConf.class);
     var proConf = config.getOrThrow("pro", ProConf.class);
-    convention.javaHome(Paths.get(System.getProperty("java.home")));
+    convention.javaHome(Path.of(System.getProperty("java.home")));
     
     derive(convention, ConventionConf::javaModuleSourcePath,
            proConf, c -> List.of(c.currentDir().resolve("src/main/java")));

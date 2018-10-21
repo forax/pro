@@ -6,7 +6,6 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 import com.github.forax.pro.main.Main.InputException;
@@ -143,14 +142,14 @@ class Scaffold {
         "}\n";
     
     try {
-      Files.write(Paths.get("build.pro"), content.getBytes(UTF_8), CREATE_NEW);
+      Files.write(Path.of("build.pro"), content.getBytes(UTF_8), CREATE_NEW);
       System.out.println("build.pro generated");
       
       Files.write(Path.of(".classpath"), eclipseClassPath.getBytes(UTF_8), CREATE_NEW);
       Files.write(Path.of(".project"), eclipseProject.getBytes(UTF_8), CREATE_NEW);
       System.out.println(".classpath and .project (Eclipse) generated");
       
-      var sourcePath = Paths.get("src", "main", "java", module);
+      var sourcePath = Path.of("src", "main", "java", module);
       Files.createDirectories(sourcePath);
       Files.write(sourcePath.resolve("module-info.java"), mainModule.getBytes(UTF_8), CREATE_NEW);
       var sourcePackage = sourcePath.resolve(module.replace('.', '/'));
@@ -158,7 +157,7 @@ class Scaffold {
       Files.write(sourcePackage.resolve("Main.java"), mainClass.getBytes(UTF_8), CREATE_NEW);
       System.out.println("Main.java generated");
       
-      var testPath = Paths.get("src", "test", "java", module);
+      var testPath = Path.of("src", "test", "java", module);
       Files.createDirectories(testPath);
       Files.write(testPath.resolve("module-info.java"), testModule.getBytes(UTF_8), CREATE_NEW);
       var testPackage = testPath.resolve(module.replace('.', '/'));

@@ -2,7 +2,6 @@ package com.github.forax.pro.main;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -21,7 +20,7 @@ public class JavaConfigRunner implements ConfigRunner {
   private static void run(Path configFile, PropertySequence propertySeq, List<String> arguments) {
     //System.out.println("run with java " + configFile);
     
-    Path javaHome = Paths.get(System.getProperty("java.home"));
+    var javaHome = Path.of(System.getProperty("java.home"));
     var args =
         Stream.of(
           Stream.of(javaHome.resolve("bin").resolve(Platform.current().javaExecutableName()).toString()),

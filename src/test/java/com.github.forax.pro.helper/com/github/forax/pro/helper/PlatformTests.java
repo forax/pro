@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -35,7 +35,7 @@ class PlatformTests {
   @Test
   void javaExecutableNamePointsToExecutableFile() {
     var name = Platform.current().javaExecutableName();
-    var path = Paths.get(System.getProperty("java.home")).resolve("bin").resolve(name);
+    var path = Path.of(System.getProperty("java.home")).resolve("bin").resolve(name);
     assertTrue(Files.isExecutable(path), "executable? " + path);
   }
 

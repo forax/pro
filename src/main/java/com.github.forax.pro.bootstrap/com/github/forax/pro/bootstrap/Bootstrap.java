@@ -18,7 +18,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -170,7 +170,7 @@ public class Bootstrap {
     copyPackagedPluginToTargetImage("frozer");
 
     // re-generate builders
-    //com.github.forax.pro.Pro.loadPlugins(java.nio.file.Paths.get("target/image/plugins"));
+    //com.github.forax.pro.Pro.loadPlugins(java.nio.file.Path.of("target/image/plugins"));
     //com.github.forax.pro.bootstrap.genbuilder.GenBuilder.generate();
     
     // update module name to maven coordinates list
@@ -223,7 +223,7 @@ public class Bootstrap {
                     location("target/image/plugins/" + name),
                     stream -> stream.filter(p -> p.toString().endsWith(".jar")),
                     Files::copy));
-    if (Files.exists(Paths.get("plugins/" + name + "/libs"))) {
+    if (Files.exists(Path.of("plugins/" + name + "/libs"))) {
       createDirectories(location("target/image/plugins/" + name + "/libs"));
       path("plugins/" + name + "/libs")
           .filter(Files::exists)

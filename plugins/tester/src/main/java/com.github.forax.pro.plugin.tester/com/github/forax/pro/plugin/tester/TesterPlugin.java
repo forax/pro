@@ -9,7 +9,6 @@ import java.lang.module.ModuleReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -85,7 +84,7 @@ public class TesterPlugin implements Plugin {
     var executor = Executors.newSingleThreadExecutor();
     var moduleDescriptor = moduleReference.descriptor();
     var moduleName = moduleDescriptor.name();
-    var testPath = Paths.get(moduleReference.location().get());
+    var testPath = Path.of(moduleReference.location().get());
     var loader = createTestClassLoader(tester, testPath, moduleName);
     
     var testConfClass = load(loader, TestConf.class);

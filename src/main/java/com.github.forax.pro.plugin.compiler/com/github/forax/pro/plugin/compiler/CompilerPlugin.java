@@ -22,7 +22,6 @@ import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -365,7 +364,7 @@ public class CompilerPlugin implements Plugin {
       if (sourceRefOpt.isPresent()) {
         var sourceRef = sourceRefOpt.get();
         
-        var sourcePath = Paths.get(sourceRef.location().get());
+        var sourcePath = Path.of(sourceRef.location().get());
         FileHelper.walkAndFindCounterpart(sourcePath, moduleRoot,
             stream -> stream.filter(skipModuleInfoDotJava),
             Files::copy);
@@ -379,7 +378,7 @@ public class CompilerPlugin implements Plugin {
         predicate = __ -> true;
       }
       
-      var testPath = Paths.get(testRef.location().get());
+      var testPath = Path.of(testRef.location().get());
       FileHelper.walkAndFindCounterpart(testPath, moduleRoot, stream -> stream.filter(predicate),
           (srcPath, dstPath) -> {
             if (Files.exists(dstPath) && Files.isDirectory(dstPath)) {

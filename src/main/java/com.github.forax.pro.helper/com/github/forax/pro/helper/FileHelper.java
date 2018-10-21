@@ -10,7 +10,6 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -158,7 +157,7 @@ public class FileHelper {
   }
   
   public static void download(URI uri, Path targetDirectory) {
-    var fileName = Paths.get(uri.getPath()).getFileName();
+    var fileName = Path.of(uri.getPath()).getFileName();
     var targetFile = targetDirectory.resolve(fileName);
     if (Files.exists(targetFile)) {
       return;

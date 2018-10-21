@@ -18,7 +18,6 @@ import java.lang.module.ModuleReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -52,8 +51,8 @@ import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
 import com.github.forax.pro.plugin.modulefixer.impl.ConstInterpreter;
-import com.github.forax.pro.plugin.modulefixer.impl.EmptyClassVisitor;
 import com.github.forax.pro.plugin.modulefixer.impl.ConstInterpreter.ConstValue;
+import com.github.forax.pro.plugin.modulefixer.impl.EmptyClassVisitor;
 
 
 public class ModuleFixerPlugin implements Plugin {
@@ -228,7 +227,7 @@ public class ModuleFixerPlugin implements Plugin {
     System.out.println("[modulefixer] fix " + ref.descriptor().name());
     return jarTool.run(System.out, System.err,
         "--update",
-        "--file", Paths.get(ref.location().get()).toString(),
+        "--file", Path.of(ref.location().get()).toString(),
         "-C", generatedModuleInfo.getParent().toString(),
         generatedModuleInfo.getFileName().toString());
   }

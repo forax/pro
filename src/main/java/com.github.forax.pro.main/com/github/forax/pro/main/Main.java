@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.lang.module.ModuleDescriptor.Version;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,10 +47,10 @@ public class Main {
   }
   
   enum InputFile {
-    ARGUMENT(args -> (args.size() >= 1)? Optional.of(new Configuration(Paths.get(args.get(0)), Main::shift)): Optional.empty()),
-    DEFAULT_JAVA(args -> Optional.of(new Configuration(Paths.get("build.java"), identity()))),
-    DEFAULT_PRO(args -> Optional.of(new Configuration(Paths.get("build.pro"), identity()))),
-    DEFAULT_JSON(args -> Optional.of(new Configuration(Paths.get("build.json"), identity())))
+    ARGUMENT(args -> (args.size() >= 1)? Optional.of(new Configuration(Path.of(args.get(0)), Main::shift)): Optional.empty()),
+    DEFAULT_JAVA(args -> Optional.of(new Configuration(Path.of("build.java"), identity()))),
+    DEFAULT_PRO(args -> Optional.of(new Configuration(Path.of("build.pro"), identity()))),
+    DEFAULT_JSON(args -> Optional.of(new Configuration(Path.of("build.json"), identity())))
     ;
     
     private final Function<List<String>, Optional<Configuration>> mapper;

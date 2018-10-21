@@ -12,7 +12,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,9 +44,9 @@ public class Pro {
     protected DefaultConfig initialValue() {
       var config = new DefaultConfig();
       var proConf = config.getOrUpdate("pro", ProConf.class);
-      proConf.currentDir(Paths.get("."));
+      proConf.currentDir(Path.of("."));
       proConf.pluginDir(Optional.ofNullable(System.getenv("PRO_PLUGIN_DIR"))
-          .map(Paths::get)
+          .map(Path::of)
           .orElseGet(Plugins::defaultPluginDir));
       var logLevel = Optional.ofNullable(System.getenv("PRO_LOG_LEVEL"))
         .map(Log.Level::of)
@@ -169,7 +168,7 @@ public class Pro {
    * @return a new Path
    */
   public static Path location(String location) {
-    return Paths.get(location);
+    return Path.of(location);
   }
   /**
    * Create a Path representing a file system path from all the components of a path.
@@ -179,7 +178,7 @@ public class Pro {
    * @return a new Path
    */
   public static Path location(String first, String... more) {
-    return Paths.get(first, more);
+    return Path.of(first, more);
   }
   
   /**
