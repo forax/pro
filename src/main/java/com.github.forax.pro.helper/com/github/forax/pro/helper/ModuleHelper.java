@@ -84,7 +84,7 @@ public class ModuleHelper {
     case 0:
       throw new IllegalArgumentException("expected one module in " + path + " but found none");
     case 1:
-      return firstOpt.get();
+      return firstOpt.orElseThrow();
     default:
       throw new IllegalArgumentException(
           "expected one module in " + path + " but found: " + all.stream().map(ModuleReference::toString).collect(joining(", ", "<", ">")));
@@ -299,7 +299,7 @@ public class ModuleHelper {
       
       var refOpt = finder.find(name);
       if (refOpt.isPresent()) {
-        refOpt.get().descriptor().requires()
+        refOpt.orElseThrow().descriptor().requires()
           .stream()
           .filter(require -> !require.modifiers().contains(Requires.Modifier.STATIC))  // skip static requires
           .map(Requires::name)
@@ -330,7 +330,7 @@ public class ModuleHelper {
       return;
     }
     visited.add(name);
-    for(Requires requires: refOpt.get().descriptor().requires()) {
+    for(Requires requires: refOpt.orElseThrow().descriptor().requires()) {
       deepFirst(requires.name(), finder, visited, order);
     }
     order.add(name);

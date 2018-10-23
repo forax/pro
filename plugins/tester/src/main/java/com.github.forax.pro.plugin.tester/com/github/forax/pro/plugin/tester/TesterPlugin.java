@@ -84,7 +84,7 @@ public class TesterPlugin implements Plugin {
     var executor = Executors.newSingleThreadExecutor();
     var moduleDescriptor = moduleReference.descriptor();
     var moduleName = moduleDescriptor.name();
-    var testPath = Path.of(moduleReference.location().get());
+    var testPath = Path.of(moduleReference.location().orElseThrow());
     var loader = createTestClassLoader(tester, testPath, moduleName);
     
     var testConfClass = load(loader, TestConf.class);

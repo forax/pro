@@ -54,7 +54,7 @@ public class Configs {
     var fromQuery = asQuery(from);
     var fromId = fromQuery._id_();
     var fromType = (Class<U>)fromQuery._type_();
-    var value = Eval.of(context -> eval.apply(context.get(fromId, fromType).get()));
+    var value = Eval.of(context -> eval.apply(context.get(fromId, fromType).orElseThrow()));
     var toQuery = asQuery(to);
     var key = findKeyOf((Class<T>)toQuery._type_(), setter);
     toQuery._derive_(key, value);

@@ -166,7 +166,7 @@ public class ResolverPlugin implements Plugin {
     // check if there are dependencies with new versions
     if (resolverConf.checkForUpdate() && depencenciesOpt.isPresent()) {
       try {
-        DependencyParser.parseDependencies(depencenciesOpt.get(), aether, dependencyParsingStrategy, (module, artifactQuery) -> {
+        DependencyParser.parseDependencies(depencenciesOpt.orElseThrow(), aether, dependencyParsingStrategy, (module, artifactQuery) -> {
           if (resolvedModules.contains(module)) {  // if the module is referenced by a module-info
             var artifactKey = artifactQuery.getArtifactKey();
             ArtifactQuery queryMostRecent = aether.createArtifactQuery(artifactKey + ":[0,]");
@@ -203,7 +203,7 @@ public class ResolverPlugin implements Plugin {
     // create mapping between module name and Maven artifact name
     var moduleToArtifactMap = new LinkedHashMap<String, List<ArtifactQuery>>();
     var artifactKeyToModuleMap = new LinkedHashMap<String, String>();
-    DependencyParser.parseDependencies(depencenciesOpt.get(), aether, dependencyParsingStrategy, (module, artifactQuery) -> {
+    DependencyParser.parseDependencies(depencenciesOpt.orElseThrow(), aether, dependencyParsingStrategy, (module, artifactQuery) -> {
       moduleToArtifactMap.computeIfAbsent(module, __ -> new ArrayList<>()).add(artifactQuery);
       artifactKeyToModuleMap.put(artifactQuery.getArtifactKey(), module);
     });

@@ -111,7 +111,7 @@ public class RunnerPlugin implements Plugin {
       return 1;  //FIXME
     }
     
-    var java = new Java(runnerConf.javaCommand(), runnerConf.modulePath(), moduleNameOpt.get());
+    var java = new Java(runnerConf.javaCommand(), runnerConf.modulePath(), moduleNameOpt.orElseThrow());
     runnerConf.upgradeModulePath().ifPresent(java::upgradeModulePath);
     runnerConf.rootModules().ifPresent(java::rootModules);
     runnerConf.enablePreview().ifPresent(java::enablePreview);

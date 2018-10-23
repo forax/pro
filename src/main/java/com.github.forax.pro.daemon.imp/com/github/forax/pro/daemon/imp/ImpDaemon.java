@@ -309,7 +309,7 @@ public class ImpDaemon implements Daemon {
     if (!firstOpt.isPresent()) {  // do nothing
       return;
     }
-    var firstPlugin = firstOpt.get();
+    var firstPlugin = firstOpt.orElseThrow();
     
     send(() -> {
       // stop watcher thread

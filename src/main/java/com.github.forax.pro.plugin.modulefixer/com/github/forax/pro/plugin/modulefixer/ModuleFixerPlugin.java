@@ -229,7 +229,7 @@ public class ModuleFixerPlugin implements Plugin {
     System.out.println("[modulefixer] fix " + ref.descriptor().name());
     return jarTool.run(System.out, System.err,
         "--update",
-        "--file", Path.of(ref.location().get()).toString(),
+        "--file", Path.of(ref.location().orElseThrow()).toString(),
         "-C", generatedModuleInfo.getParent().toString(),
         generatedModuleInfo.getFileName().toString());
   }

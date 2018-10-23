@@ -29,7 +29,7 @@ public class DefaultConfig implements MutableConfig, EvalContext {
   
   @Override
   public <T> T getOrUpdate(String key, Class<T> type) {
-    return Configs.get(root, key, type, false).get();
+    return Configs.get(root, key, type, false).orElseThrow();
   }
   
   @Override

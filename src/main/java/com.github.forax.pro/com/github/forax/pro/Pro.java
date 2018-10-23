@@ -521,7 +521,7 @@ public class Pro {
           return;
         }
         
-        commandList.add(pluginOpt.get());
+        commandList.add(pluginOpt.orElseThrow());
       }
     }
     

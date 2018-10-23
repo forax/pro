@@ -85,7 +85,7 @@ public class PerferPlugin implements Plugin {
         return 0;
       }
       
-      var list = BenchmarkList.readBenchmarkList(inputOpt.get());
+      var list = BenchmarkList.readBenchmarkList(inputOpt.orElseThrow());
       var classNames = list.stream().map(BenchmarkListEntry::getUserClassQName).collect(toUnmodifiableSet());
       log.debug(classNames, names -> "benchmarks " + classNames);
       

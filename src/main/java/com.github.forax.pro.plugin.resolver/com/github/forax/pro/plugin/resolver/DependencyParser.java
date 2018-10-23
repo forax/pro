@@ -89,10 +89,8 @@ class DependencyParser {
     }
     var module = dependency.substring(0, index);
     var version = dependency.substring(index + 1);
-    Optional<String> artifactCoordsOpt = moduleNameMap.getArtifactCoords(module);
-    if (!artifactCoordsOpt.isPresent()) {
-      throw new IllegalStateException("no Maven artifact declared for module " + module + " in module-maven.properties");
-    }
-    return Optional.of(new ModuleNameAndArtifactsCoords(module, List.of(artifactCoordsOpt.get() + ':' + version)));
+    var artifactCoords = moduleNameMap.getArtifactCoords(module)
+        .orElseThrow(() -> new IllegalStateException("no Maven artifact declared for module " + module + " in module-maven.properties"));
+    return Optional.of(new ModuleNameAndArtifactsCoords(module, List.of(artifactCoords + ':' + version)));
   }
 }
