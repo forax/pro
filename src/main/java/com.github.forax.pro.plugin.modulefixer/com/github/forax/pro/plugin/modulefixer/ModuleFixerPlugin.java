@@ -4,8 +4,8 @@ import static com.github.forax.pro.api.MutableConfig.derive;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toUnmodifiableList;
-import static java.util.stream.Collectors.toUnmodifiableMap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -478,7 +478,7 @@ public class ModuleFixerPlugin implements Plugin {
         .map(line -> line.split("="))
         .collect(groupingBy(tokens -> tokens[0],
                    mapping(tokens -> tokens[1].split("/"),
-                     toUnmodifiableMap(values -> values[0], values -> values.length == 0? RequireModifier.PLAIN: RequireModifier.STATIC))));
+                     toMap(values -> values[0], values -> values.length == 0? RequireModifier.PLAIN: RequireModifier.STATIC))));
   }
   
   static String packageOf(String typeName) {
