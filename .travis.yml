@@ -22,7 +22,19 @@ matrix:
       os: osx
       jdk: openjdk-ea
       
+    - env: DEPLOY='linux-early-access-loom' TAG="untagged-f1bea318eaa13537f98c" NAME="jdk-12-loom"
+      
+    - env: DEPLOY='linux-early-access-amber' TAG="untagged-f1bea318eaa13537f98c" NAME="jdk-12-amber"
+      
+    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-f1bea318eaa13537f98c" NAME="jdk-12-lworld"
+      
     - env: DEPLOY='macos-early-access-loom' TAG="untagged-f1bea318eaa13537f98c" NAME="jdk-12-loom"
+      os: osx
+      
+    - env: DEPLOY='macos-early-access-amber' TAG="untagged-f1bea318eaa13537f98c" NAME="jdk-12-amber"
+      os: osx
+      
+    - env: DEPLOY='macos-early-access-lworld' TAG="untagged-f1bea318eaa13537f98c" NAME="jdk-12-lworld"
       os: osx
 
 #  allow_failures:
