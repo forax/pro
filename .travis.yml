@@ -21,18 +21,24 @@ matrix:
     - env: DEPLOY='macos-early-access'
       os: osx
       jdk: openjdk-ea
+      
+    - env: DEPLOY='macos-early-access-loom' JAVA_NEXT="untagged-f1bea318eaa13537f98c/jdk-12-loom-osx.tar.gz"
+      os: osx
 
 #  allow_failures:
 #    - jdk: openjdk-ea
 
+before_install:
+  - if [[ -z $JAVA_NEXT ]]; then install-jdk.sh --url https://github.com/forax/java-next/releases/download/$JAVA_NEXT     ; fi
+
 install:
-- java --version
+  - java --version
 
 script:
-- chmod u+x ./build.sh
-- ./build.sh
-- ./target/pro/bin/pro version
-- ./target/pro/bin/pro build test.pro
+  - chmod u+x ./build.sh
+  - ./build.sh
+  - ./target/pro/bin/pro version
+  - ./target/pro/bin/pro build test.pro
 
 before_deploy:
   - cd target
