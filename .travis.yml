@@ -41,10 +41,10 @@ matrix:
 #    - jdk: openjdk-ea
 
 before_install:
-  - pwd
   - if [[ -n $TAG ]]; then wget https://github.com/forax/java-next/releases/download/$TAG/$NAME-$TRAVIS_OS_NAME.tar.gz   ; fi
   - if [[ -n $TAG ]]; then tar zxvf $NAME-$TRAVIS_OS_NAME.tar.gz   ; fi
-  - if [[ -n $TAG ]]; then export JAVA_HOME=./$NAME   ; fi
+  - if [[ -n $TAG ]]; then export JAVA_HOME=$NAME   ; fi
+  - if [[ -n $TAG ]]; then export PATH=$JAVA_HOME/bin:$PATH   ; fi
 
 install:
   - java --version
