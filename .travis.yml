@@ -43,7 +43,7 @@ matrix:
 before_install:
   - if [[ -n $TAG ]]; then wget https://github.com/forax/java-next/releases/download/$TAG/$NAME-$TRAVIS_OS_NAME.tar.gz   ; fi
   - if [[ -n $TAG ]]; then tar zxvf $NAME-$TRAVIS_OS_NAME.tar.gz   ; fi
-  - if [[ -n $TAG ]]; then export JAVA_HOME=$TRAVIS_HOME/$NAME   ; fi
+  - if [[ -n $TAG ]]; then source export JAVA_HOME=$NAME   ; fi
 
 install:
   - java --version
