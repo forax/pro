@@ -29,7 +29,7 @@ matrix:
 #    - jdk: openjdk-ea
 
 before_install:
-  - if [[ -n $JAVA_NEXT ]]; then export JAVA_HOME=~/jdk && bash install-jdk.sh --target $JAVA_HOME --url https://github.com/forax/java-next/releases/download/$JAVA_NEXT && PATH=$JAVA_HOME/bin:$PATH     ; fi
+  - if [[ -n $JAVA_NEXT ]]; then export JAVA_HOME=~/jdk && $TRAVIS_BUILD_DIR/install-jdk.sh --target $JAVA_HOME --url https://github.com/forax/java-next/releases/download/$JAVA_NEXT && PATH=$JAVA_HOME/bin:$PATH     ; fi
 
 install:
   - java --version
