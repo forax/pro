@@ -30,7 +30,7 @@ matrix:
 
 before_install:
   - if [[ -n $JAVA_NEXT ]]; then wget https://github.com/sormuras/bach/raw/master/install-jdk.sh   ; fi
-  - if [[ -n $JAVA_NEXT ]]; then bash ./install-jdk.sh --url https://github.com/forax/java-next/releases/download/$JAVA_NEXT ; fi
+  - if [[ -n $JAVA_NEXT ]]; then source ./install-jdk.sh --url https://github.com/forax/java-next/releases/download/$JAVA_NEXT ; fi
 
 install:
   - java --version
