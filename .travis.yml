@@ -22,15 +22,16 @@ matrix:
       os: osx
       jdk: openjdk-ea
       
-    - env: DEPLOY='macos-early-access-loom' JAVA_NEXT="untagged-f1bea318eaa13537f98c/jdk-12-loom-osx.tar.gz"
+    - env: DEPLOY='macos-early-access-loom' TAG="untagged-f1bea318eaa13537f98c" NAME="jdk-12-loom"
       os: osx
 
 #  allow_failures:
 #    - jdk: openjdk-ea
 
 before_install:
-  - if [[ -n $JAVA_NEXT ]]; then wget https://github.com/sormuras/bach/raw/master/install-jdk.sh   ; fi
-  - if [[ -n $JAVA_NEXT ]]; then source ./install-jdk.sh --url https://github.com/forax/java-next/releases/download/$JAVA_NEXT ; fi
+  - if [[ -n $TAG ]]; then wget https://github.com/forax/java-next/releases/download/$TAG/$NAME-osx.tar.gz   ; fi
+  - if [[ -n $TAG ]]; then tar zxvf $TAG/$NAME-osx.tar.gz   ; fi
+  - if [[ -n $TAG ]]; then export JAVA_HOME=$NAME   ; fi
 
 install:
   - java --version
