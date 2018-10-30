@@ -1,7 +1,7 @@
 [![Linux build status](https://api.travis-ci.org/forax/pro.svg?branch=master)](https://travis-ci.org/forax/pro) [![Windows build status](https://ci.appveyor.com/api/projects/status/fdsju4o5390vn282?svg=true)](https://ci.appveyor.com/project/forax/pro)
 
 # pro
-A Java 9 compatible build tool
+A Java build tool that works seamlessly with modules 
 
 > No need to be a maven to be able to use a build tool 
 
