@@ -41,6 +41,7 @@
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.engine.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.launcher.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.commons.jar"/>
+	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.reporting.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.opentest4j.jar"/>
 	<classpathentry kind="lib" path="deps/com.github.forax.pro.aether.jar"/>
 	<classpathentry kind="lib" path="deps/asm-7.0.jar"/>
