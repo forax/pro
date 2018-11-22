@@ -120,6 +120,7 @@ public class Bootstrap {
           // "Launcher + Engine"
           "org.junit.platform.engine=org.junit.platform:junit-platform-engine:" + junitPlatformVersion,
           "org.junit.platform.launcher=org.junit.platform:junit-platform-launcher:" + junitPlatformVersion,
+          "org.junit.platform.reporting=org.junit.platform:junit-platform-reporting:" + junitPlatformVersion,
           "org.junit.jupiter.engine=org.junit.jupiter:junit-jupiter-engine:" + junitJupiterVersion
       ));
     });

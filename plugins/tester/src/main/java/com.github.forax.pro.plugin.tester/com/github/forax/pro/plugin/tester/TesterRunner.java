@@ -11,6 +11,7 @@ import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import org.junit.platform.reporting.xml.XmlReportsWritingListener;
 
 public class TesterRunner implements IntSupplier {
   private final ClassLoader classLoader;
@@ -65,8 +66,11 @@ public class TesterRunner implements IntSupplier {
     var launcher = LauncherFactory.create();
     var launcherDiscoveryRequest = builder.build();
     var summaryGeneratingListener = new SummaryGeneratingListener();
+    var xmlReportsWritingListener = new XmlReportsWritingListener(testConf.reports().resolve(moduleName), new PrintWriter(System.out));
+    launcher.registerTestExecutionListeners(summaryGeneratingListener);
+    launcher.registerTestExecutionListeners(xmlReportsWritingListener);
     var startTimeMillis = System.currentTimeMillis();
-    launcher.execute(launcherDiscoveryRequest, summaryGeneratingListener);
+    launcher.execute(launcherDiscoveryRequest);
     var duration = System.currentTimeMillis() - startTimeMillis;
     var summary = summaryGeneratingListener.getSummary();
     

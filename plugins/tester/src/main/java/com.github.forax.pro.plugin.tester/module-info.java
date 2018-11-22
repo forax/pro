@@ -7,6 +7,7 @@ module com.github.forax.pro.plugin.tester {
   // JUnit Platform
   requires org.junit.platform.engine;
   requires org.junit.platform.launcher;
+  requires org.junit.platform.reporting;
 
   // JUnit Jupiter
   requires org.junit.jupiter.engine;

@@ -29,4 +29,6 @@ public interface TesterConf {
   void excludeTags(List<String> tags);
   Optional<List<String>> packages();
   void packages(List<String> tags);
+  Path reports();
+  void reports(Path reports);
 }
