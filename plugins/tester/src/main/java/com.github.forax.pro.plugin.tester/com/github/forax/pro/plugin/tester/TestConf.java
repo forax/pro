@@ -11,15 +11,15 @@ public class TestConf {
   private final List<String> includeTags;
   private final List<String> excludeTags;
   private final List<String> packages;
-  private final Path reports;
+  private final Path reportPath;
 
-  public TestConf(ModuleDescriptor moduleDescriptor, boolean parallel, List<String> packages, List<String> includeTags, List<String> excludeTags, Path reports) {
+  public TestConf(ModuleDescriptor moduleDescriptor, boolean parallel, List<String> packages, List<String> includeTags, List<String> excludeTags, Path reportPath) {
     this.moduleDescriptor = Objects.requireNonNull(moduleDescriptor);
     this.parallel = parallel;
     this.includeTags = includeTags;
     this.excludeTags = excludeTags;
     this.packages = packages;
-    this.reports = reports;
+    this.reportPath = reportPath;
   }
   
   public boolean parallel() {
@@ -40,7 +40,7 @@ public class TestConf {
   public List<String> packages() {
     return packages;
   }
-  public Path reports() {
-    return reports;
+  public Path reportPath() {
+    return reportPath;
   }
 }

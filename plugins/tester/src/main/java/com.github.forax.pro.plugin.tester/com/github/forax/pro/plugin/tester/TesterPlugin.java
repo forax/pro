@@ -37,7 +37,6 @@ public class TesterPlugin implements Plugin {
     var testerConf = config.getOrUpdate(name(), TesterConf.class);
     testerConf.timeout(60);
     testerConf.parallel(true);
-    testerConf.reports(Path.of("target", "test", "reports"));
   }
 
   @Override
@@ -50,6 +49,9 @@ public class TesterPlugin implements Plugin {
     derive(testerConf, TesterConf::pluginDir, proConf, ProConf::pluginDir);
     derive(testerConf, TesterConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
     derive(testerConf, TesterConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
+    
+    // output
+    derive(testerConf, TesterConf::moduleReportTestPath, convention, ConventionFacade::javaModuleReportTestPath);
   }
 
   @Override
@@ -94,8 +96,8 @@ public class TesterPlugin implements Plugin {
     var includeTags = tester.includeTags().orElse(List.of());
     var excludeTags = tester.excludeTags().orElse(List.of());
     var packages = tester.packages().orElse(List.of());
-    var reports = tester.reports();
-    var testConf = create(testConfClass, testConfTypes, moduleDescriptor, parallel, packages, includeTags, excludeTags, reports);
+    var reportTestPath = tester.moduleReportTestPath();
+    var testConf = create(testConfClass, testConfTypes, moduleDescriptor, parallel, packages, includeTags, excludeTags, reportTestPath);
     
     var runnerClass = load(loader, TesterRunner.class);
     var runnerTypes = new Class<?>[] {testConfClass};

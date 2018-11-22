@@ -9,4 +9,5 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 public interface ConventionFacade {
   List<Path> javaModuleExplodedTestPath();
   List<Path> javaModuleDependencyPath();
+  Path javaModuleReportTestPath();
 }

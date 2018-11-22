@@ -43,6 +43,8 @@ public interface ConventionConf {
   void javaModuleSrcArtifactTestPath(Path path);
   Path javaModuleDocArtifactTestPath();
   void javaModuleDocArtifactTestPath(Path path);
+  Path javaModuleReportTestPath();
+  void javaModuleReportTestPath(Path path);
 
   Path javaMavenLocalRepositoryPath();
   void javaMavenLocalRepositoryPath(Path path);

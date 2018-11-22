@@ -17,7 +17,9 @@ public interface TesterConf {
   void moduleExplodedTestPath(List<Path> moduleExplodedTestPath);
   List<Path> moduleDependencyPath();
   void moduleDependencyPath(List<Path> moduleDependencyPath);
-
+  Path moduleReportTestPath();
+  void moduleReportTestPath(Path moduleReportTestPath);
+  
   // tester
   int timeout();
   void timeout(int seconds);
@@ -29,6 +31,4 @@ public interface TesterConf {
   void excludeTags(List<String> tags);
   Optional<List<String>> packages();
   void packages(List<String> tags);
-  Path reports();
-  void reports(Path reports);
 }

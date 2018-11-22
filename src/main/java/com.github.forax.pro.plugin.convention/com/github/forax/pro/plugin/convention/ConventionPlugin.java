@@ -56,6 +56,8 @@ public class ConventionPlugin implements Plugin {
         proConf, c -> c.currentDir().resolve("target/test/artifact-src"));
     derive(convention, ConventionConf::javaModuleDocArtifactTestPath,
         proConf, c -> c.currentDir().resolve("target/test/artifact-doc"));
+    derive(convention, ConventionConf::javaModuleReportTestPath,
+        proConf, c -> c.currentDir().resolve("target/test/report"));
     
     derive(convention, ConventionConf::javaModuleDependencyPath,
         proConf, c -> List.of(c.currentDir().resolve("deps")));

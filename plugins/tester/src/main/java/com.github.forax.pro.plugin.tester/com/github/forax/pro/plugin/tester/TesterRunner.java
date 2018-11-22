@@ -66,7 +66,7 @@ public class TesterRunner implements IntSupplier {
     var launcher = LauncherFactory.create();
     var launcherDiscoveryRequest = builder.build();
     var summaryGeneratingListener = new SummaryGeneratingListener();
-    var xmlReportsWritingListener = new XmlReportsWritingListener(testConf.reports().resolve(moduleName), new PrintWriter(System.out));
+    var xmlReportsWritingListener = new XmlReportsWritingListener(testConf.reportPath().resolve(moduleName), new PrintWriter(System.out));
     launcher.registerTestExecutionListeners(summaryGeneratingListener);
     launcher.registerTestExecutionListeners(xmlReportsWritingListener);
     var startTimeMillis = System.currentTimeMillis();
