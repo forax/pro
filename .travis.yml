@@ -52,7 +52,7 @@ install:
 script:
   - chmod u+x ./build.sh
   - ./build.sh
-  - if [[ $NAME -eq "jdk-12-lworld" ]]; then sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:+EnableValhalla\""/g ./target/pro/bin/pro  ; fi
+  - if [ $NAME -eq "jdk-12-lworld" ]; then sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:+EnableValhalla\""/g ./target/pro/bin/pro  ; fi
   - ./target/pro/bin/pro version
   - ./target/pro/bin/pro build test.pro
 
