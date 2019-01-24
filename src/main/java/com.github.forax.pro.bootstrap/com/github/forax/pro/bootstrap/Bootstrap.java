@@ -107,8 +107,8 @@ public class Bootstrap {
     compileAndPackagePlugin("runner", list("resolver", "modulefixer", "compiler", "packager"), () -> { /* empty */});
     compileAndPackagePlugin("tester", list("resolver", "modulefixer", "compiler", "packager"), () -> {
       // set("resolver.remoteRepositories", list(uri("https://oss.sonatype.org/content/repositories/snapshots")));
-      var junitPlatformVersion = "1.4.0-M1";
-      var junitJupiterVersion = "5.4.0-M1";
+      var junitPlatformVersion = "1.4.0-RC1";
+      var junitJupiterVersion = "5.4.0-RC1";
       var opentest4jVersion = "1.1.1";
       var apiGuardianVersion = "1.0.0";
       set("resolver.dependencies", list(
