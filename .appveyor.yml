@@ -1,5 +1,5 @@
 environment:
-  JAVA_HOME: C:\projects\pro\jdk-11
+  JAVA_HOME: C:\projects\pro\jdk-11.0.2
 
 install:
   - ps: (new-object net.webclient).DownloadFile('https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_windows-x64_bin.zip', 'C:\projects\pro\openjdk-11.zip')
