@@ -29,19 +29,19 @@ matrix:
       os: osx
       jdk: openjdk-ea
 
-    - env: DEPLOY='linux-early-access-loom' TAG="untagged-66c0806e5578221ad9f2" NAME="jdk-12-loom"
+    - env: DEPLOY='linux-early-access-loom' TAG="untagged-cc7af6c939aad1aa4660" NAME="jdk-13-loom"
       
-    - env: DEPLOY='linux-early-access-amber' TAG="untagged-66c0806e5578221ad9f2" NAME="jdk-12-amber"
+    - env: DEPLOY='linux-early-access-amber' TAG="untagged-cc7af6c939aad1aa4660" NAME="jdk-13-amber"
       
-    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-66c0806e5578221ad9f2" NAME="jdk-12-lworld"
+    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-cc7af6c939aad1aa4660" NAME="jdk-13-lworld"
       
-    - env: DEPLOY='macos-early-access-loom' TAG="untagged-66c0806e5578221ad9f2" NAME="jdk-12-loom"
+    - env: DEPLOY='macos-early-access-loom' TAG="untagged-cc7af6c939aad1aa4660" NAME="jdk-13-loom"
       os: osx
       
-    - env: DEPLOY='macos-early-access-amber' TAG="untagged-66c0806e5578221ad9f2" NAME="jdk-12-amber"
+    - env: DEPLOY='macos-early-access-amber' TAG="untagged-cc7af6c939aad1aa4660" NAME="jdk-13-amber"
       os: osx
       
-    - env: DEPLOY='macos-early-access-lworld' TAG="untagged-66c0806e5578221ad9f2" NAME="jdk-12-lworld"
+    - env: DEPLOY='macos-early-access-lworld' TAG="untagged-cc7af6c939aad1aa4660" NAME="jdk-13-lworld"
       os: osx
 
 #  allow_failures:
@@ -59,7 +59,7 @@ install:
 script:
   - chmod u+x ./build.sh
   - ./build.sh
-  - if [ "$NAME" == "jdk-12-lworld" ]; then sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:+EnableValhalla\""/g ./target/pro/bin/pro  ; fi
+  - if [ "$NAME" == "jdk-13-lworld" ]; then sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:+EnableValhalla\""/g ./target/pro/bin/pro  ; fi
   - ./target/pro/bin/pro version
   - ./target/pro/bin/pro build test.pro
 
