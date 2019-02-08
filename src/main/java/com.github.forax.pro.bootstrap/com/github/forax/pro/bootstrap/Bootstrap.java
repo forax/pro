@@ -135,7 +135,8 @@ public class Bootstrap {
           "net.sf.jopt-simple=net.sf.jopt-simple:jopt-simple:" + joptSimpleVersion
       ));
     });
-    
+
+    // https://github.com/google/google-java-format/issues/266
     //    compileAndPackagePlugin("formatter", () -> {
     //      set(
     //        "resolver.remoteRepositories",
@@ -154,7 +155,7 @@ public class Bootstrap {
     //      ));
     //    });
     compileAndPackagePlugin("formatter", list("compiler", "packager"), () -> {
-      var gjfVersion = "1.6";
+      var gjfVersion = "1.7";
       var base = "https://github.com/google/google-java-format/releases/download/google-java-format";
       download(
           uri(base + "-" + gjfVersion + "/google-java-format-" + gjfVersion + "-all-deps.jar"),
