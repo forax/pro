@@ -48,6 +48,7 @@ public class TesterPlugin implements Plugin {
     // inputs
     derive(testerConf, TesterConf::pluginDir, proConf, ProConf::pluginDir);
     derive(testerConf, TesterConf::moduleExplodedTestPath, convention, ConventionFacade::javaModuleExplodedTestPath);
+    derive(testerConf, TesterConf::moduleExplodedSourcePath, convention, ConventionFacade::javaModuleExplodedSourcePath);
     derive(testerConf, TesterConf::moduleDependencyPath, convention, ConventionFacade::javaModuleDependencyPath);
     
     // output
@@ -58,6 +59,7 @@ public class TesterPlugin implements Plugin {
   public void watch(Config config, WatcherRegistry registry) {
     var testerConf = config.getOrThrow(name(), TesterConf.class);
     testerConf.moduleExplodedTestPath().forEach(registry::watch);
+    testerConf.moduleExplodedSourcePath().forEach(registry::watch);
   }
 
   private static List<ModuleReference> modules(List<Path> paths) {
@@ -140,10 +142,11 @@ public class TesterPlugin implements Plugin {
     var pluginModuleName = TesterPlugin.class.getModule().getName(); // "com.github.forax.pro.plugin.tester"
     var rootNames = List.of(pluginModuleName, testModuleName);
     var moduleFinderRoots = StableList
-        .of(testPath)                                // "target/test/exploded/[MODULE_NAME]
-        .append(tester.pluginDir().resolve(name()))  // "[PRO_HOME]/plugins/tester"
-        .appendAll(tester.moduleExplodedTestPath())  // "target/test/exploded")
-        .appendAll(tester.moduleDependencyPath());   // "deps"
+        .of(testPath)                                  // "target/test/exploded/[MODULE_NAME]
+        .append(tester.pluginDir().resolve(name()))    // "[PRO_HOME]/plugins/tester"
+        .appendAll(tester.moduleExplodedTestPath())    // "target/test/exploded")
+        .appendAll(tester.moduleExplodedSourcePath())  // "target/main/exploded")
+        .appendAll(tester.moduleDependencyPath());     // "deps"
 
     var finder = ModuleFinder.of(moduleFinderRoots.toArray(Path[]::new));
     var bootModuleLayer = ModuleLayer.boot();

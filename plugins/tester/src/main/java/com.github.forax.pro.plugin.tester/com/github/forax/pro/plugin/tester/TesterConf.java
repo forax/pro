@@ -15,6 +15,8 @@ public interface TesterConf {
   // convention
   List<Path> moduleExplodedTestPath();
   void moduleExplodedTestPath(List<Path> moduleExplodedTestPath);
+  List<Path> moduleExplodedSourcePath();
+  void moduleExplodedSourcePath(List<Path> moduleExplodedSourcePath);
   List<Path> moduleDependencyPath();
   void moduleDependencyPath(List<Path> moduleDependencyPath);
   Path moduleReportTestPath();
