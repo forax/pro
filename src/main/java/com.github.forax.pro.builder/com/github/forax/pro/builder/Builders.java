@@ -42,6 +42,8 @@ public class Builders {
     CompilerBuilder files(java.util.List<java.nio.file.Path> files);
     java.util.Optional<java.lang.String> lint();
     CompilerBuilder lint(java.lang.String lint);
+    java.util.Optional<java.lang.String> module();
+    CompilerBuilder module(java.lang.String module);
     java.util.List<java.nio.file.Path> moduleDependencyPath();
     CompilerBuilder moduleDependencyPath(java.nio.file.Path... moduleDependencyPath);
     CompilerBuilder moduleDependencyPath(java.util.List<java.nio.file.Path> moduleDependencyPath);
@@ -394,6 +396,8 @@ public class Builders {
     java.util.List<java.nio.file.Path> moduleExplodedTestPath();
     TesterBuilder moduleExplodedTestPath(java.nio.file.Path... moduleExplodedTestPath);
     TesterBuilder moduleExplodedTestPath(java.util.List<java.nio.file.Path> moduleExplodedTestPath);
+    java.nio.file.Path moduleReportTestPath();
+    TesterBuilder moduleReportTestPath(java.nio.file.Path moduleReportTestPath);
     java.util.Optional<java.util.List<java.lang.String>> packages();
     TesterBuilder packages(java.lang.String... packages);
     TesterBuilder packages(java.util.List<java.lang.String> packages);
