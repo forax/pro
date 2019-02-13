@@ -6,8 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 class Javac {
+  private Integer release;
   private Path destination;
-  private int release;
   private List<Path> moduleSourcePath;
   private List<Path> sourcePath;
   private List<Path> modulePath;
@@ -15,14 +15,15 @@ class Javac {
   private List<Path> upgradeModulePath;
   private List<Path> processorModulePath;
   private List<Path> processorPath;
+  private String module;
   private List<String> rootModules;
   private boolean verbose; 
   private String lint;
   private boolean enablePreview;
   private List<String> rawArguments;
   
-  Javac(int release) {
-    this.release = release;
+  Javac() {
+    // empty
   }
   
   public void destination(Path destination) {
@@ -35,8 +36,8 @@ class Javac {
   public void release(int release) {
     this.release = release;
   }
-  public int release() {
-    return release;
+  public Optional<Integer> release() {
+    return Optional.ofNullable(release);
   }
   
   public Optional<List<Path>> moduleSourcePath() {
@@ -118,7 +119,12 @@ class Javac {
   public void classPath(List<Path> classPath) {
     this.classPath = classPath;
   }
-  
+  public Optional<String> module() {
+    return Optional.ofNullable(module);
+  }
+  public void module(String module) {
+    this.module = Objects.requireNonNull(module);
+  }
   public Optional<List<String>> rootModules() {
     return Optional.ofNullable(rootModules);
   }

@@ -8,11 +8,6 @@ import com.github.forax.pro.api.TypeCheckedConfig;
 
 @TypeCheckedConfig
 public interface CompilerConf {
-  @Deprecated
-  int release();
-  @Deprecated
-  void release(int release);
-  
   Optional<Integer> sourceRelease();
   void sourceRelease(int release);
   
@@ -59,6 +54,9 @@ public interface CompilerConf {
   
   List<Path> moduleDependencyPath();
   void moduleDependencyPath(List<Path> path);
+  
+  Optional<String> module();
+  void module(String module);
   
   Optional<List<String>> rootModules();
   void rootModules(List<String> rootModules);

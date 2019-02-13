@@ -1,7 +1,6 @@
 package com.github.forax.pro.plugin.compiler;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
-import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
 import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
@@ -50,10 +49,8 @@ public class CompilerPlugin implements Plugin {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
   public void init(MutableConfig config) {
     var compilerConf = config.getOrUpdate(name(), CompilerConf.class);
-    compilerConf.release(11);
     compilerConf.processorModuleSourcePath(List.of());
     compilerConf.processorModuleTestPath(List.of());
   }
@@ -97,7 +94,7 @@ public class CompilerPlugin implements Plugin {
   }
   
   enum JavacOption {
-    RELEASE(action("--release", Javac::release)),
+    RELEASE(actionMaybe("--release", Javac::release)),
     VERBOSE(exists("-verbose", Javac::verbose)),
     LINT(javac -> javac.lint().map(lint -> line -> line.add("-Xlint:" + lint))),
     ENABLE_PREVIEW(exists("--enable-preview", Javac::enablePreview)),
@@ -105,6 +102,7 @@ public class CompilerPlugin implements Plugin {
     DESTINATION(actionMaybe("-d", Javac::destination)),
     MODULE_SOURCE_PATH(actionMaybe("--module-source-path", Javac::moduleSourcePath, File.pathSeparator)),
     SOURCE_PATH(actionMaybe("-sourcepath", Javac::sourcePath, File.pathSeparator)),
+    MODULE(actionMaybe("--module", Javac::module)),
     ROOT_MODULES(actionMaybe("--add-modules", Javac::rootModules, ",")),
     UPGRADE_MODULE_PATH(actionMaybe("--upgrade-module-path", Javac::upgradeModulePath, File.pathSeparator)),
     PROCESSOR_MODULE_PATH(actionMaybe("--processor-module-path", Javac::processorModulePath, File.pathSeparator)),
@@ -131,7 +129,6 @@ public class CompilerPlugin implements Plugin {
     var compiler = config.getOrThrow(name(), CompilerConf.class);
     
     @SuppressWarnings("deprecation")
-    var sourceRelease = compiler.sourceRelease().orElse(compiler.release());
     var moduleSourceFinder = ModuleHelper.sourceModuleFinders(compiler.moduleSourcePath());
     var errorCode = compile(log, javacTool, compiler,
         compiler.moduleSourcePath(),
@@ -139,7 +136,7 @@ public class CompilerPlugin implements Plugin {
         List.of(),
         compiler.moduleSourceResourcesPath(),
         compiler.processorModuleSourcePath(),
-        sourceRelease,
+        compiler.sourceRelease(),
         compiler.moduleExplodedSourcePath(),
         "source:");
     if (errorCode != 0) {
@@ -171,7 +168,7 @@ public class CompilerPlugin implements Plugin {
         List.of(compiler.moduleExplodedSourcePath()),
         StableList.<Path>of().appendAll(compiler.moduleSourceResourcesPath()).appendAll(compiler.moduleTestResourcesPath()),
         compiler.processorModuleTestPath(),
-        compiler.testRelease().orElse(sourceRelease),
+        compiler.testRelease().or(() -> compiler.sourceRelease()),
         compiler.moduleExplodedTestPath(),
         "test:");
   }
@@ -179,7 +176,7 @@ public class CompilerPlugin implements Plugin {
   private static int compile(Log log, ToolProvider javacTool, CompilerConf compiler,
       List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, List<Path> resourcesPath,
       List<Path> processorModulePath,
-      int release, Path destination, String pass) throws IOException {
+      Optional<Integer> release, Path destination, String pass) throws IOException {
     
     Optional<List<Path>> modulePath = modulePathOrDependencyPath(compiler.modulePath(),
         compiler.moduleDependencyPath(), additionalSourcePath);
@@ -228,16 +225,18 @@ public class CompilerPlugin implements Plugin {
     deleteAllFiles(destination, false);
     
     
-    var javac = new Javac(release);
+    var javac = new Javac();
+    release.ifPresent(javac::release);
     compiler.verbose().ifPresent(javac::verbose);
     compiler.lint().ifPresent(javac::lint);
     compiler.enablePreview().ifPresent(javac::enablePreview);
     compiler.rawArguments().ifPresent(javac::rawArguments);
     compiler.upgradeModulePath().ifPresent(javac::upgradeModulePath);
+    compiler.module().ifPresent(javac::module);
     compiler.rootModules().ifPresent(javac::rootModules);
     
     
-    var compatibilityMode = release <= 8;
+    var compatibilityMode = release.map(_release -> _release <= 8).orElse(false);
     if (!compatibilityMode) {
       // module mode, compile all java files at once using moduleSourcePath
       javac.moduleSourcePath(moduleSourcePath);
@@ -270,7 +269,7 @@ public class CompilerPlugin implements Plugin {
         // compile the module-info with release 9
         javac.classPath(null); // reset classpath
         modulePath.ifPresent(javac::modulePath);  // use modulePath instead
-        errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, List.of(moduleName), javac, 9, moduleInfoFilter);
+        errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, List.of(moduleName), javac, Optional.of(9), moduleInfoFilter);
         if (errorCode != 0) {
           return errorCode;
         }
@@ -336,8 +335,8 @@ public class CompilerPlugin implements Plugin {
   
   private static int compileAllFiles(Log log, ToolProvider javacTool, CompilerConf compiler,
                                      List<Path> moduleSourcePath, List<String> moduleNames, Javac javac,
-                                     int release, Predicate<Path> filter) {
-    javac.release(release);
+                                     Optional<Integer> release, Predicate<Path> filter) {
+    release.ifPresent(javac::release);
     var cmdLine = gatherAll(JavacOption.class, option -> option.action).apply(javac, new CmdLine());
     
     var files = compiler.files().orElseGet(() -> walkIfNecessary(findSourcePathOfModules(moduleSourcePath, moduleNames), pathFilenameEndsWith(".java")));
