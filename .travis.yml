@@ -31,21 +31,21 @@ matrix:
 
     - env: DEPLOY='linux-early-access-loom' TAG="untagged-061a961b3b7a1bd05dd1" NAME="jdk-13-loom"
       
-    - env: DEPLOY='linux-early-access-record' TAG="untagged-061a961b3b7a1bd05dd1" NAME="jdk-13-record"
+#    - env: DEPLOY='linux-early-access-record' TAG="untagged-061a961b3b7a1bd05dd1" NAME="jdk-13-record"
       
     - env: DEPLOY='linux-early-access-lworld' TAG="untagged-061a961b3b7a1bd05dd1" NAME="jdk-13-lworld"
       
     - env: DEPLOY='macos-early-access-loom' TAG="untagged-061a961b3b7a1bd05dd1" NAME="jdk-13-loom"
       os: osx
       
-    - env: DEPLOY='macos-early-access-record' TAG="untagged-061a961b3b7a1bd05dd1" NAME="jdk-13-record"
-      os: osx
+#    - env: DEPLOY='macos-early-access-record' TAG="untagged-061a961b3b7a1bd05dd1" NAME="jdk-13-record"
+#      os: osx
       
     - env: DEPLOY='macos-early-access-lworld' TAG="untagged-061a961b3b7a1bd05dd1" NAME="jdk-13-lworld"
       os: osx
 
-  allow_failures:
-    - env: NAME="jdk-13-record"
+#  allow_failures:
+#    - env: NAME="jdk-13-record"
 
 before_install:
   - if [[ -n $TAG ]]; then wget https://github.com/forax/java-next/releases/download/$TAG/$NAME-$TRAVIS_OS_NAME.tar.gz   ; fi
