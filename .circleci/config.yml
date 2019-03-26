@@ -14,9 +14,8 @@ jobs:
       - checkout
 
       # run
-      - run:
-          - chmod u+x ./build.sh
-          - ./build.sh
-          - ./target/pro/bin/pro version
-          - ./target/pro/bin/pro build test.pro
+      - run: chmod u+x ./build.sh 
+      - run: ./build.sh
+      - run: ./target/pro/bin/pro version
+      - run: ./target/pro/bin/pro build test.pro
 
