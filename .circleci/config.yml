@@ -14,7 +14,11 @@ jobs:
       - checkout
 
       # run
-      - run: chmod u+x ./build.sh 
+      - run: - wget https://github.com/forax/java-next/releases/download/untagged-7c3c86a81f6e2e921c04/jdk-13-loom-linux.tar.gz
+      - run: tar zxvf jdk-13-loom-linux.tar.gz
+      - run: export JAVA_HOME=jdk-13-loom
+      - run: export PATH=$JAVA_HOME/bin:$PATH
+      - run: chmod u+x ./build.sh
       - run: ./build.sh
       - run: ./target/pro/bin/pro version
       - run: ./target/pro/bin/pro build test.pro
