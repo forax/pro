@@ -1,5 +1,9 @@
 package com.github.forax.pro.helper;
 
+import static com.github.forax.pro.helper.util.Unchecked.getUnchecked;
+import static com.github.forax.pro.helper.util.Unchecked.suppress;
+import static java.nio.file.Files.list;
+import static java.nio.file.Files.walk;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -13,7 +17,6 @@ import static org.objectweb.asm.Opcodes.ACC_TRANSITIVE;
 import static org.objectweb.asm.Opcodes.V9;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Modifier;
@@ -104,15 +107,11 @@ public class ModuleHelper {
       .collect(Collectors.toSet());
   }
 
-  private static void parseModule(Path moduleInfoPath, ModuleClassVisitor visitor) {
-    try {
-      JavacModuleParser.parse(moduleInfoPath, visitor);
-    } catch(IOException e) {
-      throw new UncheckedIOException(e);
-    }
+  private static void parseModule(Path moduleInfoPath, ModuleClassVisitor visitor) throws IOException {
+    JavacModuleParser.parse(moduleInfoPath, visitor);
   }
 
-  private static Optional<ModuleNode> sourceModuleInfo(Path moduleInfoPath) {
+  private static Optional<ModuleNode> sourceModuleInfo(Path moduleInfoPath) throws IOException {
     class Visitor implements  ModuleClassVisitor {
       ModuleNode moduleNode;
 
@@ -143,24 +142,24 @@ public class ModuleHelper {
     return list == null? new ArrayList<>(): list;
   }
 
-  private static Set<String> findJavaPackages(Path moduleDirectory) {
-    try(var stream = Files.walk(moduleDirectory)) {
+  private static Set<String> findJavaPackages(Path moduleDirectory) throws IOException {
+    try(var stream = walk(moduleDirectory)) {
       return stream
           .filter(path -> path.getFileName().toString().endsWith(".java"))
           .map(path -> moduleDirectory.relativize(path))
           .filter(path -> path.getParent() != null)
           .map(path -> path.getParent().toString().replace('/', '.').replace('\\', '.'))
           .collect(Collectors.toSet());
-    } catch(IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
 
   public static Optional<ModuleDescriptor> sourceModuleDescriptor(Path moduleInfoPath) {
-    return sourceModuleInfo(moduleInfoPath).map(moduleNode -> createModuleDescriptor(moduleNode, moduleInfoPath));
+    // IOExceptions are suppressed
+    return getUnchecked(() -> sourceModuleInfo(moduleInfoPath))
+        .map(suppress((ModuleNode moduleNode) -> createModuleDescriptor(moduleNode, moduleInfoPath)));
   }
 
-  private static ModuleDescriptor createModuleDescriptor(ModuleNode moduleNode, Path moduleInfoPath) {
+  private static ModuleDescriptor createModuleDescriptor(ModuleNode moduleNode, Path moduleInfoPath) throws IOException {
     var modifiers = (moduleNode.access & ACC_OPEN) != 0? Set.of(Modifier.OPEN): Set.<Modifier>of();
     var builder = ModuleDescriptor.newModule(moduleNode.name, modifiers);
 
@@ -195,14 +194,13 @@ public class ModuleHelper {
   }
 
   public static ModuleFinder sourceModuleFinder(Path directory) {
+    // IOExceptions are suppressed
     return new ModuleFinder() {
       @Override
       public Set<ModuleReference> findAll() {
-        try(var stream = Files.list(directory)) {
+        try(var stream = getUnchecked(() -> list(directory))) {
           return stream.flatMap(path -> find(path.getFileName().toString()).stream())
               .collect(Collectors.toSet());
-        } catch (IOException e) {
-          throw new UncheckedIOException(e);
         }
       }
 
@@ -221,7 +219,7 @@ public class ModuleHelper {
   static ModuleReference moduleReference(ModuleDescriptor descriptor, URI uri, ModuleReader moduleReader) {
     return new ModuleReference(descriptor, uri) {
       @Override
-      public ModuleReader open() throws IOException {
+      public ModuleReader open() {
         return moduleReader;
       }
     };

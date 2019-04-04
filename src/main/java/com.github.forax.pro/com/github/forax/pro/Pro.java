@@ -1,15 +1,14 @@
 package com.github.forax.pro;
 
+import static com.github.forax.pro.helper.util.Unchecked.getUnchecked;
+import static java.nio.file.Files.walk;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.StackWalker.StackFrame;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
@@ -68,15 +67,8 @@ public class Pro {
   static {
     // initialization
     var config = CONFIG.get();
-
     var proConf = config.getOrThrow("pro", ProConf.class);
-    
-    List<Plugin> plugins;
-    try {
-      plugins = Plugins.getAllPlugins(proConf.pluginDir());
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    var plugins = getUnchecked(() -> Plugins.getAllPlugins(proConf.pluginDir()));
     
     var log = Log.create("pro", proConf.loglevel());
     log.info(plugins, ps -> "registered plugins " + ps.stream().map(Plugin::name).collect(Collectors.joining(", ")));
@@ -94,12 +86,7 @@ public class Pro {
    */
   public static void loadPlugins(Path dynamicPluginDir) {
     var config = CONFIG.get();
-    List<Plugin> plugins;
-    try {
-      plugins = Plugins.getDynamicPlugins(dynamicPluginDir);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    var plugins = getUnchecked(() -> Plugins.getDynamicPlugins(dynamicPluginDir));
     for(var plugin : plugins) {
       var pluginName = plugin.name();
       if (PLUGINS.putIfAbsent(pluginName, plugin) == null) {
@@ -254,10 +241,8 @@ public class Pro {
    * @return a list of files (and directories)
    */
   public static StableList<Path> files(Path sourceDirectory, PathMatcher filter) {
-    try(var stream = Files.walk(sourceDirectory)) {
+    try(var stream = getUnchecked(() -> walk(sourceDirectory))) {
       return list(stream.filter(filter::matches));
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
   
@@ -265,14 +250,10 @@ public class Pro {
    * Creates an URI from a string.
    * 
    * @param uri a string containing an URI
-   * @return a, URI
+   * @return an URI
    */
   public static URI uri(String uri) {
-    try {
-      return new URI(uri);
-    } catch(URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
+    return getUnchecked(() -> new URI(uri));
   }
   
   /**
@@ -333,22 +314,6 @@ public class Pro {
   public static void print(Object... elements) {
     System.out.println(Arrays.stream(elements).map(String::valueOf).collect(Collectors.joining(" ")));
   }
-  
-  /*
-  public static void exec(String... commands) {
-    var processBuilder = new ProcessBuilder(commands);
-    processBuilder.inheritIO();
-    int errorCode;
-    try {
-      var process = processBuilder.start();
-      errorCode = process.waitFor();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    } catch (InterruptedException e) {
-      return;  //TODO revisit ?
-    }
-    exitIfNonZero(errorCode);
-  }*/
   
   
   /**
@@ -508,7 +473,7 @@ public class Pro {
     var proConf = config.getOrThrow("pro", ProConf.class);
     
     var commandList = new ArrayList<Command>();
-    for(Object command: commands) {
+    for(var command: commands) {
       if (command instanceof Command) {
         commandList.add((Command)command);
       } else {

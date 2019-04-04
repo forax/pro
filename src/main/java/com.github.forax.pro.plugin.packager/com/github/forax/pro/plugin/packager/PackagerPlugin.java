@@ -3,9 +3,10 @@ package com.github.forax.pro.plugin.packager;
 import static com.github.forax.pro.api.helper.OptionAction.action;
 import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
+import static com.github.forax.pro.helper.util.Unchecked.getUnchecked;
+import static java.nio.file.Files.list;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,15 +14,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
-import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
 import com.github.forax.pro.api.Plugin;
 import com.github.forax.pro.api.WatcherRegistry;
 import com.github.forax.pro.api.helper.CmdLine;
-import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.api.helper.OptionAction;
+import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.plugin.packager.MetadataParser.Metadata;
@@ -147,22 +147,16 @@ public class PackagerPlugin implements Plugin {
     FileHelper.deleteAllFiles(output, false);
     Files.createDirectories(output);
     
-    try {
-      return inputs
-          .parallelStream()
-          .mapToInt(directory -> {
-            try(Stream<Path> stream = Files.list(directory)) {
-              return stream
-                  .mapToInt(file -> action.apply(file, output))
-                  .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
-            } catch(IOException e) {
-              throw new UncheckedIOException(e);
-            }
-          })
-          .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
-    } catch(UncheckedIOException e) {
-      throw e.getCause();
-    }
+    return inputs
+        .parallelStream()
+        .mapToInt(directory -> {
+          try(var stream = getUnchecked(() -> list(directory))) {
+            return stream
+                .mapToInt(file -> action.apply(file, output))
+                .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
+          }
+        })
+        .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
   }
 
   private static int packageModule(Log log, ToolProvider jarTool, Path moduleExploded,  Path moduleArtifact, PackagerConf packager, Map<String, Metadata> metadataMap, String prefix) {

@@ -8,6 +8,9 @@ import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
+import static com.github.forax.pro.helper.util.Unchecked.raises;
+import static com.github.forax.pro.helper.util.Unchecked.suppress;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.File;
@@ -71,12 +74,13 @@ public class DocerPlugin implements Plugin {
     docerConf.moduleMergedTestPath().forEach(registry::watch);
   }
   
-  static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
+  static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) throws IOException {
+    raises(IOException.class);
     return modulePath
              .or(() -> Optional.of(
                     StableList.from(moduleDependencyPath).appendAll(additionnalPath)))
-             .map(FileHelper.unchecked(FileHelper::pathFromFilesThatExist))
-             .filter(list -> !list.isEmpty());
+             .map(suppress(FileHelper::pathFromFilesThatExist))
+             .filter(not(List::isEmpty));
   }
   
   enum JavadocOption {

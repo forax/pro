@@ -1,6 +1,7 @@
 package com.github.forax.pro.plugin.modulefixer;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
+import static com.github.forax.pro.helper.util.Unchecked.suppress;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.mapping;
@@ -10,7 +11,6 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.module.ModuleDescriptor.Requires;
@@ -269,7 +269,7 @@ public class ModuleFixerPlugin implements Plugin {
                                      Map<String, Object> propertyMap) throws IOException {
     try(var reader = ref.open()) {
       try(var resources = reader.list()) {
-        resources.forEach(resource -> {
+        resources.forEach(suppress(resource -> {
           if (resource.endsWith(".class")) {
             scanJavaClass(resource, reader, requirePackages, exports, uses);  
           } else {
@@ -285,27 +285,24 @@ public class ModuleFixerPlugin implements Plugin {
               }
             }
           }
-        }); 
+        })); 
       }
     }
     requirePackages.removeAll(exports);
   }
 
   // see ServiceLoader javadoc for the full format
-  private static void scanServiceFile(String resource, ModuleReader reader, Map<String, Set<String>> provides) {
+  private static void scanServiceFile(String resource, ModuleReader reader, Map<String, Set<String>> provides) throws IOException {
     var service = resource.substring("META-INF/services/".length());
     try(var input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource));
         var isr = new InputStreamReader(input, StandardCharsets.UTF_8);
         var lineReader = new BufferedReader(isr)) {
 
       var providers = lineReader.lines()
-        .map(ModuleFixerPlugin::parseProviderLine)
-        .filter(provider -> !provider.isEmpty())  // skip empty line
-        .collect(Collectors.toSet());
+          .map(ModuleFixerPlugin::parseProviderLine)
+          .filter(provider -> !provider.isEmpty())  // skip empty line
+          .collect(Collectors.toSet());
       provides.put(service, providers);
-
-    } catch(IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
   
@@ -320,25 +317,23 @@ public class ModuleFixerPlugin implements Plugin {
   }
   
   // see Jar Manifest for the full documentation
-  private static void scanManifest(String resource, ModuleReader reader, Map<String, Object> propertyMap) {
+  private static void scanManifest(String resource, ModuleReader reader, Map<String, Object> propertyMap) throws IOException {
     try(var input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource));
         var isr = new InputStreamReader(input, StandardCharsets.UTF_8);
         var lineReader = new BufferedReader(isr)) {
 
       lineReader.lines()
-        .flatMap(line -> {
-          int index = line.indexOf(':');
-          if (index == -1) {
-            return Stream.empty();
-          }
-          String key = line.substring(0, index);
-          String value = line.substring(index + 1).trim();
-          return extractManifestValue(key, value).map(object -> Map.entry(key, object)).stream();
-        })
-        .forEach(entry -> propertyMap.put(entry.getKey(), entry.getValue()));
+      .flatMap(line -> {
+        int index = line.indexOf(':');
+        if (index == -1) {
+          return Stream.empty();
+        }
+        String key = line.substring(0, index);
+        String value = line.substring(index + 1).trim();
+        return extractManifestValue(key, value).map(object -> Map.entry(key, object)).stream();
+      })
+      .forEach(entry -> propertyMap.put(entry.getKey(), entry.getValue()));
 
-    } catch(IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
   
@@ -355,7 +350,7 @@ public class ModuleFixerPlugin implements Plugin {
     }
   }
   
-  private static void scanJavaClass(String resource, ModuleReader reader, Set<String> requirePackages, Set<String> exports, Set<String> uses) {
+  private static void scanJavaClass(String resource, ModuleReader reader, Set<String> requirePackages, Set<String> exports, Set<String> uses) throws IOException {
     try(var input = reader.open(resource).orElseThrow(() -> new IOException("resource unavailable " + resource))) {
       var classReader = new ClassReader(input);
       var className = classReader.getClassName();
@@ -364,7 +359,7 @@ public class ModuleFixerPlugin implements Plugin {
       }
       var packageName = packageOf(className);
       exports.add(packageName);
-      
+
       classReader.accept(new ClassRemapper(EmptyClassVisitor.getInstance(), new Remapper() {
         @Override
         public String map(String typeName) {
@@ -374,19 +369,19 @@ public class ModuleFixerPlugin implements Plugin {
         }
       }) {
         String owner;
-        
+
         @Override
         public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
           owner = name;
           super.visit(version, access, name, signature, superName, interfaces);
         }
-        
+
         // consider that annotations are not real dependencies
         @Override
         protected AnnotationVisitor createAnnotationRemapper(AnnotationVisitor av) {
           return null;
         }
-        
+
         @Override
         public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
           var delegate = super.visitMethod(access, name, desc, signature, exceptions);
@@ -395,7 +390,7 @@ public class ModuleFixerPlugin implements Plugin {
           }
           return new MethodNode(Opcodes.ASM7, access, packageName, desc, signature, exceptions) {
             final ArrayList<MethodInsnNode> nodes = new ArrayList<>();
-            
+
             @Override
             public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
               super.visitMethodInsn(opcode, owner, packageName, desc, itf);
@@ -406,14 +401,14 @@ public class ModuleFixerPlugin implements Plugin {
                 nodes.add((MethodInsnNode)instructions.getLast());
               }
             }
-            
+
             @Override
             public void visitEnd() {
               super.visitEnd();
-              
+
               // replay instructions to find dependencies
               accept(delegate);
-              
+
               if (!nodes.isEmpty()) {
                 // do the static analysis to find constant classes
                 var analyzer = new Analyzer<>(new ConstInterpreter());
@@ -421,9 +416,9 @@ public class ModuleFixerPlugin implements Plugin {
                 try {
                   frames = analyzer.analyze(owner, this);
                 } catch (AnalyzerException e) {
-                  throw new UncheckedIOException(new IOException("error while analyzing " + owner, e));
+                  throw new IllegalStateException("error while analyzing " + owner, e);
                 }
-                
+
                 for(var node: nodes) {
                   // try to recognize
                   //   <S> java.util.ServiceLoader<S> load(java.lang.Class<S>, java.lang.ClassLoader);
@@ -449,7 +444,7 @@ public class ModuleFixerPlugin implements Plugin {
                   default:
                     throw new IllegalStateException("unknown signature in java.util.ServiceLoader " + node.name + node.desc);
                   }
-                  
+
                   var constString = value.getConstString();
                   if (constString != "") {
                     uses.add(constString);
@@ -460,8 +455,6 @@ public class ModuleFixerPlugin implements Plugin {
           };
         }
       }, ClassReader.SKIP_FRAMES  /* there is maybe a bug in ASM ? */);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
   

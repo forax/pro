@@ -6,9 +6,7 @@ import static java.util.stream.Collectors.toUnmodifiableMap;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,23 +20,20 @@ class DependencyParser {
   interface ModuleNameMap {
     Optional<String> getArtifactCoords(String moduleName);
     
-    static ModuleNameMap create(ResolverConf resolverConf) {
-      URL moduleNameListURL;
-      try {
-        moduleNameListURL = resolverConf.moduleNameList().toURL();
-      } catch (MalformedURLException e) {
-        throw new UncheckedIOException(new IOException(e));
-      }
+    /**
+     * @param moduleNameList URI of the list that associate module names to their Maven coordinates
+     * @return a function that associate a module name to its Maven coordinates
+     * @throws IOException if an I/O exception occurs
+     */
+    static ModuleNameMap create(URI moduleNameList) throws IOException {
+      var moduleNameListURL = moduleNameList.toURL();
       Map<String, String> moduleNameMap;
-      try(var input = moduleNameListURL.openStream();
+      try (var input = moduleNameListURL.openStream();
           var reader = new InputStreamReader(input, UTF_8);
           var buffered = new BufferedReader(reader);
           var lines = buffered.lines()) {
-        moduleNameMap = lines
-            .map(line -> line.split("="))
+        moduleNameMap = lines.map(line -> line.split("="))
             .collect(toUnmodifiableMap(tokens -> tokens[0], tokens -> tokens[1]));
-      } catch(IOException e) {
-        throw new UncheckedIOException(e);
       }
       return moduleName -> Optional.ofNullable(moduleNameMap.get(moduleName));
     }

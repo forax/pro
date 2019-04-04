@@ -1,7 +1,9 @@
 package com.github.forax.pro.bootstrap;
 
 import static com.github.forax.pro.Pro.getOrElseThrow;
-import static com.github.forax.pro.helper.FileHelper.unchecked;
+import static com.github.forax.pro.helper.util.Unchecked.suppress;
+import static java.nio.file.Files.list;
+import static java.util.function.Predicate.not;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,9 +31,9 @@ class Vanity {
     var imagePath = getOrElseThrow("convention.javaLinkerImagePath", Path.class);
     
     // remove unnecessary commands
-    try(var stream = Files.list(imagePath.resolve("bin"))) {
-      stream.filter(path -> !keep(path))
-            .forEach(unchecked(Files::delete));
+    try(var stream = list(imagePath.resolve("bin"))) {
+      stream.filter(not(Vanity::keep))
+            .forEach(suppress(Files::delete));
     }
     
     // change image directory

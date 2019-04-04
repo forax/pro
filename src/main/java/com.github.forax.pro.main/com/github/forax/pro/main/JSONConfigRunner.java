@@ -1,8 +1,9 @@
 package com.github.forax.pro.main;
 
+import static com.github.forax.pro.helper.util.Unchecked.suppress;
+import static java.nio.file.Files.newBufferedReader;
+
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ import com.github.forax.pro.main.runner.PropertySequence;
 public class JSONConfigRunner implements ConfigRunner {
   @Override
   public Optional<Runnable> accept(Path config, PropertySequence propertySeq, List<String> arguments) {
-    return Optional.<Runnable>of(() -> run(config, propertySeq, arguments))
+    return Optional.of(suppress(() -> run(config, propertySeq, arguments)))
              .filter(__ -> config.toString().endsWith(".json"));
   }
   
@@ -47,18 +48,14 @@ public class JSONConfigRunner implements ConfigRunner {
   }
   
  
-  private static void run(Path configFile, PropertySequence propertySeq, List<String> arguments) {
+  private static void run(Path configFile, PropertySequence propertySeq, List<String> arguments) throws IOException {
     //System.out.println("run with json " + configFile);
     
     var pluginNames = new ArrayList<>();
-    try {
-      try(var reader = Files.newBufferedReader(configFile)) {
-        var tokener = new JSONTokener(reader);
-        var object = new JSONObject(tokener);
-        decode("", object.toMap(), pluginNames);
-      }
-    } catch(IOException e) {
-      throw new UncheckedIOException(e);
+    try(var reader = newBufferedReader(configFile)) {
+      var tokener = new JSONTokener(reader);
+      var object = new JSONObject(tokener);
+      decode("", object.toMap(), pluginNames);
     }
     
     Pro.set("pro.exitOnError", true);

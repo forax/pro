@@ -5,10 +5,22 @@ import static com.github.forax.pro.api.helper.OptionAction.actionMaybe;
 import static com.github.forax.pro.api.helper.OptionAction.exists;
 import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
+import static com.github.forax.pro.api.helper.OptionAction.toPrettyString;
 import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEquals;
+import static com.github.forax.pro.helper.FileHelper.pathFromFilesThatExist;
+import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
+import static com.github.forax.pro.helper.ModuleHelper.mergeModuleDescriptor;
+import static com.github.forax.pro.helper.ModuleHelper.moduleDescriptorToSource;
+import static com.github.forax.pro.helper.ModuleHelper.sourceModuleFinders;
+import static com.github.forax.pro.helper.util.Unchecked.getUnchecked;
+import static java.nio.file.Files.copy;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.walk;
+import static java.nio.file.Files.write;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.joining;
@@ -16,14 +28,11 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleFinder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.spi.ToolProvider;
@@ -89,8 +98,8 @@ public class CompilerPlugin implements Plugin {
     return modulePath
              .or(() -> Optional.of(
                     StableList.from(moduleDependencyPath).appendAll(additionnalPath)))
-             .map(FileHelper.unchecked(FileHelper::pathFromFilesThatExist))
-             .filter(list -> !list.isEmpty());
+             .map(FileHelper::pathFromFilesThatExist)
+             .filter(not(List::isEmpty));
   }
   
   enum JavacOption {
@@ -128,8 +137,7 @@ public class CompilerPlugin implements Plugin {
         .orElseThrow(() -> new IllegalStateException("can not find javac"));
     var compiler = config.getOrThrow(name(), CompilerConf.class);
     
-    @SuppressWarnings("deprecation")
-    var moduleSourceFinder = ModuleHelper.sourceModuleFinders(compiler.moduleSourcePath());
+    var moduleSourceFinder = sourceModuleFinders(compiler.moduleSourcePath());
     var errorCode = compile(log, javacTool, compiler,
         compiler.moduleSourcePath(),
         moduleSourceFinder,
@@ -142,12 +150,12 @@ public class CompilerPlugin implements Plugin {
     if (errorCode != 0) {
       return errorCode;
     }
-    var moduleTestPath = FileHelper.pathFromFilesThatExist(compiler.moduleTestPath());
+    var moduleTestPath = pathFromFilesThatExist(compiler.moduleTestPath());
     if (moduleTestPath.isEmpty()) {
       return 0;
     }
     
-    var moduleTestFinder = ModuleHelper.sourceModuleFinders(compiler.moduleTestPath());
+    var moduleTestFinder = sourceModuleFinders(compiler.moduleTestPath());
     if (moduleTestFinder.findAll().isEmpty()) {  // there is no test module-info defined
       log.info(compiler.moduleTestPath(), testPath -> "test: can not find any test modules in " + testPath.stream().map(Path::toString).collect(joining(", ")));
       return 0;
@@ -278,17 +286,17 @@ public class CompilerPlugin implements Plugin {
     
     //copy all resources
     for(var resources: resourcesPath) {
-      if (Files.exists(resources)) {
+      if (exists(resources)) {
         for(var moduleName: rootSourceNames) {  // copy only resources of the modules
           var resourceDir = resources.resolve(moduleName);
           var destinationDir = destination.resolve(moduleName);
-          if (Files.exists(resourceDir)) {
+          if (exists(resourceDir)) {
             log.debug(null, __ -> "copy " + resourceDir + " to " + destinationDir);
-            FileHelper.walkAndFindCounterpart(resourceDir, destinationDir, Function.identity(), (src, dest) -> {
-              if (Files.isDirectory(src) && Files.isDirectory(dest)) { // do not overwrite directory
+            walkAndFindCounterpart(resourceDir, destinationDir, Function.identity(), (src, dest) -> {
+              if (isDirectory(src) && isDirectory(dest)) { // do not overwrite directory
                 return;
               }
-              Files.copy(src, dest); 
+              copy(src, dest); 
             });
           }
         }
@@ -300,13 +308,13 @@ public class CompilerPlugin implements Plugin {
       var descriptor = module.descriptor();
       var moduleFolder = destination.resolve(descriptor.name());
       var servicesPath = moduleFolder.resolve("META-INF/services/");
-      Set<Provides> provides = descriptor.provides();
+      var provides = descriptor.provides();
       if (!provides.isEmpty()) {
         Files.createDirectories(servicesPath);
       }
       for(var provide: provides) {
         var servicePath = servicesPath.resolve(provide.service());
-        Files.write(servicePath, (Iterable<String>)provide.providers().stream()::iterator, CREATE_NEW);
+        write(servicePath, (Iterable<String>)provide.providers().stream()::iterator, CREATE_NEW);
       }
     }
     
@@ -314,17 +322,16 @@ public class CompilerPlugin implements Plugin {
   }
   
   private static Stream<Path> asClassPath(Path path) {
-    try {
-      if (Files.isDirectory(path)) {
-        var jars = Files.walk(path).filter(p -> p.getFileName().toString().endsWith(".jar")).collect(toUnmodifiableList());
+    // IOExceptions suppressed
+    return getUnchecked(() -> {
+      if (isDirectory(path)) {
+        var jars = walk(path).filter(p -> p.getFileName().toString().endsWith(".jar")).collect(toUnmodifiableList());
         if (!jars.isEmpty()) {
           return jars.stream();  
         }
       }
       return Stream.of(path);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    });
   }
   
   private static List<Path> findSourcePathOfModules(List<Path> moduleSourcePath, List<String> moduleNames) {
@@ -343,7 +350,7 @@ public class CompilerPlugin implements Plugin {
     files.stream().filter(filter).forEach(cmdLine::add);
     
     var arguments = cmdLine.toArguments();
-    log.verbose(files, fs -> OptionAction.toPrettyString(JavacOption.class, option -> option.action).apply(javac, "javac") + "\n" + fs.stream().map(Path::toString).collect(joining(" ")));
+    log.verbose(files, fs -> toPrettyString(JavacOption.class, option -> option.action).apply(javac, "javac") + "\n" + fs.stream().map(Path::toString).collect(joining(" ")));
     
     return javacTool.run(System.out, System.err, arguments);
   }
@@ -352,7 +359,7 @@ public class CompilerPlugin implements Plugin {
                            Path moduleMergedTestPath) throws IOException {
     Files.createDirectories(moduleMergedTestPath);
     
-    var skipModuleInfoDotJava = not(pathFilenameEquals("module-info.java"));
+    
     
     for(var testRef: moduleTestFinder.findAll()) {
       var moduleName = testRef.descriptor().name();
@@ -364,12 +371,13 @@ public class CompilerPlugin implements Plugin {
         var sourceRef = sourceRefOpt.orElseThrow();
         
         var sourcePath = Path.of(sourceRef.location().orElseThrow());
-        FileHelper.walkAndFindCounterpart(sourcePath, moduleRoot,
+        var skipModuleInfoDotJava = not(pathFilenameEquals("module-info.java"));
+        walkAndFindCounterpart(sourcePath, moduleRoot,
             stream -> stream.filter(skipModuleInfoDotJava),
             Files::copy);
         
-        var descriptor = ModuleHelper.mergeModuleDescriptor(sourceRef.descriptor(), testRef.descriptor());
-        Files.write(moduleRoot.resolve("module-info.java"), List.of(ModuleHelper.moduleDescriptorToSource(descriptor)));
+        var descriptor = mergeModuleDescriptor(sourceRef.descriptor(), testRef.descriptor());
+        write(moduleRoot.resolve("module-info.java"), List.of(moduleDescriptorToSource(descriptor)));
         
         predicate = skipModuleInfoDotJava;
         
@@ -378,12 +386,12 @@ public class CompilerPlugin implements Plugin {
       }
       
       var testPath = Path.of(testRef.location().orElseThrow());
-      FileHelper.walkAndFindCounterpart(testPath, moduleRoot, stream -> stream.filter(predicate),
+      walkAndFindCounterpart(testPath, moduleRoot, stream -> stream.filter(predicate),
           (srcPath, dstPath) -> {
-            if (Files.exists(dstPath) && Files.isDirectory(dstPath)) {
+            if (exists(dstPath) && isDirectory(dstPath)) {
               return;  // skip existing path
             }
-            Files.copy(srcPath, dstPath);
+            copy(srcPath, dstPath);
           });
     }
     return 0;

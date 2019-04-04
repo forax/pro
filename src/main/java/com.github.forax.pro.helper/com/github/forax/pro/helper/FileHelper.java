@@ -1,11 +1,20 @@
 package com.github.forax.pro.helper;
 
+import static com.github.forax.pro.helper.util.Unchecked.getUnchecked;
+import static com.github.forax.pro.helper.util.Unchecked.runUnchecked;
+import static com.github.forax.pro.helper.util.Unchecked.suppress;
+import static java.nio.file.FileVisitResult.CONTINUE;
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.Files.walk;
+import static java.nio.file.Files.walkFileTree;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -13,12 +22,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import com.github.forax.pro.helper.util.Unchecked;
 
 public class FileHelper {
   private FileHelper() {
@@ -33,96 +41,34 @@ public class FileHelper {
    * Delete recursively all files inside a directory.
    * @param directory a directory
    * @param removeDirectory also delete the top level directory.
-   * @throws IOException if a file can not be deleted
    */
-  public static void deleteAllFiles(Path directory, boolean removeDirectory) throws IOException {
-    Files.walkFileTree(directory, new FileVisitor<>() {
+  public static void deleteAllFiles(Path directory, boolean removeDirectory) {
+    // IOExceptions are suppressed
+    runUnchecked(() -> walkFileTree(directory, new FileVisitor<>() {
       @Override
       public FileVisitResult postVisitDirectory(Path path, IOException e) throws IOException {
         if (removeDirectory || !path.equals(directory)) {
           Files.delete(path);  
         }
-        return FileVisitResult.CONTINUE;
+        return CONTINUE;
       }
 
       @Override
       public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attrs) throws IOException {
-        return FileVisitResult.CONTINUE;
+        return CONTINUE;
       }
 
       @Override
       public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
         Files.delete(path);
-        return FileVisitResult.CONTINUE;
+        return CONTINUE;
       }
 
       @Override
       public FileVisitResult visitFileFailed(Path path, IOException e) throws IOException {
-        return FileVisitResult.CONTINUE;
+        return CONTINUE;
       }
-    });
-  }
-  
-  public interface IORunnable {
-    public void run() throws IOException;
-  }
-  public interface IOConsumer<T> {
-    public void accept(T element) throws IOException;
-  }
-  public interface IOBiConsumer<T, U> {
-    public void accept(T t, U u) throws IOException;
-  }
-  public interface IOFunction<T, R> {
-    public R apply(T element) throws IOException;
-  }
-  public interface IOBiFunction<T, U, R> {
-    public R apply(T element, U element2) throws IOException;
-  }
-
-  public static Runnable unchecked(IORunnable runnable) {
-    return () -> {
-      try {
-        runnable.run();
-      } catch(IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    };
-  }
-  public static <T> Consumer<T> unchecked(IOConsumer<? super T> consumer) {
-    return element -> {
-      try {
-        consumer.accept(element);
-      } catch(IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    };
-  }
-  public static <T, U> BiConsumer<T, U> unchecked(IOBiConsumer<? super T, ? super U> consumer) {
-    return (element, element2) -> {
-      try {
-        consumer.accept(element, element2);
-      } catch(IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    };
-  }
-  public static <T, R> Function<T, R> unchecked(IOFunction<? super T, ? extends R> function) {
-    return element -> {
-      try {
-        return function.apply(element);
-      } catch(IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    };
-  }
-  public static <T, U, R> BiFunction<T, U, R> unchecked(IOBiFunction<? super T, ? super U, ? extends R> function) {
-    return (element, element2) -> {
-      try {
-        return function.apply(element, element2);
-      } catch(IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    };
+    }));
   }
   
   public static Predicate<Path> pathFilenameEndsWith(String text) {
@@ -134,42 +80,45 @@ public class FileHelper {
   }
   
   public static List<Path> walkIfNecessary(List<Path> list, Predicate<? super Path> filter) {
+    // IOExceptions are suppressed
     return list.stream()
-               .flatMap(FileHelper.<Path, Stream<Path>>unchecked(path -> {
-                   if (!Files.isDirectory(path)) {
+               .flatMap(suppress(path -> {
+                   if (!isDirectory(path)) {
                      return Stream.of(path);
                    }
-                   return Files.walk(path).filter(filter);
+                   return walk(path).filter(filter);
                }))
                .collect(toUnmodifiableList());
   }
   
-  public static void walkAndFindCounterpart(Path srcPath, Path dstPath, Function<Stream<Path>, Stream<Path>> configure, IOBiConsumer<Path, Path> consumer) {
-    try(Stream<Path> stream = Files.walk(srcPath)) {
+  public static void walkAndFindCounterpart(Path srcPath, Path dstPath, Function<Stream<Path>, Stream<Path>> configure, Unchecked.IOBiConsumer<Path, Path> consumer) {
+    // IOExceptions are suppressed
+    try(var stream = getUnchecked(() -> Files.walk(srcPath))) {
       configure.apply(stream)
-        .forEach(unchecked(path -> {
-          Path targetPath = dstPath.resolve(srcPath.relativize(path));
+        .forEach(suppress(path -> {
+          var targetPath = dstPath.resolve(srcPath.relativize(path));
           consumer.accept(path, targetPath);
       }));
-    } catch(IOException e) {
-      throw new UncheckedIOException(e);
     }
   }
   
   public static void download(URI uri, Path targetDirectory) {
+    // IOExceptions are suppressed
     var fileName = Path.of(uri.getPath()).getFileName();
     var targetFile = targetDirectory.resolve(fileName);
-    if (Files.exists(targetFile)) {
+    if (exists(targetFile)) {
       return;
     }
-    try { 
-      Files.createDirectories(targetDirectory);
-      try(var input = uri.toURL().openStream();
-           var output = Files.newOutputStream(targetFile, CREATE_NEW, WRITE)) {
-        input.transferTo(output);
+    runUnchecked(() -> {
+      try { 
+        createDirectories(targetDirectory);
+        try(var input = uri.toURL().openStream();
+            var output = newOutputStream(targetFile, CREATE_NEW, WRITE)) {
+          input.transferTo(output);
+        }
+      } catch (IOException e) {
+        throw new IOException("download failed: url=" + uri + " targetDirectory=" + targetDirectory, e);
       }
-    } catch (IOException e) {
-      throw new UncheckedIOException("download failed: url=" + uri + " targetDirectory=" + targetDirectory, e);
-    }
+    });
   }
 }

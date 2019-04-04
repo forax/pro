@@ -200,7 +200,7 @@ public class Bootstrap {
     }
   }
   
-  private static void compileAndPackagePlugin(String name, List<String> plugins, Runnable extras) throws IOException {
+  private static void compileAndPackagePlugin(String name, List<String> plugins, Runnable extras) {
     deleteAllFiles(location("plugins/" + name + "/target"), false);
 
     local("plugins/" + name, () -> {

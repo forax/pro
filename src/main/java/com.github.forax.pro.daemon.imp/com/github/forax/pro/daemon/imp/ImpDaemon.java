@@ -1,10 +1,10 @@
 package com.github.forax.pro.daemon.imp;
 
+import static com.github.forax.pro.helper.util.Unchecked.getUnchecked;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,9 +19,9 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.github.forax.pro.api.Command;
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.Plugin;
-import com.github.forax.pro.api.Command;
 import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.daemon.Daemon;
 import com.github.forax.pro.helper.Log;
@@ -319,12 +319,7 @@ public class ImpDaemon implements Daemon {
       }
       this.watcherThread = null;
       
-      WatchService watcher;
-      try {
-        watcher = FileSystems.getDefault().newWatchService();
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
+      var watcher = getUnchecked(() -> FileSystems.getDefault().newWatchService());
       
       var roots = new HashSet<Path>();
       firstPlugin.watch(config, roots::add);

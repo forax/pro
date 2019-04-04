@@ -2,6 +2,7 @@ package com.github.forax.pro.plugin.resolver;
 
 import static com.github.forax.pro.api.MutableConfig.derive;
 import static com.github.forax.pro.helper.util.Lazy.lazy;
+import static com.github.forax.pro.helper.util.Unchecked.suppress;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
@@ -11,7 +12,6 @@ import java.lang.module.FindException;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -42,6 +42,7 @@ import com.github.forax.pro.helper.ModuleHelper;
 import com.github.forax.pro.helper.ModuleHelper.ResolverListener;
 import com.github.forax.pro.helper.util.StableList;
 import com.github.forax.pro.helper.util.Strategy;
+import com.github.forax.pro.helper.util.Unchecked;
 import com.github.forax.pro.plugin.resolver.DependencyParser.ModuleNameMap;
 
 public class ResolverPlugin implements Plugin {
@@ -57,11 +58,7 @@ public class ResolverPlugin implements Plugin {
   }
   
   private static URI getDefaultModuleNameList() {
-    try {
-      return ResolverPlugin.class.getResource("module-maven.properties").toURI();
-    } catch (URISyntaxException e) {
-      throw new UncheckedIOException(new IOException(e));
-    }
+    return Unchecked.getUnchecked(ResolverPlugin.class.getResource("module-maven.properties")::toURI);
   }
   
   @Override
@@ -156,7 +153,7 @@ public class ResolverPlugin implements Plugin {
     log.debug(remoteRepositories, remotes -> "remoteRepositories " + remotes);
     
     var aether = Aether.create(resolverConf.mavenLocalRepositoryPath(), remoteRepositories);
-    var moduleNameMap = lazy(() -> ModuleNameMap.create(resolverConf));
+    var moduleNameMap = lazy(suppress(() -> ModuleNameMap.create(resolverConf.moduleNameList())));
     var dependencyParsingStrategy = Strategy.compose(
         DependencyParser::parseMavenArtifactCoords,
         dependency -> DependencyParser.parseVersionAndUseModuleNameMap(dependency, moduleNameMap.eval()));
