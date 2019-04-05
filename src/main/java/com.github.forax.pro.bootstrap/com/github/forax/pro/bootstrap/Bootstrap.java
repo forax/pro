@@ -184,7 +184,7 @@ public class Bootstrap {
 
   
   private static void updateModuleNameList() {
-    var moduleNameListURI = uri("https://raw.githubusercontent.com/jodastephen/jpms-module-names/master/generated/module-maven.properties");
+    var moduleNameListURI = uri("https://raw.githubusercontent.com/sormuras/modules/master/module-maven.properties");
     var resolverResourceFile = location("src/main/resources/com.github.forax.pro.plugin.resolver/com/github/forax/pro/plugin/resolver/module-maven.properties");
     
     try {
