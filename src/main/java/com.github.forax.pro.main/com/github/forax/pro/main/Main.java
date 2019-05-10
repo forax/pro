@@ -17,6 +17,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.github.forax.pro.daemon.Daemon;
+import com.github.forax.pro.helper.Platform;
 import com.github.forax.pro.main.runner.ConfigRunner;
 import com.github.forax.pro.main.runner.PropertySequence;
 
@@ -208,6 +209,11 @@ public class Main {
   }
   
   public static void main(String[] args) {
+    //TODO remove when fixed, at least on linux SPAWN does not work 
+    if (Platform.current() == Platform.UNIX) {
+      System.setProperty("jdk.lang.Process.launchMechanism", "fork");
+    }
+    
     try {
       execute(PropertySequence.empty(), List.of(args));
     } catch(InputException e) {
