@@ -65,7 +65,7 @@ script:
 
 before_deploy:
   - cd target
-  - zip -r ../pro-$DEPLOY.zip pro
+  - jar cvfM ../pro-$DEPLOY.zip pro
   - cd ..
 
 deploy:
