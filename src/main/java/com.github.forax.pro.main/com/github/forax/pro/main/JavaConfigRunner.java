@@ -33,7 +33,7 @@ public class JavaConfigRunner implements ConfigRunner {
         .flatMap(s -> s)
         .toArray(String[]::new);
     
-    //System.out.println("cmd " + java.util.Arrays.toString(args));
+    //System.out.println("cmd " + String.join(" ", args));
     
     var exitCode = 1;
     try {
@@ -45,7 +45,7 @@ public class JavaConfigRunner implements ConfigRunner {
       
       exitCode = process.waitFor();
     } catch (InterruptedException|IOException e) {
-      System.err.println("i/o error " + e.getMessage());
+      System.err.println("i/o error " + e.getMessage() + "\n command " + String.join(" ", args));
     }
     System.exit(exitCode);
   }

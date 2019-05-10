@@ -127,9 +127,14 @@ public class RunnerPlugin implements Plugin {
       return 1; //FIXME
     }
     
-    var process = new ProcessBuilder(StableList.of(javaCommand.toString()).appendAll(arguments))
-      .redirectErrorStream(true)
-      .start();
+    Process process;
+    try {
+      process = new ProcessBuilder(StableList.of(javaCommand.toString()).appendAll(arguments))
+          .redirectErrorStream(true)
+          .start();
+    } catch(IOException e) {
+      throw new IOException(e.getMessage() + " while trying to execute " + javaCommand.toString() + " " + String.join(" ", arguments), e);
+    }
     
     process.getInputStream().transferTo(System.out);
     

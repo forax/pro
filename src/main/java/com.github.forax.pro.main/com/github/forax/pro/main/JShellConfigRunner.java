@@ -1,7 +1,5 @@
 package com.github.forax.pro.main;
 
-import static java.lang.Runtime.version;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -20,11 +18,8 @@ public class JShellConfigRunner implements ConfigRunner {
   private static void run(Path configFile, PropertySequence propertySeq, List<String> arguments) {
     //System.out.println("run with jshell " + configFile);
     
-    var isAtLeastJava11 = version().feature() >= 11;
     var args =
       Stream.of(
-        Stream.of("-R--enable-preview").filter(__ -> isAtLeastJava11),  // always enable preview features if Java 11
-        Stream.of("--enable-preview").filter(__ -> isAtLeastJava11),
         Stream.of("-R-XX:+EnableValhalla").filter(__ -> System.getProperty("valhalla.enableValhalla") != null),
         Stream.of("-R-Dpro.exitOnError=false"),
         propertySeq.stream().map(entry -> "-D" + entry.getKey() + '=' + entry.getValue()),
@@ -35,6 +30,9 @@ public class JShellConfigRunner implements ConfigRunner {
       .toArray(String[]::new);
     
     int exitCode = JShellWrapper.run(System.in, System.out, System.err, args);
+    if (exitCode != 0) {
+      System.err.println("error while executing jshell " + String.join(" ", args));
+    }
     System.exit(exitCode);
   }
 }
