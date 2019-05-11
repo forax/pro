@@ -5,6 +5,7 @@ import static java.nio.file.Files.delete;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.getPosixFilePermissions;
 import static java.nio.file.Files.list;
+import static java.nio.file.Files.newBufferedReader;
 import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.Files.readAllLines;
 import static java.nio.file.Files.setPosixFilePermissions;
@@ -13,6 +14,7 @@ import static java.nio.file.Files.write;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
+import static java.util.function.Predicate.not;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,12 +26,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -56,16 +57,20 @@ class pro_wrapper {
     if (osName.indexOf("win") != -1) {
       return "cmd.exe";
     }
-    var shell = System.getenv("SHELL");
-    if (shell != null && !shell.isEmpty()) {
-      return shell;
-    }
-    return "/bin/sh";
+    return Optional.ofNullable(System.getenv("SHELL")).filter(not(String::isEmpty)).orElse("/bin/sh");
   }
   
-  private static Optional<String> specialBuild() {
+  private static Optional<String> specialBuild() throws IOException {
     var specialBuild = System.getenv("PRO_SPECIAL_BUILD");
-    return Optional.ofNullable(specialBuild).filter(build -> !build.isEmpty());
+    var path = Path.of("pro_wrapper_settings.txt");
+    var proSettings = new Properties();
+    if (exists(path)) {
+      try(var reader = newBufferedReader(path)) {
+        proSettings.load(reader);
+      }
+    }
+    return Optional.ofNullable(specialBuild).filter(not(String::isEmpty)).or(
+        () -> Optional.ofNullable(proSettings.getProperty("PRO_SPECIAL_BUILD")));
   }
   
   private static String userHome() {
@@ -106,6 +111,12 @@ class pro_wrapper {
     System.out.println("");
   }
   
+  private static void setExecutionPermissions(Path path) throws IOException {
+    var permissions = getPosixFilePermissions(path);
+    Collections.addAll(permissions, OWNER_EXECUTE, GROUP_EXECUTE, OTHERS_EXECUTE);
+    setPosixFilePermissions(path, permissions);
+  }
+  
   private static void unpack(Path localPath, Path folder) throws IOException {
     System.out.println("unpack pro to " + folder);
     createDirectories(folder);
@@ -123,11 +134,15 @@ class pro_wrapper {
       }
     }
     
-    // make the command in pro/bin executable
+    // make the commands in pro/bin, and pro/lib executable
     for(var cmd: (Iterable<Path>)list(folder.resolve("pro").resolve("bin"))::iterator) {
-      Set<PosixFilePermission> permissions = getPosixFilePermissions(cmd);
-      Collections.addAll(permissions, OWNER_EXECUTE, GROUP_EXECUTE, OTHERS_EXECUTE);
-      setPosixFilePermissions(cmd, permissions);
+      setExecutionPermissions(cmd);
+    }
+    for(var path: (Iterable<Path>)list(folder.resolve("pro").resolve("lib"))::iterator) {
+      var fileName = path.getFileName().toString();
+      if (fileName.equals("jexec") || fileName.equals("jspawnhelper")) {
+        setExecutionPermissions(path);
+      }
     }
   }
   
@@ -197,6 +212,7 @@ class pro_wrapper {
     var release = lastestReleaseVersion().orElseThrow(() -> new IOException("latest release not found on Github"));
     var specialBuild = specialBuild().map(build -> '-' + build).orElse("");
     var filename = "pro-" + platform() + specialBuild + ".zip";
+    System.out.println("require " + filename + " release " + release + " ...");
     
     var cachePath = Path.of(userHome(), ".pro", "cache", release, filename);
     if (!exists(cachePath)) {
@@ -204,11 +220,11 @@ class pro_wrapper {
     }
     
     var releaseTxt = Path.of("pro", "pro-release.txt");
-    if (!exists(releaseTxt) || !firstLine(releaseTxt).equals(release)) {
+    if (!exists(releaseTxt) || !firstLine(releaseTxt).equals(filename)) {
       deleteAllFiles(releaseTxt.getParent());
       
       unpack(cachePath, Path.of("."));
-      write(releaseTxt, List.of(release));
+      write(releaseTxt, List.of(filename));
     }
     
     return exec("pro/bin/pro", args);
