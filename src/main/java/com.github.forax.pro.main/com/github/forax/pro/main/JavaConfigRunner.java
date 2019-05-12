@@ -25,8 +25,6 @@ public class JavaConfigRunner implements ConfigRunner {
         Stream.of(
           Stream.of(javaHome.resolve("bin").resolve(Platform.current().javaExecutableName()).toString()),
           Stream.of("-XX:+EnableValhalla").filter(__ -> System.getProperty("valhalla.enableValhalla") != null),
-          //FIXME JDK 13 bug due to 8212828
-          Stream.of("-Djdk.lang.Process.launchMechanism=fork").filter(__ -> Platform.current() == Platform.UNIX),
           Stream.of("-Dpro.exitOnError=true"),
           propertySeq.stream().map(entry -> "-D" + entry.getKey() + '=' + entry.getValue()),
           Stream.of(arguments).filter(a -> !a.isEmpty()).map(a -> "-Dpro.arguments=" + String.join(",", a)),
