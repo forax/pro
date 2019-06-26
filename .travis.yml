@@ -8,14 +8,14 @@ matrix:
     - env: DEPLOY='linux'
       jdk: openjdk11
       
-    - env: DEPLOY='linux-12-early-access'
+    - env: DEPLOY='linux-12'
       jdk: openjdk12
+      
+    - env: DEPLOY='linux-13-early-access'
+      jdk: openjdk13
 
     - env: DEPLOY='linux-early-access'
       jdk: openjdk-ea
-
-    - env: DEPLOY='false'
-      jdk: oraclejdk11
 
     - env: DEPLOY='macos'
       os: osx
