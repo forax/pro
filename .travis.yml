@@ -21,9 +21,13 @@ matrix:
       os: osx
       jdk: openjdk11
       
-    - env: DEPLOY='macos-12-early-access'
+    - env: DEPLOY='macos-12'
       os: osx
       jdk: openjdk12
+      
+    - env: DEPLOY='macos-13-early-access'
+      os: osx
+      jdk: openjdk13
 
     - env: DEPLOY='macos-early-access'
       os: osx
