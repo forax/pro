@@ -41,7 +41,7 @@ matrix:
       
     - env: DEPLOY='macos-early-access-loom' TAG="untagged-017670efcae8857d6d25" NAME="jdk-14-loom"
       os: osx
-      
+
     - env: DEPLOY='macos-early-access-record' TAG="untagged-017670efcae8857d6d25" NAME="jdk-14-record"
       os: osx
       
