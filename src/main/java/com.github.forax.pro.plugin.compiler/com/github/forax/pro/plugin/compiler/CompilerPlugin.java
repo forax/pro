@@ -164,10 +164,7 @@ public class CompilerPlugin implements Plugin {
     var moduleMergedTestPath = compiler.moduleMergedTestPath();
     deleteAllFiles(moduleMergedTestPath, false);
     
-    errorCode = merge(moduleSourceFinder, moduleTestFinder, moduleMergedTestPath);
-    if (errorCode != 0) {
-      return errorCode;
-    }
+    merge(moduleSourceFinder, moduleTestFinder, moduleMergedTestPath);
     
     var moduleMergedTestFinder = ModuleHelper.sourceModuleFinder(compiler.moduleMergedTestPath());
     return compile(log, javacTool, compiler,
@@ -176,7 +173,7 @@ public class CompilerPlugin implements Plugin {
         List.of(compiler.moduleExplodedSourcePath()),
         StableList.<Path>of().appendAll(compiler.moduleSourceResourcesPath()).appendAll(compiler.moduleTestResourcesPath()),
         compiler.processorModuleTestPath(),
-        compiler.testRelease().or(() -> compiler.sourceRelease()),
+        compiler.testRelease().or(compiler::sourceRelease),
         compiler.moduleExplodedTestPath(),
         "test:");
   }
@@ -186,15 +183,6 @@ public class CompilerPlugin implements Plugin {
       List<Path> processorModulePath,
       Optional<Integer> release, Path destination, String pass) throws IOException {
     
-    Optional<List<Path>> modulePath = modulePathOrDependencyPath(compiler.modulePath(),
-        compiler.moduleDependencyPath(), additionalSourcePath);
-    
-    var dependencyFinder = ModuleFinder.compose(
-        modulePath
-            .stream()
-            .flatMap(List::stream)
-            .map(ModuleFinder::of)
-            .toArray(ModuleFinder[]::new));
     var rootSourceNames = moduleFinder.findAll().stream()
             .map(ref -> ref.descriptor().name())
             .collect(toUnmodifiableList());
@@ -203,6 +191,14 @@ public class CompilerPlugin implements Plugin {
       return 1; //FIXME
     }
     
+    var modulePath = modulePathOrDependencyPath(compiler.modulePath(),
+        compiler.moduleDependencyPath(), additionalSourcePath);
+    var dependencyFinder = ModuleFinder.compose(
+        modulePath
+            .stream()
+            .flatMap(List::stream)
+            .map(ModuleFinder::of)
+            .toArray(ModuleFinder[]::new));
     var systemFinder = ModuleHelper.systemModulesFinder();
     
     log.debug(moduleFinder, finder -> pass + " modules " + finder.findAll().stream().map(ref -> ref.descriptor().name()).sorted().collect(joining(", ")));
@@ -258,8 +254,8 @@ public class CompilerPlugin implements Plugin {
       }
     } else {
       // compatibility mode, do a topological sort first, and compile modules one by one
-      modulePath.ifPresent(paths -> javac.classPath(paths.stream().flatMap(path -> asClassPath(path)).collect(toUnmodifiableList())));
-      Optional.of(processorModulePath).filter(not(List::isEmpty)).ifPresent(paths -> javac.processorPath(paths.stream().flatMap(path -> asClassPath(path)).collect(toUnmodifiableList())));
+      modulePath.ifPresent(paths -> javac.classPath(paths.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList())));
+      Optional.of(processorModulePath).filter(not(List::isEmpty)).ifPresent(paths -> javac.processorPath(paths.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList())));
       
       var moduleNames = ModuleHelper.topologicalSort(moduleFinder, rootSourceNames);
       for(var moduleName: moduleNames) {
@@ -336,7 +332,7 @@ public class CompilerPlugin implements Plugin {
   
   private static List<Path> findSourcePathOfModules(List<Path> moduleSourcePath, List<String> moduleNames) {
     return moduleSourcePath.stream()
-        .flatMap(sourcePath -> moduleNames.stream().map(moduleName -> sourcePath.resolve(moduleName)))
+        .flatMap(sourcePath -> moduleNames.stream().map(sourcePath::resolve))
         .collect(toUnmodifiableList());
   }
   
@@ -355,11 +351,9 @@ public class CompilerPlugin implements Plugin {
     return javacTool.run(System.out, System.err, arguments);
   }
   
-  private static int merge(ModuleFinder moduleSourceFinder, ModuleFinder moduleTestFinder,
+  private static void merge(ModuleFinder moduleSourceFinder, ModuleFinder moduleTestFinder,
                            Path moduleMergedTestPath) throws IOException {
     Files.createDirectories(moduleMergedTestPath);
-    
-    
     
     for(var testRef: moduleTestFinder.findAll()) {
       var moduleName = testRef.descriptor().name();
@@ -394,6 +388,5 @@ public class CompilerPlugin implements Plugin {
             copy(srcPath, dstPath);
           });
     }
-    return 0;
   }
 }
