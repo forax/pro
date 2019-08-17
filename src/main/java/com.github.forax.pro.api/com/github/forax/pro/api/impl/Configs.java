@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 import com.github.forax.pro.api.TypeCheckedConfig;
 
-public class Configs {
+public final class Configs {
   private Configs() {
     throw new AssertionError();
   }
@@ -215,6 +215,7 @@ public class Configs {
     <T> Optional<T> get(String key, Class<T> type);
   }
   
+  @FunctionalInterface
   private interface Eval {
     Object eval(EvalContext context);
   
@@ -326,25 +327,18 @@ public class Configs {
               default:
               }
             } else {
-              try {
-
-                var parameterCount = method.getParameterCount();
-                if (parameterCount == 0) {
-                  return getterMap.get(name).invokeExact(context, id, map, method.getReturnType(), proxyReadOnly, proxyFrozen);
-                }
-                if (parameterCount == 1) {
-                  if (proxyReadOnly) {
-                    throw readOnly(proxyClass, method.getName());
-                  }
-                  var value = method.isVarArgs()? List.of((Object[])args[0]): args[0];
-                  setterMap.get(name).invokeExact(map, value);
-                  return proxy; // acts as a builder;
-                }
-
-              } catch(RuntimeException e) {
-                e.printStackTrace();
-                throw e;
-              }
+            	var parameterCount = method.getParameterCount();
+            	if (parameterCount == 0) {
+            		return getterMap.get(name).invokeExact(context, id, map, method.getReturnType(), proxyReadOnly, proxyFrozen);
+            	}
+            	if (parameterCount == 1) {
+            		if (proxyReadOnly) {
+            			throw readOnly(proxyClass, method.getName());
+            		}
+            		var value = method.isVarArgs()? List.of((Object[])args[0]): args[0];
+            		setterMap.get(name).invokeExact(map, value);
+            		return proxy; // acts as a builder;
+            	}
             }
           }
           throw new IllegalStateException("invalid method " + method + " on " + declaringClass.getName());
