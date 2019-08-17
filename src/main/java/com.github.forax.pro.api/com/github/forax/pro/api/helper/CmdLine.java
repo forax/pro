@@ -6,15 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public final class CmdLine {
-  private final ArrayList<String> arguments;
-  
-  private CmdLine(ArrayList<String> arguments) {
-    this.arguments = arguments;
-  }
-  
-  public CmdLine() {
-    this(new ArrayList<>());
-  }
+  private final ArrayList<String> arguments = new ArrayList<>();
   
   public CmdLine add(Object value) {
     arguments.add(value.toString());  // implicit nullcheck
