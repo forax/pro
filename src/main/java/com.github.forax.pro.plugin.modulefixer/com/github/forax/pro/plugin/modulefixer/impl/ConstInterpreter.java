@@ -53,7 +53,7 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
     static final ConstValue ONE_SLOT = new ConstValue("", 1);
     static final ConstValue TWO_SLOT = new ConstValue("", 2);
     
-    static ConstValue slot(int size) { return size == 1? ONE_SLOT: TWO_SLOT; }
+    static ConstValue slotForSize(int size) { return size == 1? ONE_SLOT: TWO_SLOT; }
     static ConstValue string(String constString) { return new ConstValue(constString, 1); }
     
     final String constString;
@@ -83,7 +83,7 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
     if (type == Type.VOID_TYPE) {
       return null;
     }
-    return type == null? ConstValue.ONE_SLOT:  ConstValue.slot(type.getSize());
+    return type == null? ConstValue.ONE_SLOT:  ConstValue.slotForSize(type.getSize());
   }
 
   @Override
@@ -101,7 +101,7 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
       }
       return constant instanceof Long || constant instanceof Double ? ConstValue.TWO_SLOT: ConstValue.ONE_SLOT;
     case GETSTATIC:
-      return ConstValue.slot(Type.getType(((FieldInsnNode) insn).desc).getSize());
+      return ConstValue.slotForSize(Type.getType(((FieldInsnNode) insn).desc).getSize());
     default:
       return ConstValue.ONE_SLOT;
     }
@@ -125,7 +125,7 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
     case D2L:
       return ConstValue.TWO_SLOT;
     case GETFIELD:
-      return ConstValue.slot(Type.getType(((FieldInsnNode) insn).desc).getSize());
+      return ConstValue.slotForSize(Type.getType(((FieldInsnNode) insn).desc).getSize());
     default:
       return ConstValue.ONE_SLOT;
     }
@@ -171,7 +171,7 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
     }
     var desc = (opcode == INVOKEDYNAMIC) ? ((InvokeDynamicInsnNode) insn).desc
         : ((MethodInsnNode) insn).desc;
-    return ConstValue.slot(Type.getReturnType(desc).getSize());
+    return ConstValue.slotForSize(Type.getReturnType(desc).getSize());
   }
 
   @Override
@@ -182,7 +182,7 @@ public final class ConstInterpreter extends Interpreter<ConstInterpreter.ConstVa
   @Override
   public ConstValue merge(ConstValue d, ConstValue w) {
     if (d.constString == "" || w.constString == "") {
-      return ConstValue.slot(Math.min(d.slot, w.slot));
+      return ConstValue.slotForSize(Math.min(d.slot, w.slot));
     }
     if (d.constString.equals(w.constString)) {
       return d;
