@@ -33,19 +33,19 @@ matrix:
       os: osx
       jdk: openjdk-ea
 
-    - env: DEPLOY='linux-early-access-loom' TAG="untagged-a9238b952918e5adc484" NAME="jdk-14-loom"
+    - env: DEPLOY='linux-early-access-loom' TAG="untagged-f846c0ac070405356946" NAME="jdk-14-loom"
 
-    - env: DEPLOY='linux-early-access-record' TAG="untagged-a9238b952918e5adc484" NAME="jdk-14-record"
+    - env: DEPLOY='linux-early-access-record' TAG="untagged-f846c0ac070405356946" NAME="jdk-14-record"
       
-    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-a9238b952918e5adc484" NAME="jdk-14-lworld"
+    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-f846c0ac070405356946" NAME="jdk-14-lworld"
       
-    - env: DEPLOY='macos-early-access-loom' TAG="untagged-a9238b952918e5adc484" NAME="jdk-14-loom"
+    - env: DEPLOY='macos-early-access-loom' TAG="untagged-f846c0ac070405356946" NAME="jdk-14-loom"
       os: osx
 
-    - env: DEPLOY='macos-early-access-record' TAG="untagged-a9238b952918e5adc484" NAME="jdk-14-record"
+    - env: DEPLOY='macos-early-access-record' TAG="untagged-f846c0ac070405356946" NAME="jdk-14-record"
       os: osx
       
-    - env: DEPLOY='macos-early-access-lworld' TAG="untagged-a9238b952918e5adc484" NAME="jdk-14-lworld"
+    - env: DEPLOY='macos-early-access-lworld' TAG="untagged-f846c0ac070405356946" NAME="jdk-14-lworld"
       os: osx
 
 #  allow_failures:
