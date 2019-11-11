@@ -2,7 +2,7 @@ environment:
   JAVA_HOME: C:\projects\pro\zulu11.35.15-ca-jdk11.0.5-win_x64
 
 install:
-  - ps: (new-object net.webclient).DownloadFile('https://cdn.azul.com/zulu/bin/zulu11.35.15-ca-jdk11.0.5-win_x64.zip', 'C:\projects\pro\openjdk-11.zip')
+  - ps: (new-object net.webclient).DownloadFile('https://cdn.azul.com/zulu/bin/zulu11.35.15-ca-jdk11.0.5-win_x64.zip', 'C:\projects\pro\zulu11.35.15-ca-jdk11.0.5-win_x64.zip')
   - ps: Expand-Archive -Path C:\projects\pro\zulu11.35.15-ca-jdk11.0.5-win_x64.zip -DestinationPath C:\projects\pro
   - cmd: echo "%JAVA_HOME%"
 
