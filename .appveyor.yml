@@ -1,9 +1,9 @@
 environment:
-  JAVA_HOME: C:\projects\pro\jdk-11.0.2
+  JAVA_HOME: C:\projects\pro\zulu11.35.15-ca-jdk11.0.5-win_x64
 
 install:
-  - ps: (new-object net.webclient).DownloadFile('https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_windows-x64_bin.zip', 'C:\projects\pro\openjdk-11.zip')
-  - ps: Expand-Archive -Path C:\projects\pro\openjdk-11.zip -DestinationPath C:\projects\pro
+  - ps: (new-object net.webclient).DownloadFile('https://cdn.azul.com/zulu/bin/zulu11.35.15-ca-jdk11.0.5-win_x64.zip', 'C:\projects\pro\openjdk-11.zip')
+  - ps: Expand-Archive -Path C:\projects\pro\zulu11.35.15-ca-jdk11.0.5-win_x64.zip -DestinationPath C:\projects\pro
   - cmd: echo "%JAVA_HOME%"
 
 build_script:
