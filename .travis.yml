@@ -58,6 +58,7 @@ before_install:
   - if [[ -n $TAG ]]; then export PATH=$JAVA_HOME/bin:$PATH   ; fi
 
 install:
+  - echo $JAVA_HOME
   - java --version
 
 script:
