@@ -56,7 +56,7 @@ before_install:
   - if [[ -n $TAG ]]; then tar zxvf $NAME-$TRAVIS_OS_NAME.tar.gz   ; fi
   - if [[ -n $TAG ]]; then export JAVA_HOME=$NAME   ; fi
   - if [[ -n $TAG ]]; then export PATH=$JAVA_HOME/bin:$PATH   ; fi
-  - if [[ -n JAVA_HOME ]]; then export JAVA_HOME="/Library/Java/JavaVirtualMachines/openjdk-13.0.1.jdk/Contents/Home"  ; fi
+  - if [[ ! -n JAVA_HOME ]]; then export JAVA_HOME="/Library/Java/JavaVirtualMachines/openjdk-13.0.1.jdk/Contents/Home"  ; fi
   
 install:
   - echo $JAVA_HOME
