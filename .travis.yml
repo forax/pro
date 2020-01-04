@@ -57,7 +57,8 @@ before_install:
   - if [[ -n $TAG ]]; then export JAVA_HOME=$NAME   ; fi
   - if [[ -n $TAG ]]; then export PATH=$JAVA_HOME/bin:$PATH   ; fi
   - if [[ -n JAVA_HOME ]]; then export JAVA=`which java` ; fi
-  - if [[ -n JAVA_HOME ]]; then export JAVA_HOME=`dirname $JAVA`  ; fi
+  - if [[ -n JAVA_HOME ]]; then export JAVA_BIN=`dirname $JAVA`  ; fi
+  - if [[ -n JAVA_HOME ]]; then export JAVA_HOME=`dirname $JAVA`_BIN  ; fi
   
 install:
   - echo $JAVA_HOME
