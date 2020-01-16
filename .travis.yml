@@ -65,7 +65,7 @@ install:
 script:
   - chmod u+x ./build.sh
   - ./build.sh
-  - if [ "$NAME" == "jdk-15-loom" ]; then sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:UseAVX=2\""/g ./target/pro/bin/pro  ; fi
+#  - if [ "$NAME" == "jdk-15-loom" ]; then sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:UseAVX=2\""/g ./target/pro/bin/pro  ; fi
   - ./target/pro/bin/pro version
   - ./target/pro/bin/pro build test.pro
   - cat /home/travis/build/forax/pro/hs_err_pid*
