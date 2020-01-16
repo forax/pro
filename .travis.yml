@@ -33,13 +33,13 @@ matrix:
       os: osx
       jdk: openjdk-ea
 
-    - env: DEPLOY='linux-early-access-loom' TAG="untagged-e9ca9136c78b5e394298" NAME="jdk-15-loom"
+    - env: DEPLOY='linux-early-access-loom' TAG="untagged-9ea38d25d845cef47f03" NAME="jdk-15-loom"
 
     - env: DEPLOY='linux-early-access-record' TAG="untagged-e9ca9136c78b5e394298" NAME="jdk-15-sealed"
       
     - env: DEPLOY='linux-early-access-lworld' TAG="untagged-5d606538faacb96f752c" NAME="jdk-14-lworld"
       
-    - env: DEPLOY='macos-early-access-loom' TAG="untagged-e9ca9136c78b5e394298" NAME="jdk-15-loom"
+    - env: DEPLOY='macos-early-access-loom' TAG="untagged-9ea38d25d845cef47f03" NAME="jdk-15-loom"
       os: osx
 
     - env: DEPLOY='macos-early-access-record' TAG="untagged-e9ca9136c78b5e394298" NAME="jdk-15-sealed"
