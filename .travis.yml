@@ -67,7 +67,6 @@ script:
   - ./build.sh
   - ./target/pro/bin/pro version
   - ./target/pro/bin/pro build test.pro
-  - cat /home/travis/build/forax/pro/hs_err_pid*
 
 before_deploy:
   - cd target
