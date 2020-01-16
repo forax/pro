@@ -39,7 +39,7 @@ matrix:
       
     - env: DEPLOY='linux-early-access-lworld' TAG="untagged-5d606538faacb96f752c" NAME="jdk-14-lworld"
       
-    - env: DEPLOY='macos-early-access-loom' TAG="untagged-9ea38d25d845cef47f03" NAME="jdk-14-loom"
+    - env: DEPLOY='macos-early-access-loom' TAG="untagged-679d090f06eca5336ba2" NAME="jdk-15-loom"
       os: osx
 
     - env: DEPLOY='macos-early-access-record' TAG="untagged-e9ca9136c78b5e394298" NAME="jdk-15-sealed"
@@ -65,10 +65,9 @@ install:
 script:
   - chmod u+x ./build.sh
   - ./build.sh
-#  - if [ "$NAME" == "jdk-15-loom" ]; then sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:UseAVX=2\""/g ./target/pro/bin/pro  ; fi
+  - if [ "$NAME" == "jdk-15-loom" ]; then sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:UseAVX=2\""/g ./target/pro/bin/pro  ; fi
   - ./target/pro/bin/pro version
   - ./target/pro/bin/pro build test.pro
-  - cat /home/travis/build/forax/pro/hs_err_pid*
 
 before_deploy:
   - cd target
