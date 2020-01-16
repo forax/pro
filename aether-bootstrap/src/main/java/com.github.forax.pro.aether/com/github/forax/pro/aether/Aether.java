@@ -65,7 +65,7 @@ public class Aether {
 
     // central repository
     var central = new RemoteRepository.Builder("central", "default",
-        "http://central.maven.org/maven2/").build();
+        "https://central.maven.org/maven2/").build();
     
     // remote repositories
     var remotes = Stream.concat(

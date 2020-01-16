@@ -32,15 +32,15 @@ resolver.
       
       // Aether internal dependencies
       "org.apache.httpcomponents.httpclient=org.apache.httpcomponents:httpclient:4.5.6",
-      "org.slf4j.api=org.slf4j:slf4j-api:1.8.0-beta2",
+      "org.slf4j.api=org.slf4j:slf4j-api:1.7.30",
       "ch.qos.logback.classic=ch.qos.logback:logback-classic:1.3.0-alpha4",
       "ch.qos.logback.core=ch.qos.logback:logback-core:1.3.0-alpha4",
       "java.activation=javax.activation:activation:1.1.1",
       "java.mail=com.sun.mail:javax.mail:1.6.1",
-      "org.slf4j.simple=org.slf4j:slf4j-simple:1.8.0-beta2",
+      "org.slf4j.simple=org.slf4j:slf4j-simple:1.7.30",
       "org.apache.maven.wagon.provider.api=org.apache.maven.wagon:wagon-provider-api:3.2.0",
       "org.apache.commons.codec=commons-codec:commons-codec:1.11",
-      "org.apache.commons.logging.impl=org.slf4j:jcl-over-slf4j:1.8.0-beta2",
+      "org.apache.commons.logging.impl=org.slf4j:jcl-over-slf4j:1.7.30",
       "org.apache.httpcomponents.httpcore=org.apache.httpcomponents:httpcore:4.4.10",
       
       
