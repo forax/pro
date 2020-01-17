@@ -63,9 +63,9 @@ install:
   - java --version
 
 script:
+  - export JAVA_TOOL_OPTIONS="-XX:+UnlockDiagnosticVMOptions -XX:DisableIntrinsic=_bigIntegerLeftShiftWorker,_bigIntegerRightShiftWorke -XX:CompileCommand=dontinline,java.math.BigInteger::shiftLeft -XX:CompileCommand=dontinline,java.math.BigInteger::shiftRight"
   - chmod u+x ./build.sh
   - ./build.sh
-  - if [ "$NAME" == "jdk-15-loom" ]; then sed -i.bak s/JLINK_VM_OPTIONS=/JLINK_VM_OPTIONS="\"-XX:UseAVX=2\""/g ./target/pro/bin/pro  ; fi
   - ./target/pro/bin/pro version
   - ./target/pro/bin/pro build test.pro
 
