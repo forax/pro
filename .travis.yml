@@ -49,7 +49,7 @@ matrix:
       os: osx
 
 #  allow_failures:
-#    - env: NAME="jdk-13-record"
+#     - env: NAME="jdk-13-record"
 
 before_install:
   - if [[ -n $TAG ]]; then wget https://github.com/forax/java-next/releases/download/$TAG/$NAME-$TRAVIS_OS_NAME.tar.gz   ; fi
