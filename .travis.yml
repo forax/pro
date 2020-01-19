@@ -7,9 +7,6 @@ matrix:
 
     - env: DEPLOY='linux'
       jdk: openjdk11
-      
-    - env: DEPLOY='linux-13'
-      jdk: openjdk13
 
     - env: DEPLOY='linux-14'
       jdk: openjdk14
@@ -21,10 +18,6 @@ matrix:
       os: osx
       jdk: openjdk11
       
-    - env: DEPLOY='macos-13'
-      os: osx
-      jdk: openjdk13
-      
     - env: DEPLOY='macos-14'
       os: osx
       jdk: openjdk14
@@ -33,19 +26,24 @@ matrix:
       os: osx
       jdk: openjdk-ea
 
-    - env: DEPLOY='linux-early-access-loom' TAG="untagged-679d090f06eca5336ba2" NAME="jdk-15-loom"
+    - env: DEPLOY='linux-early-access-loom' TAG="untagged-caf6d88ff2ef1e512e8d" NAME="jdk-15-loom"
 
-    - env: DEPLOY='linux-early-access-record' TAG="untagged-e9ca9136c78b5e394298" NAME="jdk-15-sealed"
-      
     - env: DEPLOY='linux-early-access-lworld' TAG="untagged-5d606538faacb96f752c" NAME="jdk-14-lworld"
+
+    - env: DEPLOY='linux-early-access-record' TAG="untagged-caf6d88ff2ef1e512e8d" NAME="jdk-15-sealed"
       
-    - env: DEPLOY='macos-early-access-loom' TAG="untagged-679d090f06eca5336ba2" NAME="jdk-15-loom"
+    - env: DEPLOY='linux-early-access-foreign' TAG="untagged-caf6d88ff2ef1e512e8d" NAME="jdk-15-foreign"
+      
+    - env: DEPLOY='macos-early-access-loom' TAG="untagged-caf6d88ff2ef1e512e8d" NAME="jdk-15-loom"
       os: osx
 
-    - env: DEPLOY='macos-early-access-record' TAG="untagged-e9ca9136c78b5e394298" NAME="jdk-15-sealed"
-      os: osx
-      
     - env: DEPLOY='macos-early-access-lworld' TAG="untagged-5d606538faacb96f752c" NAME="jdk-14-lworld"
+      os: osx
+
+    - env: DEPLOY='macos-early-access-record' TAG="untagged-caf6d88ff2ef1e512e8d" NAME="jdk-15-sealed"
+      os: osx
+
+    - env: DEPLOY='macos-early-access-foreign' TAG="untagged-caf6d88ff2ef1e512e8d" NAME="jdk-15-foreign"
       os: osx
 
 #  allow_failures:
