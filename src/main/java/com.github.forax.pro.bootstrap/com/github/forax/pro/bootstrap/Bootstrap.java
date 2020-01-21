@@ -43,7 +43,6 @@ public class Bootstrap {
     set("packager.modules", list(
         "com.github.forax.pro@" + version,
         "com.github.forax.pro.aether@" + version,
-        "com.github.forax.pro.ather.fakeguava@" + version,
         "com.github.forax.pro.api@" + version,
         "com.github.forax.pro.bootstrap@" + version,
         "com.github.forax.pro.builder@" + version,
