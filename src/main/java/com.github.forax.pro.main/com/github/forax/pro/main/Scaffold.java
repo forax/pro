@@ -25,6 +25,14 @@ class Scaffold {
         .filter(name -> !name.isEmpty())
         .orElse("com.acme.foo.bar");
     
+    var junitPlatformVersion = "1.6.0";
+    var junitJupiterVersion = "5.6.0";
+    var opentest4jVersion = "1.2.0";
+    var apiGuardianVersion = "1.1.0";
+    
+    var jmhVersion = "1.22";
+    var commonMath3Version = "3.6.1";
+    var joptSimpleVersion = "5.0.4";
     var content =
         "import static com.github.forax.pro.Pro.*;\n" + 
         "import static com.github.forax.pro.builder.Builders.*;\n" + 
@@ -33,16 +41,16 @@ class Scaffold {
         "    checkForUpdate(true).\n" +
         "    dependencies(\n" + 
         "        // JUnit 5\n" + 
-        "        \"org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.5.1\",\n" + 
-        "        \"org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.5.1\",\n" + 
-        "        \"org.apiguardian.api=org.apiguardian:apiguardian-api:1.0.0\",\n" + 
-        "        \"org.opentest4j=org.opentest4j:opentest4j:1.2.0\" /*,*/\n" +
+        "        \"org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:" + junitJupiterVersion + "\",\n" + 
+        "        \"org.junit.platform.commons=org.junit.platform:junit-platform-commons:" + junitPlatformVersion + "\",\n" + 
+        "        \"org.apiguardian.api=org.apiguardian:apiguardian-api:" + apiGuardianVersion + "\",\n" + 
+        "        \"org.opentest4j=org.opentest4j:opentest4j:" + opentest4jVersion + "\" /*,*/\n" +
         "\n" +
         "//        // JMH\n" + 
-        "//        \"org.openjdk.jmh=org.openjdk.jmh:jmh-core:1.21\",\n" + 
-        "//        \"org.apache.commons.math3=org.apache.commons:commons-math3:3.6.1\",\n" + 
-        "//        \"net.sf.jopt-simple=net.sf.jopt-simple:jopt-simple:5.0.4\",\n" + 
-        "//        \"org.openjdk.jmh.generator=org.openjdk.jmh:jmh-generator-annprocess:1.21\"\n" +
+        "//        \"org.openjdk.jmh=org.openjdk.jmh:jmh-core:" + jmhVersion + "\",\n" + 
+        "//        \"org.apache.commons.math3=org.apache.commons:commons-math3:" + commonMath3Version + "\",\n" + 
+        "//        \"net.sf.jopt-simple=net.sf.jopt-simple:jopt-simple:" + joptSimpleVersion + "\",\n" + 
+        "//        \"org.openjdk.jmh.generator=org.openjdk.jmh:jmh-generator-annprocess:" + jmhVersion + "\"\n" +
         "    )\n" + 
         "\n" + 
         "compiler.\n" + 
