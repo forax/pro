@@ -125,7 +125,7 @@ public class Bootstrap {
       ));
     });
     compileAndPackagePlugin("perfer", list("resolver", "modulefixer", "compiler", "packager"), () -> {
-      var jmhVersion = "1.21";
+      var jmhVersion = "1.22";
       var commonMath3Version = "3.6.1";
       var joptSimpleVersion = "5.0.4";
       set("resolver.dependencies", list(
@@ -177,7 +177,7 @@ public class Bootstrap {
     //com.github.forax.pro.bootstrap.genbuilder.GenBuilder.generate();
     
     // update module name to maven coordinates list
-    //updateModuleNameList();
+    // updateModuleNameList();
     
     Vanity.postOperations();
   }
