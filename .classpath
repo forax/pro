@@ -44,10 +44,10 @@
 	<classpathentry kind="lib" path="plugins/tester/deps/org.junit.platform.reporting.jar"/>
 	<classpathentry kind="lib" path="plugins/tester/deps/org.opentest4j.jar"/>
 	<classpathentry kind="lib" path="deps/com.github.forax.pro.aether.jar"/>
-	<classpathentry kind="lib" path="deps/asm-7.2-beta.jar"/>
-	<classpathentry kind="lib" path="deps/asm-analysis-7.2-beta.jar"/>
-	<classpathentry kind="lib" path="deps/asm-commons-7.2-beta.jar"/>
-	<classpathentry kind="lib" path="deps/asm-tree-7.2-beta.jar"/>
+	<classpathentry kind="lib" path="deps/asm-7.3.1.jar"/>
+	<classpathentry kind="lib" path="deps/asm-analysis-7.3.1.jar"/>
+	<classpathentry kind="lib" path="deps/asm-commons-7.3.1.jar"/>
+	<classpathentry kind="lib" path="deps/asm-tree-7.3.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
 		<attributes>
 			<attribute name="module" value="true"/>
