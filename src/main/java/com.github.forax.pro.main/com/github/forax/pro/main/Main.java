@@ -49,8 +49,7 @@ public class Main {
   enum InputFile {
     ARGUMENT(args -> (args.size() >= 1)? Optional.of(new Configuration(Path.of(args.get(0)), Main::shift)): Optional.empty()),
     DEFAULT_JAVA(args -> Optional.of(new Configuration(Path.of("build.java"), identity()))),
-    DEFAULT_PRO(args -> Optional.of(new Configuration(Path.of("build.pro"), identity()))),
-    DEFAULT_JSON(args -> Optional.of(new Configuration(Path.of("build.json"), identity())))
+    DEFAULT_PRO(args -> Optional.of(new Configuration(Path.of("build.pro"), identity())))
     ;
     
     private final Function<List<String>, Optional<Configuration>> mapper;

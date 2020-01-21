@@ -1,6 +1,5 @@
 module com.github.forax.pro.main {
   requires java.compiler;
-  requires org.json;
   requires com.github.forax.pro;
   requires com.github.forax.pro.aether;
   requires com.github.forax.pro.builder;
@@ -15,6 +14,5 @@ module com.github.forax.pro.main {
   
   provides com.github.forax.pro.main.runner.ConfigRunner
     with com.github.forax.pro.main.JavaConfigRunner,
-         com.github.forax.pro.main.JSONConfigRunner,
          com.github.forax.pro.main.JShellConfigRunner;
 }
