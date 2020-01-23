@@ -21,6 +21,7 @@ public class JShellConfigRunner implements ConfigRunner {
     var args =
       Stream.of(
         Stream.of("-R-XX:+EnableValhalla").filter(__ -> System.getProperty("valhalla.enableValhalla") != null),
+        Stream.of("-R--enable-preview"),
         Stream.of("-R-Dpro.exitOnError=false"),
         propertySeq.stream().map(entry -> "-D" + entry.getKey() + '=' + entry.getValue()),
         Stream.of(arguments).filter(a -> !a.isEmpty()).map(a -> "-R-Dpro.arguments=" + String.join(",", a)),
