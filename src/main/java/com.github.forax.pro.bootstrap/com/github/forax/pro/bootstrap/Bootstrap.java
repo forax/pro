@@ -124,7 +124,7 @@ public class Bootstrap {
       ));
     });
     compileAndPackagePlugin("perfer", list("resolver", "modulefixer", "compiler", "packager"), () -> {
-      var jmhVersion = "1.22";
+      var jmhVersion = "1.23";
       var commonMath3Version = "3.6.1";
       var joptSimpleVersion = "5.0.4";
       set("resolver.dependencies", list(
