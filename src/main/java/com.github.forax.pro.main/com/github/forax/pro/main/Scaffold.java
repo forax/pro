@@ -30,7 +30,7 @@ class Scaffold {
     var opentest4jVersion = "1.2.0";
     var apiGuardianVersion = "1.1.0";
     
-    var jmhVersion = "1.22";
+    var jmhVersion = "1.23";
     var commonMath3Version = "3.6.1";
     var joptSimpleVersion = "5.0.4";
     var content =
