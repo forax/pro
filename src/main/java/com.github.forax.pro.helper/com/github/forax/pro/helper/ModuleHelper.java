@@ -4,8 +4,10 @@ import static com.github.forax.pro.helper.util.Unchecked.getUnchecked;
 import static com.github.forax.pro.helper.util.Unchecked.suppress;
 import static java.nio.file.Files.list;
 import static java.nio.file.Files.walk;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.objectweb.asm.Opcodes.ACC_MANDATED;
@@ -193,6 +195,48 @@ public class ModuleHelper {
     return descriptor;
   }
 
+  /**
+   * Find a module from a folder and a path inside the module is.
+   * @param moduleFolder the root of the module
+   * @param local a local path in which the module is stored
+   * @return a reference to a module (or not)
+   */
+  public static Optional<ModuleReference> findSourceModuleReference(Path moduleFolder, Path local) {
+    return Optional.of(moduleFolder)
+        .filter(Files::isDirectory)
+        .flatMap(path -> Optional.of(path.resolve(local).normalize().resolve("module-info.java"))
+            .filter(Files::exists)
+            .flatMap(ModuleHelper::sourceModuleDescriptor)
+            .map(descriptor -> moduleReference(descriptor, path.toUri(), null)));
+  }
+
+  /**
+   * Creates a module finder from a set of modules.
+   * @param modules a set of modules.
+   * @return a module finder that will resolved those modules.
+   */
+  public static ModuleFinder moduleFinder(Set<ModuleReference> modules) {
+    var moduleMap = modules.stream().collect(Collectors.toMap(module -> module.descriptor().name(), m -> m));
+    return new ModuleFinder() {
+      @Override
+      public Set<ModuleReference> findAll() {
+        return modules;
+      }
+
+      @Override
+      public Optional<ModuleReference> find(String name) {
+        return Optional.ofNullable(moduleMap.get(name));
+      }
+
+      @Override
+      public String toString() {
+        return moduleMap.toString();
+      }
+    };
+  }
+
+
+  @Deprecated
   public static ModuleFinder sourceModuleFinder(Path directory) {
     // IOExceptions are suppressed
     return new ModuleFinder() {
@@ -216,15 +260,22 @@ public class ModuleHelper {
     };
   }
 
+  @Deprecated
   static ModuleReference moduleReference(ModuleDescriptor descriptor, URI uri, ModuleReader moduleReader) {
     return new ModuleReference(descriptor, uri) {
       @Override
       public ModuleReader open() {
         return moduleReader;
       }
+
+      @Override
+      public String toString() {
+        return descriptor.name() + " at " + uri;
+      }
     };
   }
 
+  @Deprecated
   public static ModuleFinder sourceModuleFinders(List<Path> directories) {
     return ModuleFinder.compose(
         directories.stream()
@@ -310,28 +361,26 @@ public class ModuleHelper {
     }
   }
 
-  public static List<String> topologicalSort(ModuleFinder finder, List<String> rootNames) {
-    var order = new ArrayList<String>();
-    var visited = new HashSet<String>();
-    for(var root: rootNames) {
-      deepFirst(root, finder, visited, order);
+  public static Set<ModuleReference> topologicalSort(Collection<ModuleReference> roots) {
+    var order = new LinkedHashSet<ModuleReference>();
+    var map = roots.stream().collect(toMap(ref -> ref.descriptor().name(), identity()));
+    for(var root: List.copyOf(map.keySet())) {
+      deepFirst(root, map, order);
     }
     return order;
   }
   
-  private static void deepFirst(String name, ModuleFinder finder, HashSet<String> visited, ArrayList<String> order) {
-    if (visited.contains(name)) {
+  private static void deepFirst(String name, Map<String, ModuleReference> map, LinkedHashSet<ModuleReference> order) {
+    var moduleRef = map.get(name);
+    if (moduleRef == null) {
       return;
     }
-    var refOpt = finder.find(name);
-    if (!refOpt.isPresent()) {
-      return;
+    map.remove(name);  // visited
+
+    for(var requires: moduleRef.descriptor().requires()) {
+      deepFirst(requires.name(), map, order);
     }
-    visited.add(name);
-    for(Requires requires: refOpt.orElseThrow().descriptor().requires()) {
-      deepFirst(requires.name(), finder, visited, order);
-    }
-    order.add(name);
+    order.add(moduleRef);
   }
   
 
@@ -445,7 +494,7 @@ public class ModuleHelper {
           .$("  exports %s;",  ModuleDescriptor::exports,  Exports::source,   "to %s", Exports::targets)
           .$("  opens %s;",    ModuleDescriptor::opens,    Opens::source,     "to %s", Opens::targets)
           .$("")
-          .$("  uses %s;",     ModuleDescriptor::uses,     Function.identity())
+          .$("  uses %s;",     ModuleDescriptor::uses,     identity())
           .$("  provides %s;", ModuleDescriptor::provides, Provides::service, "with %s", Provides::providers)
           .$("}\n")
           .join();

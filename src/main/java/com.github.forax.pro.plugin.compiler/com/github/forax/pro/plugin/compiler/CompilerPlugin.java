@@ -9,12 +9,11 @@ import static com.github.forax.pro.api.helper.OptionAction.toPrettyString;
 import static com.github.forax.pro.helper.FileHelper.deleteAllFiles;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEquals;
-import static com.github.forax.pro.helper.FileHelper.pathFromFilesThatExist;
 import static com.github.forax.pro.helper.FileHelper.walkAndFindCounterpart;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
 import static com.github.forax.pro.helper.ModuleHelper.mergeModuleDescriptor;
 import static com.github.forax.pro.helper.ModuleHelper.moduleDescriptorToSource;
-import static com.github.forax.pro.helper.ModuleHelper.sourceModuleFinders;
+import static com.github.forax.pro.helper.ModuleSourceLayout.JDK_LAYOUT;
 import static com.github.forax.pro.helper.util.Unchecked.getUnchecked;
 import static java.nio.file.Files.copy;
 import static java.nio.file.Files.exists;
@@ -22,21 +21,11 @@ import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.walk;
 import static java.nio.file.Files.write;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.util.function.Function.identity;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.module.ModuleFinder;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.spi.ToolProvider;
-import java.util.stream.Stream;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
@@ -49,7 +38,20 @@ import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
 import com.github.forax.pro.helper.ModuleHelper.ResolverListener;
-import com.github.forax.pro.helper.util.StableList;
+import com.github.forax.pro.helper.ModuleSourceLayout;
+import java.io.File;
+import java.io.IOException;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.spi.ToolProvider;
+import java.util.stream.Stream;
 
 public class CompilerPlugin implements Plugin {
   @Override
@@ -94,15 +96,7 @@ public class CompilerPlugin implements Plugin {
     compilerConf.processorModuleTestPath().forEach(registry::watch);
   }
   
-  static Optional<List<Path>> modulePathOrDependencyPath(Optional<List<Path>> modulePath, List<Path> moduleDependencyPath, List<Path> additionnalPath) {
-    return modulePath
-             .or(() -> Optional.of(
-                    StableList.from(moduleDependencyPath).appendAll(additionnalPath)))
-             .map(FileHelper::pathFromFilesThatExist)
-             .filter(not(List::isEmpty));
-  }
-  
-  enum JavacOption {
+  private enum JavacOption {
     RELEASE(actionMaybe("--release", Javac::release)),
     VERBOSE(exists("-verbose", Javac::verbose)),
     LINT(javac -> javac.lint().map(lint -> line -> line.add("-Xlint:" + lint))),
@@ -123,11 +117,31 @@ public class CompilerPlugin implements Plugin {
     
     final OptionAction<Javac> action;
     
-    private JavacOption(OptionAction<Javac> action) {
+    JavacOption(OptionAction<Javac> action) {
       this.action = action;
     }
   }
-  
+
+  private static List<Path> concat(List<Path> path1, Path path2) {
+    return Stream.concat(path1.stream(), Stream.of(path2)).filter(Files::exists).collect(toList());
+  }
+  private static List<Path> concat(List<Path> path1, List<Path> path2) {
+    return Stream.concat(path1.stream(), path2.stream()).filter(Files::exists).collect(toList());
+  }
+
+
+  private static List<Path> computeModulePath(Optional<List<Path>> modulePath, Supplier<List<Path>> defaultModulePath) {
+    return modulePath
+        .or(() -> Optional.of(defaultModulePath.get()))
+        .orElseGet(List::of)
+        .stream().filter(Files::exists)
+        .collect(toUnmodifiableList());
+  }
+
+  private static List<Path> expandPath(List<Path> paths) {
+    return paths.stream().flatMap(p -> FileHelper.expand(p).stream()).filter(Files::exists).collect(toUnmodifiableList());
+  }
+
   @Override
   public int execute(Config config) throws IOException {
     var log = Log.create(name(), config.getOrThrow("pro", ProConf.class).loglevel());
@@ -136,82 +150,113 @@ public class CompilerPlugin implements Plugin {
     var javacTool = ToolProvider.findFirst("javac")
         .orElseThrow(() -> new IllegalStateException("can not find javac"));
     var compiler = config.getOrThrow(name(), CompilerConf.class);
-    
-    var moduleSourceFinder = sourceModuleFinders(compiler.moduleSourcePath());
-    var errorCode = compile(log, javacTool, compiler,
-        compiler.moduleSourcePath(),
-        moduleSourceFinder,
-        List.of(),
-        compiler.moduleSourceResourcesPath(),
-        compiler.processorModuleSourcePath(),
-        compiler.sourceRelease(),
-        compiler.moduleExplodedSourcePath(),
-        "source:");
-    if (errorCode != 0) {
-      return errorCode;
-    }
-    var moduleTestPath = pathFromFilesThatExist(compiler.moduleTestPath());
-    if (moduleTestPath.isEmpty()) {
-      return 0;
-    }
-    
-    var moduleTestFinder = sourceModuleFinders(compiler.moduleTestPath());
-    if (moduleTestFinder.findAll().isEmpty()) {  // there is no test module-info defined
-      log.info(compiler.moduleTestPath(), testPath -> "test: can not find any test modules in " + testPath.stream().map(Path::toString).collect(joining(", ")));
-      return 0;
-    }
-    
-    var moduleMergedTestPath = compiler.moduleMergedTestPath();
-    deleteAllFiles(moduleMergedTestPath, false);
-    
-    merge(moduleSourceFinder, moduleTestFinder, moduleMergedTestPath);
-    
-    var moduleMergedTestFinder = ModuleHelper.sourceModuleFinder(compiler.moduleMergedTestPath());
-    return compile(log, javacTool, compiler,
-        List.of(moduleMergedTestPath),
-        moduleMergedTestFinder,
-        List.of(compiler.moduleExplodedSourcePath()),
-        StableList.<Path>of().appendAll(compiler.moduleSourceResourcesPath()).appendAll(compiler.moduleTestResourcesPath()),
-        compiler.processorModuleTestPath(),
-        compiler.testRelease().or(compiler::sourceRelease),
-        compiler.moduleExplodedTestPath(),
-        "test:");
-  }
 
-  private static int compile(Log log, ToolProvider javacTool, CompilerConf compiler,
-      List<Path> moduleSourcePath, ModuleFinder moduleFinder, List<Path> additionalSourcePath, List<Path> resourcesPath,
-      List<Path> processorModulePath,
-      Optional<Integer> release, Path destination, String pass) throws IOException {
-    
-    var rootSourceNames = moduleFinder.findAll().stream()
-            .map(ref -> ref.descriptor().name())
-            .collect(toUnmodifiableList());
-    if (rootSourceNames.isEmpty()) {
-      log.error(moduleSourcePath, sourcePath -> pass + " can not find any modules in " + sourcePath.stream().map(Path::toString).collect(joining(", ")));
+    // find layout
+    var sourceLayoutFactory = ModuleSourceLayout.Factory.of(ModuleSourceLayout::lookupForJdkLayout)
+        .or(ModuleSourceLayout::lookupForMavenLayout);
+    var layoutOpt = sourceLayoutFactory.createLayout(Path.of("."));
+    if (layoutOpt.isEmpty()) {
+      log.error(null, __ -> "no source layout found");
       return 1; //FIXME
     }
-    
-    var modulePath = modulePathOrDependencyPath(compiler.modulePath(),
-        compiler.moduleDependencyPath(), additionalSourcePath);
+    var layout = layoutOpt.orElseThrow();
+    log.verbose(layout, _layout -> layout + " detected");
+
+    // find source modules and source module finder
+    var sourceModuleRefs = ModuleHelper.topologicalSort(layout.findModuleRefs(compiler.moduleSourcePath()));
+    var moduleSourceFinder = ModuleHelper.moduleFinder(sourceModuleRefs);
+    log.verbose(moduleSourceFinder, finder -> "module source finder: " + finder);
+    if (!sourceModuleRefs.isEmpty()) {
+      // find module source path, processor source path, module path an resource path
+      var compilerModuleSourcePath = layout.toAllPath(compiler.moduleSourcePath());
+      var compilerProcessorModuleSourcePath = compiler.processorModuleSourcePath();
+      var compilerModuleSourceResourcePath = compiler.moduleSourceResourcesPath();
+      var compilerModulePath = computeModulePath(compiler.modulePath(), compiler::moduleDependencyPath);
+
+      log.verbose(compilerModuleSourcePath, path -> "compilerModuleSourcePath: " + path);
+      log.verbose(compilerProcessorModuleSourcePath,
+          path -> "compilerProcessorModuleSourcePath: " + path);
+      log.verbose(compilerModuleSourceResourcePath,
+          path -> "compilerModuleSourceResourcePath: " + path);
+      log.verbose(compilerModulePath, path -> "compilerModulePath: " + path);
+
+      var errorCode = compile(log, javacTool,
+          sourceModuleRefs,
+          moduleSourceFinder,
+          compiler.sourceRelease(),
+          compiler,
+          compilerModuleSourcePath,
+          compilerProcessorModuleSourcePath,
+          compilerModulePath,
+          compilerModuleSourceResourcePath,
+          layout,
+          compiler.moduleExplodedSourcePath(),
+          "source:");
+      if (errorCode != 0) {
+        return errorCode;
+      }
+    } else {
+      // no source
+      log.info(null, __ -> "no source found");
+    }
+
+    // find test modules and finder
+    var testModuleRefs = layout.findModuleRefs(compiler.moduleTestPath());
+    if (!testModuleRefs.isEmpty()) {
+      var compilerModuleMergedTestPath = compiler.moduleMergedTestPath();
+      var compilerProcessorModuleTestPath = concat(compiler.processorModuleSourcePath(), compiler.processorModuleTestPath());
+      var compilerModuleTestResourcePath = concat(compiler.moduleSourceResourcesPath(), compiler.moduleTestResourcesPath());
+      var compilerModulePath = computeModulePath(compiler.modulePath(),
+          () -> concat(compiler.moduleDependencyPath(), compiler.moduleExplodedSourcePath()));
+
+      log.verbose(compilerModuleMergedTestPath, path -> "compilerModuleMergedTestPath: " + path);
+      log.verbose(compilerProcessorModuleTestPath, path -> "compilerProcessorModuleTestPath: " + path);
+      log.verbose(compilerModuleTestResourcePath, path -> "compilerModuleTestResourcePath: " + path);
+      log.verbose(compilerModulePath, path -> "compilerModulePath: " + path);
+
+      deleteAllFiles(compilerModuleMergedTestPath, false);
+      merge(log, moduleSourceFinder, testModuleRefs, compilerModuleMergedTestPath);
+
+      // reload testModuleRefs but from merged to get the module-infos right
+      var mergedTestModuleRefs = ModuleHelper.topologicalSort(JDK_LAYOUT.findModuleRefs(List.of(compilerModuleMergedTestPath)));
+      // find test module finder
+      var moduleMergedTestFinder = ModuleHelper.moduleFinder(mergedTestModuleRefs);
+      log.verbose(moduleMergedTestFinder, finder -> "module test merged finder: " + finder);
+
+      return compile(log, javacTool,
+          mergedTestModuleRefs,
+          moduleMergedTestFinder,
+          compiler.testRelease().or(compiler::sourceRelease),
+          compiler,
+          List.of(compilerModuleMergedTestPath),
+          compilerProcessorModuleTestPath,
+          compilerModulePath,
+          compilerModuleTestResourcePath,
+          layout,
+          compiler.moduleExplodedTestPath(),
+          "test:");
+    } else {
+      // no test
+      log.info(null, __ -> "no test found");
+    }
+
+    return 0;
+  }
+
+  private static boolean resolveModuleGraph(Log log, ModuleFinder moduleFinder, List<Path> compilerModulePath,  String pass) {
     var dependencyFinder = ModuleFinder.compose(
-        modulePath
-            .stream()
-            .flatMap(List::stream)
+        compilerModulePath.stream()
             .map(ModuleFinder::of)
             .toArray(ModuleFinder[]::new));
     var systemFinder = ModuleHelper.systemModulesFinder();
-    
+
     log.debug(moduleFinder, finder -> pass + " modules " + finder.findAll().stream().map(ref -> ref.descriptor().name()).sorted().collect(joining(", ")));
     log.debug(dependencyFinder, finder -> pass + " dependency modules " + finder.findAll().stream().map(ref -> ref.descriptor().name()).sorted().collect(joining(", ")));
     log.debug(systemFinder, finder -> pass + " system modules " + finder.findAll().stream().map(ref -> ref.descriptor().name()).sorted().collect(joining(", ")));
-    
-    /*
-    Configuration.resolveRequires(ModuleFinder.compose(sourceModuleFinder, dependencyFinder),
-        List.of(Layer.boot().configuration()), ModuleFinder.of(), rootNames);
-    */
-    var resolved = ModuleHelper.resolveOnlyRequires(
+
+    return ModuleHelper.resolveOnlyRequires(
         ModuleFinder.compose(moduleFinder, dependencyFinder, systemFinder),
-        rootSourceNames,
+        moduleFinder.findAll().stream().map(ref -> ref.descriptor().name()).collect(toList()),
         new ResolverListener() {
           @Override
           public void module(String moduleName) {
@@ -222,12 +267,28 @@ public class CompilerPlugin implements Plugin {
             log.error(null, __ -> pass + " can not resolve " + moduleName + " from " + dependencyChain);
           }
         });
+  }
+
+  private static int compile(Log log, ToolProvider javacTool,
+      Set<ModuleReference> moduleRefs,
+      ModuleFinder moduleFinder,
+      Optional<Integer> release,
+      CompilerConf compiler,
+      List<Path> compilerModuleSourcePath,
+      List<Path> compilerProcessorModulePath,
+      List<Path> compilerModulePath,
+      List<Path> resourcesPath,
+      ModuleSourceLayout layout,
+      Path destination,
+      String pass) throws IOException {
+
+    // try to resolve the module graph to see if something is missing ?
+    var resolved = resolveModuleGraph(log, moduleFinder, compilerModulePath,  pass);
     if (!resolved) {
       return 1;  //FIXME
     }
     
     deleteAllFiles(destination, false);
-    
     
     var javac = new Javac();
     release.ifPresent(javac::release);
@@ -238,42 +299,45 @@ public class CompilerPlugin implements Plugin {
     compiler.upgradeModulePath().ifPresent(javac::upgradeModulePath);
     compiler.module().ifPresent(javac::module);
     compiler.rootModules().ifPresent(javac::rootModules);
-    
-    
+
     var compatibilityMode = release.map(_release -> _release <= 8).orElse(false);
     if (!compatibilityMode) {
       // module mode, compile all java files at once using moduleSourcePath
-      javac.moduleSourcePath(moduleSourcePath);
-      modulePath.ifPresent(javac::modulePath);
-      Optional.of(processorModulePath).filter(not(List::isEmpty)).ifPresent(javac::processorModulePath);
+      javac.moduleSourcePath(compilerModuleSourcePath);
+      Optional.of(compilerModulePath).filter(not(List::isEmpty)).ifPresent(javac::modulePath);
+      Optional.of(compilerProcessorModulePath).filter(not(List::isEmpty)).ifPresent(javac::processorModulePath);
       javac.destination(destination);
-      
-      var errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, rootSourceNames, javac, release, __ -> true);
+
+      var files = compiler.files()
+          .orElseGet(() -> walkIfNecessary(expandPath(compilerModuleSourcePath), pathFilenameEndsWith(".java")));
+
+      var errorCode = compileAllFiles(log, javacTool, javac, release, files);
       if (errorCode != 0) {
         return errorCode;
       }
     } else {
-      // compatibility mode, do a topological sort first, and compile modules one by one
-      modulePath.ifPresent(paths -> javac.classPath(paths.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList())));
-      Optional.of(processorModulePath).filter(not(List::isEmpty)).ifPresent(paths -> javac.processorPath(paths.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList())));
-      
-      var moduleNames = ModuleHelper.topologicalSort(moduleFinder, rootSourceNames);
-      for(var moduleName: moduleNames) {
+      // compatibility mode, compile modules one by one, moduleRefs is already in topological order
+      javac.classPath(compilerModulePath.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList()));
+      javac.processorPath(compilerProcessorModulePath.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList()));
+
+      for(var moduleRef: moduleRefs) {
         // compile modules one by one using the sourcePath, without the module-info
-        List<Path> sourcePath = moduleSourcePath.stream().map(path -> path.resolve(moduleName)).filter(Files::exists).collect(toUnmodifiableList());
+        var sourcePath = layout.toModulePath(moduleRef, compiler.moduleSourcePath());
         javac.sourcePath(sourcePath);
-        javac.destination(destination.resolve(moduleName));
-        
-        var moduleInfoFilter = pathFilenameEquals("module-info.java");
-        var errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, List.of(moduleName), javac, release, not(moduleInfoFilter));
+        javac.destination(destination.resolve(moduleRef.descriptor().name()));
+        var moduleInfo = pathFilenameEquals("module-info.java");
+        var files = compiler.files()
+            .orElseGet(() -> walkIfNecessary(sourcePath, pathFilenameEndsWith(".java").and(not(moduleInfo))));
+        var errorCode = compileAllFiles(log, javacTool, javac, release, files);
         if (errorCode != 0) {
           return errorCode;
         }
         
         // compile the module-info with release 9
         javac.classPath(null); // reset classpath
-        modulePath.ifPresent(javac::modulePath);  // use modulePath instead
-        errorCode = compileAllFiles(log, javacTool, compiler, moduleSourcePath, List.of(moduleName), javac, Optional.of(9), moduleInfoFilter);
+        Optional.of(compilerModulePath).filter(not(List::isEmpty)).ifPresent(javac::modulePath);  // use modulePath instead
+        files = walkIfNecessary(sourcePath, moduleInfo);
+        errorCode = compileAllFiles(log, javacTool, javac, Optional.of(9), files);
         if (errorCode != 0) {
           return errorCode;
         }
@@ -281,27 +345,46 @@ public class CompilerPlugin implements Plugin {
     }
     
     //copy all resources
-    for(var resources: resourcesPath) {
-      if (exists(resources)) {
-        for(var moduleName: rootSourceNames) {  // copy only resources of the modules
-          var resourceDir = resources.resolve(moduleName);
-          var destinationDir = destination.resolve(moduleName);
-          if (exists(resourceDir)) {
-            log.debug(null, __ -> "copy " + resourceDir + " to " + destinationDir);
-            walkAndFindCounterpart(resourceDir, destinationDir, Function.identity(), (src, dest) -> {
-              if (isDirectory(src) && isDirectory(dest)) { // do not overwrite directory
-                return;
-              }
-              copy(src, dest); 
-            });
+    copyAllResources(log, moduleRefs, resourcesPath, layout, destination);
+
+    // declare all services for the classpath
+    declareAllServicesForTheClassPath(moduleRefs, destination);
+
+    return 0;
+  }
+
+
+  private static int compileAllFiles(Log log, ToolProvider javacTool, Javac javac, Optional<Integer> release, List<Path> files) {
+    release.ifPresent(javac::release);
+    var cmdLine = gatherAll(JavacOption.class, option -> option.action).apply(javac, new CmdLine());
+    files.forEach(cmdLine::add);
+
+    var arguments = cmdLine.toArguments();
+    log.verbose(files, fs -> toPrettyString(JavacOption.class, option -> option.action).apply(javac, "javac") + "\n" + fs.stream().map(Path::toString).collect(joining(" ")));
+
+    return javacTool.run(System.out, System.err, arguments);
+  }
+
+  private static void copyAllResources(Log log, Set<ModuleReference> moduleRefs,
+      List<Path> resourcesPath, ModuleSourceLayout layout, Path destination) {
+    for(var moduleRef: moduleRefs) {
+      for(var resourceDir : layout.toModulePath(moduleRef, resourcesPath)) {
+        var destinationDir = destination.resolve(moduleRef.descriptor().name());
+        log.verbose(null, __ -> "copy resources from directory " + resourceDir + " to " + destinationDir);
+        walkAndFindCounterpart(resourceDir, destinationDir, identity(), (src, dest) -> {
+          if (isDirectory(src) && isDirectory(dest)) { // do not overwrite directory
+            return;
           }
-        }
+          copy(src, dest);
+        });
       }
     }
-    
-    // declare all services for the classpath
-    for(var module: moduleFinder.findAll()) {
-      var descriptor = module.descriptor();
+  }
+
+  private static void declareAllServicesForTheClassPath(Set<ModuleReference> moduleRefs,
+      Path destination) throws IOException {
+    for(var moduleRef: moduleRefs) {
+      var descriptor = moduleRef.descriptor();
       var moduleFolder = destination.resolve(descriptor.name());
       var servicesPath = moduleFolder.resolve("META-INF/services/");
       var provides = descriptor.provides();
@@ -313,10 +396,8 @@ public class CompilerPlugin implements Plugin {
         write(servicePath, (Iterable<String>)provide.providers().stream()::iterator, CREATE_NEW);
       }
     }
-    
-    return 0;
   }
-  
+
   private static Stream<Path> asClassPath(Path path) {
     // IOExceptions suppressed
     return getUnchecked(() -> {
@@ -330,32 +411,12 @@ public class CompilerPlugin implements Plugin {
     });
   }
   
-  private static List<Path> findSourcePathOfModules(List<Path> moduleSourcePath, List<String> moduleNames) {
-    return moduleSourcePath.stream()
-        .flatMap(sourcePath -> moduleNames.stream().map(sourcePath::resolve))
-        .collect(toUnmodifiableList());
-  }
-  
-  private static int compileAllFiles(Log log, ToolProvider javacTool, CompilerConf compiler,
-                                     List<Path> moduleSourcePath, List<String> moduleNames, Javac javac,
-                                     Optional<Integer> release, Predicate<Path> filter) {
-    release.ifPresent(javac::release);
-    var cmdLine = gatherAll(JavacOption.class, option -> option.action).apply(javac, new CmdLine());
-    
-    var files = compiler.files().orElseGet(() -> walkIfNecessary(findSourcePathOfModules(moduleSourcePath, moduleNames), pathFilenameEndsWith(".java")));
-    files.stream().filter(filter).forEach(cmdLine::add);
-    
-    var arguments = cmdLine.toArguments();
-    log.verbose(files, fs -> toPrettyString(JavacOption.class, option -> option.action).apply(javac, "javac") + "\n" + fs.stream().map(Path::toString).collect(joining(" ")));
-    
-    return javacTool.run(System.out, System.err, arguments);
-  }
-  
-  private static void merge(ModuleFinder moduleSourceFinder, ModuleFinder moduleTestFinder,
+  private static void merge(Log log, ModuleFinder moduleSourceFinder, Set<ModuleReference> testModuleRefs,
                            Path moduleMergedTestPath) throws IOException {
     Files.createDirectories(moduleMergedTestPath);
-    
-    for(var testRef: moduleTestFinder.findAll()) {
+
+    log.verbose(testModuleRefs, __ -> "merge " + testModuleRefs);
+    for(var testRef: testModuleRefs) {
       var moduleName = testRef.descriptor().name();
       var moduleRoot = moduleMergedTestPath.resolve(moduleName);
       
@@ -366,9 +427,13 @@ public class CompilerPlugin implements Plugin {
         
         var sourcePath = Path.of(sourceRef.location().orElseThrow());
         var skipModuleInfoDotJava = not(pathFilenameEquals("module-info.java"));
+        log.verbose(null, __ -> "copy source from directory " + sourcePath + " to " + moduleRoot);
         walkAndFindCounterpart(sourcePath, moduleRoot,
             stream -> stream.filter(skipModuleInfoDotJava),
-            Files::copy);
+            (source, target) -> {
+              log.debug(null, __ -> "copy file " + source + " to " + target);
+              Files.copy(source, target);
+            });
         
         var descriptor = mergeModuleDescriptor(sourceRef.descriptor(), testRef.descriptor());
         write(moduleRoot.resolve("module-info.java"), List.of(moduleDescriptorToSource(descriptor)));
@@ -380,11 +445,13 @@ public class CompilerPlugin implements Plugin {
       }
       
       var testPath = Path.of(testRef.location().orElseThrow());
+      log.verbose(null, __ -> "copy test from directory " + testPath + " to " + moduleRoot);
       walkAndFindCounterpart(testPath, moduleRoot, stream -> stream.filter(predicate),
           (srcPath, dstPath) -> {
             if (exists(dstPath) && isDirectory(dstPath)) {
               return;  // skip existing path
             }
+            log.debug(null, __ -> "copy file " + srcPath + " to " + dstPath);
             copy(srcPath, dstPath);
           });
     }
