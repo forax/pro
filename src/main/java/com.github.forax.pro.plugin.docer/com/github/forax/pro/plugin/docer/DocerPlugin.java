@@ -8,22 +8,10 @@ import static com.github.forax.pro.api.helper.OptionAction.gatherAll;
 import static com.github.forax.pro.api.helper.OptionAction.rawValues;
 import static com.github.forax.pro.helper.FileHelper.pathFilenameEndsWith;
 import static com.github.forax.pro.helper.FileHelper.walkIfNecessary;
+import static com.github.forax.pro.helper.ModuleSourceLayout.JDK_LAYOUT;
 import static com.github.forax.pro.helper.util.Unchecked.raises;
 import static com.github.forax.pro.helper.util.Unchecked.suppress;
 import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.toUnmodifiableList;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.module.ModuleFinder;
-import java.net.InetAddress;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-import java.util.spi.ToolProvider;
-import java.util.stream.Collectors;
 
 import com.github.forax.pro.api.Config;
 import com.github.forax.pro.api.MutableConfig;
@@ -35,7 +23,20 @@ import com.github.forax.pro.api.helper.ProConf;
 import com.github.forax.pro.helper.FileHelper;
 import com.github.forax.pro.helper.Log;
 import com.github.forax.pro.helper.ModuleHelper;
+import com.github.forax.pro.helper.ModuleSourceLayout;
 import com.github.forax.pro.helper.util.StableList;
+import java.io.File;
+import java.io.IOException;
+import java.lang.module.ModuleReference;
+import java.net.InetAddress;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.spi.ToolProvider;
+import java.util.stream.Collectors;
 
 public class DocerPlugin implements Plugin {
   @Override
@@ -83,7 +84,7 @@ public class DocerPlugin implements Plugin {
              .filter(not(List::isEmpty));
   }
   
-  enum JavadocOption {
+  private enum JavadocOption {
     RAW_ARGUMENTS(rawValues(Javadoc::rawArguments)),
     DESTINATION(action("-d", Javadoc::destination)),
     MODULE_SOURCE_PATH(action("--module-source-path", Javadoc::moduleSourcePath, File.pathSeparator)),
@@ -97,9 +98,9 @@ public class DocerPlugin implements Plugin {
     RELEASE(actionMaybe("--release", Javadoc::release))
     ;
     
-    final OptionAction<Javadoc> action;
+    private final OptionAction<Javadoc> action;
     
-    private JavadocOption(OptionAction<Javadoc> action) {
+    JavadocOption(OptionAction<Javadoc> action) {
       this.action = action;
     }
   }
@@ -112,47 +113,73 @@ public class DocerPlugin implements Plugin {
     var javadocTool = ToolProvider.findFirst("javadoc")
         .orElseThrow(() -> new IllegalStateException("can not find javadoc"));
     var docerConf = config.getOrThrow(name(), DocerConf.class);
-    
-    var moduleSourcePath = FileHelper.pathFromFilesThatExist(docerConf.moduleSourcePath());
-    var moduleSourceFinder = ModuleHelper.sourceModuleFinders(moduleSourcePath);
-    var errorCode = generateAll(moduleSourceFinder, docerConf.moduleDocSourcePath(),
-        (input, output) -> generateDoc(log, javadocTool, docerConf, true, input, output));
-    if (errorCode != 0) {
-      return errorCode;
+
+    // find layout
+    var sourceLayoutFactory = ModuleSourceLayout.Factory.of(ModuleSourceLayout::lookupForJdkLayout)
+        .or(ModuleSourceLayout::lookupForMavenLayout);
+    var layoutOpt = sourceLayoutFactory.createLayout(Path.of("."));
+    if (layoutOpt.isEmpty()) {
+      log.error(null, __ -> "no source layout found");
+      return 1; //FIXME
     }
-    var moduleTestPath = FileHelper.pathFromFilesThatExist(docerConf.moduleMergedTestPath());
-    if (!docerConf.generateTestDoc() || moduleTestPath.isEmpty()) {
-      return 0;
+    var layout = layoutOpt.orElseThrow();
+    log.verbose(layout, _layout -> layout + " detected");
+
+    // generate javadoc of source
+    var sourceModuleRefs = ModuleHelper.topologicalSort(layout.findModuleRefs(docerConf.moduleSourcePath()));
+    if (!sourceModuleRefs.isEmpty()) {
+      var docerModuleSourcePath = layout.toAllPath(docerConf.moduleSourcePath());
+      log.verbose(docerModuleSourcePath, path -> "docerModuleSourcePath: " + path);
+
+      var sourceRelease = docerConf.sourceRelease();
+      var errorCode = generateAll(layout, sourceModuleRefs, docerConf.moduleSourcePath(), docerConf.moduleDocSourcePath(),
+          (input, output) -> generateDoc(log, javadocTool, docerConf, docerModuleSourcePath, sourceRelease, input, output));
+      if (errorCode != 0) {
+        return errorCode;
+      }
+    } else {
+      log.info(null, __ -> "no source found");
     }
-    
-    var moduleTestFinder = ModuleHelper.sourceModuleFinders(moduleTestPath);
-    return generateAll(moduleTestFinder, docerConf.moduleDocTestPath(),
-        (input, output) -> generateDoc(log, javadocTool, docerConf, false, input, output));
+
+    // generate javadoc of tests
+    var mergedTestModuleRefs = ModuleHelper.topologicalSort(JDK_LAYOUT.findModuleRefs(docerConf.moduleMergedTestPath()));
+    if (docerConf.generateTestDoc() && !mergedTestModuleRefs.isEmpty()) {
+      var docerModuleMergedTestPath = layout.toAllPath(docerConf.moduleMergedTestPath());
+      log.verbose(docerModuleMergedTestPath, path -> "docerModuleMergedTestPath: " + path);
+
+      var testRelease = docerConf.testRelease().or(docerConf::sourceRelease);
+      return generateAll(layout, mergedTestModuleRefs, docerConf.moduleMergedTestPath(), docerConf.moduleDocTestPath(),
+          (input, output) -> generateDoc(log, javadocTool, docerConf, docerModuleMergedTestPath, testRelease, input, output));
+    } else {
+      log.info(null, __ -> "no test found");
+    }
+
+    return 0;
   }
 
   interface Action {
     int apply(Path input, Path output);
   }
   
-  private static int generateAll(ModuleFinder finder, Path output, Action action) throws IOException {
-    FileHelper.deleteAllFiles(output, false);
-    Files.createDirectories(output);
+  private static int generateAll(ModuleSourceLayout layout, Set<ModuleReference> modules, List<Path> sourcePath, Path destination, Action action) throws IOException {
+    FileHelper.deleteAllFiles(destination, false);
+    Files.createDirectories(destination);
     
-    var modules = finder.findAll().stream().flatMap(module -> module.location().stream()).collect(toUnmodifiableList());
     return modules.parallelStream()
-        .mapToInt(location -> action.apply(Path.of(location), output))
+        .flatMap(module -> layout.toModulePath(module, sourcePath).stream())
+        .mapToInt(path -> action.apply(path, destination))
         .reduce(0, (exitCode1, exitCode2) -> exitCode1 | exitCode2);
   }
   
-  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docerConf, boolean main, Path input, Path output) {
-    var javadoc = new Javadoc(output.resolve(input.getFileName().toString()), docerConf.moduleSourcePath());
+  private static int generateDoc(Log log, ToolProvider javadocTool, DocerConf docerConf, List<Path> sourcePath, Optional<Integer> release, Path input, Path output) {
+    var javadoc = new Javadoc(output.resolve(input.getFileName().toString()), sourcePath);
     docerConf.rawArguments().ifPresent(javadoc::rawArguments);
     javadoc.modulePath(docerConf.moduleDependencyPath());
     docerConf.upgradeModulePath().ifPresent(javadoc::upgradeModulePath);
     docerConf.rootModules().ifPresent(javadoc::rootModules);
     javadoc.quiet(docerConf.quiet());
     javadoc.html5(docerConf.html5());
-    (main? docerConf.sourceRelease(): docerConf.testRelease().or(docerConf::sourceRelease)).ifPresent(javadoc::release);
+    release.ifPresent(javadoc::release);
     docerConf.enablePreview().ifPresent(javadoc::enablePreview);
     docerConf.link().filter(url -> isLinkHostOnline(log, url)).ifPresent(javadoc::link);
     
