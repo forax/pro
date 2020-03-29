@@ -235,33 +235,7 @@ public class ModuleHelper {
     };
   }
 
-
-  @Deprecated
-  public static ModuleFinder sourceModuleFinder(Path directory) {
-    // IOExceptions are suppressed
-    return new ModuleFinder() {
-      @Override
-      public Set<ModuleReference> findAll() {
-        try(var stream = getUnchecked(() -> list(directory))) {
-          return stream.flatMap(path -> find(path.getFileName().toString()).stream())
-              .collect(Collectors.toSet());
-        }
-      }
-
-      @Override
-      public Optional<ModuleReference> find(String name) {
-        return Optional.of(directory.resolve(name))
-          .filter(Files::isDirectory)
-          .flatMap(path -> Optional.of(path.resolve("module-info.java"))
-                                   .filter(Files::exists)
-                                   .flatMap(ModuleHelper::sourceModuleDescriptor)
-                                   .map(descriptor -> moduleReference(descriptor, path.toUri(), null)));
-      }
-    };
-  }
-
-  @Deprecated
-  static ModuleReference moduleReference(ModuleDescriptor descriptor, URI uri, ModuleReader moduleReader) {
+  private static ModuleReference moduleReference(ModuleDescriptor descriptor, URI uri, ModuleReader moduleReader) {
     return new ModuleReference(descriptor, uri) {
       @Override
       public ModuleReader open() {
@@ -273,14 +247,6 @@ public class ModuleHelper {
         return descriptor.name() + " at " + uri;
       }
     };
-  }
-
-  @Deprecated
-  public static ModuleFinder sourceModuleFinders(List<Path> directories) {
-    return ModuleFinder.compose(
-        directories.stream()
-                   .map(ModuleHelper::sourceModuleFinder)
-                   .toArray(ModuleFinder[]::new));
   }
 
   /**
