@@ -6,6 +6,7 @@ import static com.github.forax.pro.helper.util.Unchecked.suppress;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
+import com.github.forax.pro.helper.ModuleSourceLayout;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.module.FindException;
@@ -119,7 +120,18 @@ public class ResolverPlugin implements Plugin {
     log.debug(config, conf -> "config " + config);
     
     var resolverConf = config.getOrThrow(name(), ResolverConf.class);
-    
+
+    // find layout
+    var sourceLayoutFactory = ModuleSourceLayout.Factory.of(ModuleSourceLayout::lookupForJdkLayout)
+        .or(ModuleSourceLayout::lookupForMavenLayout);
+    var layoutOpt = sourceLayoutFactory.createLayout(Path.of("."));
+    if (layoutOpt.isEmpty()) {
+      log.error(null, __ -> "no source layout found");
+      return 1; //FIXME
+    }
+    var layout = layoutOpt.orElseThrow();
+    log.verbose(layout, _layout -> layout + " detected");
+
     // create finder for dependencies (or module path if specified)
     var modulePathOpt = modulePathOrDependencyPath(resolverConf.modulePath(),
         resolverConf.moduleDependencyPath(), List.of());
@@ -131,19 +143,18 @@ public class ResolverPlugin implements Plugin {
             .map(ModuleFinder::of)
             .toArray(ModuleFinder[]::new));
     
-    
     // find resolved and unresolved modules in dependencies (for source and test)
     var resolvedModules = new LinkedHashSet<String>();
     var unresolvedModules = new LinkedHashSet<String>();
     
     // source module names
-    var moduleSourceFinder = ModuleHelper.sourceModuleFinders(resolverConf.moduleSourcePath());
+    var moduleSourceFinder = ModuleHelper.moduleFinder(layout.findModuleRefs(resolverConf.moduleSourcePath()));
     var sourceResolved = resolveModuleDependencies(moduleSourceFinder, dependencyFinder, resolvedModules, unresolvedModules);
     
     // test module names
     var moduleTestPath = FileHelper.pathFromFilesThatExist(resolverConf.moduleTestPath());
     if (!moduleTestPath.isEmpty()) {
-      ModuleFinder moduleTestFinder = ModuleHelper.sourceModuleFinders(resolverConf.moduleTestPath());
+      var moduleTestFinder = ModuleHelper.moduleFinder(layout.findModuleRefs(resolverConf.moduleTestPath()));
       sourceResolved &= resolveModuleDependencies(moduleTestFinder, dependencyFinder, resolvedModules, unresolvedModules);
     }
     
