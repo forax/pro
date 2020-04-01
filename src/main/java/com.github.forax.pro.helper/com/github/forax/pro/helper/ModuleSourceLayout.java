@@ -2,6 +2,7 @@ package com.github.forax.pro.helper;
 
 import static java.nio.file.Files.exists;
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Collectors.toUnmodifiableList;
 
 import java.lang.module.ModuleReference;
@@ -191,12 +192,12 @@ public interface ModuleSourceLayout {
   }
 
   /**
-   * Returns the Maven layout at that folder if it exists
+   * Returns the Maven multi layout at that folder if it exists
    *
    * @param root the root folder containing the layout
-   * @return a Maven layout (or not).
+   * @return a Maven multi layout (or not).
    */
-  static Optional<ModuleSourceLayout> lookupForMavenLayout(Path root) {
+  static Optional<ModuleSourceLayout> lookupForMavenMultiLayout(Path root) {
     Objects.requireNonNull(root);
     if (!exists(root)) {
       return Optional.empty();
@@ -204,16 +205,14 @@ public interface ModuleSourceLayout {
     return Optional.of(new ModuleSourceLayout() {
       @Override
       public Set<ModuleReference> findModuleRefs(List<Path> moduleSourcePath) {
-        var noLocalPath = List.of(Path.of("."));
-        return findModules(root, noLocalPath, moduleSourcePath);
+        return findModules(root, List.of(Path.of(".")), moduleSourcePath);
       }
 
       @Override
       public Optional<Path> toAll(Path moduleLocal) {
         Objects.requireNonNull(moduleLocal);
         return Optional.of(root)
-            .map(p -> p.resolve("*/").resolve(moduleLocal))
-            /*.map(Path::normalize)*/;
+            .map(p -> p.resolve("*/").resolve(moduleLocal));
       }
 
       @Override
@@ -230,7 +229,7 @@ public interface ModuleSourceLayout {
 
       @Override
       public String toString() {
-        return "maven layout";
+        return "maven multi layout";
       }
     });
   }

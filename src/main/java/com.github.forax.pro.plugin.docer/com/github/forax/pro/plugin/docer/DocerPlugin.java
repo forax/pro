@@ -116,7 +116,7 @@ public class DocerPlugin implements Plugin {
 
     // find layout
     var sourceLayoutFactory = ModuleSourceLayout.Factory.of(ModuleSourceLayout::lookupForJdkLayout)
-        .or(ModuleSourceLayout::lookupForMavenLayout);
+        .or(ModuleSourceLayout::lookupForMavenMultiLayout);
     var layoutOpt = sourceLayoutFactory.createLayout(Path.of("."));
     if (layoutOpt.isEmpty()) {
       log.error(null, __ -> "no source layout found");
