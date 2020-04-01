@@ -26,11 +26,11 @@ matrix:
       os: osx
       jdk: openjdk-ea
 
-    - env: DEPLOY='linux-early-access-loom' TAG="untagged-9a5468853a6f3b1b9c9c" NAME="jdk-15-loom"
+    - env: DEPLOY='linux-early-access-loom' TAG="untagged-ace6b4c924a9d1d01e71" NAME="jdk-15-loom"
 
-    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-9a5468853a6f3b1b9c9c" NAME="jdk-15-lworld"
+    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-ace6b4c924a9d1d01e71" NAME="jdk-15-lworld"
 
-    - env: DEPLOY='linux-early-access-sealed' TAG="untagged-9a5468853a6f3b1b9c9c" NAME="jdk-15-sealed"
+    - env: DEPLOY='linux-early-access-sealed' TAG="untagged-ace6b4c924a9d1d01e71" NAME="jdk-15-sealed"
 
     - env: DEPLOY='linux-early-access-foreign' TAG="untagged-9a5468853a6f3b1b9c9c" NAME="jdk-15-vector"
       
@@ -46,6 +46,8 @@ matrix:
     - env: DEPLOY='macos-early-access-foreign' TAG="untagged-9a5468853a6f3b1b9c9c" NAME="jdk-15-vector"
       os: osx
 
+    tar:
+      gz:
 #  allow_failures:
 #     - env: NAME="jdk-13-record"
 
@@ -61,7 +63,6 @@ install:
   - java --version
 
 script:
-  - export JAVA_TOOL_OPTIONS="-XX:+UnlockDiagnosticVMOptions -XX:DisableIntrinsic=_bigIntegerLeftShiftWorker,_bigIntegerRightShiftWorke -XX:CompileCommand=dontinline,java.math.BigInteger::shiftLeft -XX:CompileCommand=dontinline,java.math.BigInteger::shiftRight"
   - chmod u+x ./build.sh
   - ./build.sh
   - ./target/pro/bin/pro version
