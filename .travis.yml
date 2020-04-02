@@ -46,8 +46,6 @@ matrix:
     - env: DEPLOY='macos-early-access-foreign' TAG="untagged-9a5468853a6f3b1b9c9c" NAME="jdk-15-vector"
       os: osx
 
-    tar:
-      gz:
 #  allow_failures:
 #     - env: NAME="jdk-13-record"
 
