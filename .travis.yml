@@ -61,6 +61,7 @@ install:
   - java --version
 
 script:
+  - export JAVA_TOOL_OPTIONS="-XX:+UnlockDiagnosticVMOptions -XX:DisableIntrinsic=_bigIntegerLeftShiftWorker,_bigIntegerRightShiftWorke -XX:CompileCommand=dontinline,java.math.BigInteger::shiftLeft -XX:CompileCommand=dontinline,java.math.BigInteger::shiftRight"
   - chmod u+x ./build.sh
   - ./build.sh
   - ./target/pro/bin/pro version
