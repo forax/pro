@@ -144,21 +144,29 @@ public class ResolverPlugin implements Plugin {
             .toArray(ModuleFinder[]::new));
     
     // find resolved and unresolved modules in dependencies (for source and test)
+    var sourceResolved = true;
     var resolvedModules = new LinkedHashSet<String>();
     var unresolvedModules = new LinkedHashSet<String>();
     
-    // source module names
-    var moduleSourceFinder = ModuleHelper.moduleFinder(layout.findModuleRefs(resolverConf.moduleSourcePath()));
-    var sourceResolved = resolveModuleDependencies(moduleSourceFinder, dependencyFinder, resolvedModules, unresolvedModules);
-    
-    // test module names
-    var moduleTestPath = FileHelper.pathFromFilesThatExist(resolverConf.moduleTestPath());
-    if (!moduleTestPath.isEmpty()) {
-      var moduleTestFinder = ModuleHelper.moduleFinder(layout.findModuleRefs(resolverConf.moduleTestPath()));
+    // source modules
+    var sourceModuleRefs = layout.findModuleRefs(resolverConf.moduleSourcePath());
+    if (!sourceModuleRefs.isEmpty()) {
+      var moduleSourceFinder = ModuleHelper.moduleFinder(sourceModuleRefs);
+      log.debug(moduleSourceFinder, finder -> "moduleSourceFinder " + finder);
+
+      sourceResolved &= resolveModuleDependencies(moduleSourceFinder, dependencyFinder, resolvedModules, unresolvedModules);
+    }
+
+    // test modules
+    var testModuleRefs = layout.findModuleRefs(resolverConf.moduleTestPath());
+    if (!testModuleRefs.isEmpty()) {
+      var moduleTestFinder = ModuleHelper.moduleFinder(testModuleRefs);
+      log.debug(moduleTestFinder, finder -> "moduleTestFinder " + finder);
+
       sourceResolved &= resolveModuleDependencies(moduleTestFinder, dependencyFinder, resolvedModules, unresolvedModules);
     }
     
-    log.debug(unresolvedModules, unresolved -> "unresolvedModules " + unresolved);
+    log.verbose(unresolvedModules, unresolved -> "unresolvedModules " + unresolved);
     
     var remoteRepositories = resolverConf.remoteRepositories().orElse(List.of());
     log.debug(remoteRepositories, remotes -> "remoteRepositories " + remotes);

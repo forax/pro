@@ -204,7 +204,8 @@ public class ModuleHelper {
   public static Optional<ModuleReference> findSourceModuleReference(Path moduleFolder, Path local) {
     return Optional.of(moduleFolder)
         .filter(Files::isDirectory)
-        .flatMap(path -> Optional.of(path.resolve(local).normalize().resolve("module-info.java"))
+        .map(path -> path.resolve(local).normalize())
+        .flatMap(path -> Optional.of(path.resolve("module-info.java"))
             .filter(Files::exists)
             .flatMap(ModuleHelper::sourceModuleDescriptor)
             .map(descriptor -> moduleReference(descriptor, path.toUri(), null)));

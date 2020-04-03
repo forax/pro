@@ -411,42 +411,46 @@ public class CompilerPlugin implements Plugin {
     });
   }
   
-  private static void merge(Log log, ModuleFinder moduleSourceFinder, Set<ModuleReference> testModuleRefs,
-                           Path moduleMergedTestPath) throws IOException {
+  private static void merge(Log log, ModuleFinder moduleSourceFinder,
+      Set<ModuleReference> testModuleRefs, Path moduleMergedTestPath) throws IOException {
     Files.createDirectories(moduleMergedTestPath);
 
-    log.verbose(testModuleRefs, __ -> "merge " + testModuleRefs);
+    log.verbose(testModuleRefs, __ -> "merge testModuleRefs: " + testModuleRefs);
+    log.verbose(moduleSourceFinder, __ -> "merge moduleSourceFinder: " + moduleSourceFinder);
+
     for(var testRef: testModuleRefs) {
-      var moduleName = testRef.descriptor().name();
-      var moduleRoot = moduleMergedTestPath.resolve(moduleName);
-      
+      var testModuleName = testRef.descriptor().name();
+      var testModuleDestination = moduleMergedTestPath.resolve(testModuleName);
+
       Predicate<Path> predicate;
-      var sourceRefOpt = moduleSourceFinder.find(moduleName);
+      var sourceRefOpt = moduleSourceFinder.find(testModuleName);
       if (sourceRefOpt.isPresent()) {
         var sourceRef = sourceRefOpt.orElseThrow();
-        
+
         var sourcePath = Path.of(sourceRef.location().orElseThrow());
         var skipModuleInfoDotJava = not(pathFilenameEquals("module-info.java"));
-        log.verbose(null, __ -> "copy source from directory " + sourcePath + " to " + moduleRoot);
-        walkAndFindCounterpart(sourcePath, moduleRoot,
+
+        log.verbose(null, __ -> "copy source from directory " + sourcePath + " to " + testModuleDestination);
+        walkAndFindCounterpart(sourcePath, testModuleDestination,
             stream -> stream.filter(skipModuleInfoDotJava),
             (source, target) -> {
               log.debug(null, __ -> "copy file " + source + " to " + target);
               Files.copy(source, target);
             });
-        
+
+
         var descriptor = mergeModuleDescriptor(sourceRef.descriptor(), testRef.descriptor());
-        write(moduleRoot.resolve("module-info.java"), List.of(moduleDescriptorToSource(descriptor)));
+        write(testModuleDestination.resolve("module-info.java"), List.of(moduleDescriptorToSource(descriptor)));
         
         predicate = skipModuleInfoDotJava;
         
       } else {
         predicate = __ -> true;
       }
-      
+
       var testPath = Path.of(testRef.location().orElseThrow());
-      log.verbose(null, __ -> "copy test from directory " + testPath + " to " + moduleRoot);
-      walkAndFindCounterpart(testPath, moduleRoot, stream -> stream.filter(predicate),
+      log.verbose(null, __ -> "copy test from directory " + testPath + " to " + testModuleDestination);
+      walkAndFindCounterpart(testPath, testModuleDestination, stream -> stream.filter(predicate),
           (srcPath, dstPath) -> {
             if (exists(dstPath) && isDirectory(dstPath)) {
               return;  // skip existing path
@@ -454,6 +458,7 @@ public class CompilerPlugin implements Plugin {
             log.debug(null, __ -> "copy file " + srcPath + " to " + dstPath);
             copy(srcPath, dstPath);
           });
+
     }
   }
 }
