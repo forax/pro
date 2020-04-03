@@ -42,10 +42,10 @@ matrix:
     - env: DEPLOY='macos-early-access-lworld' TAG="untagged-f3dc9f90c6e0a06c83c1" NAME="jdk-15-lworld"
       os: osx
 
-    - env: DEPLOY='macos-early-access-sealed' TAG="untagged-7df6346683e24ae477ec" NAME="jdk-15-sealed"
+    - env: DEPLOY='macos-early-access-sealed' TAG="untagged-c2d3eda3b50f72359cc5" NAME="jdk-15-sealed"
       os: osx
 
-    - env: DEPLOY='macos-early-access-vector' TAG="untagged-9a5468853a6f3b1b9c9c" NAME="jdk-15-vector"
+    - env: DEPLOY='macos-early-access-vector' TAG="untagged-c2d3eda3b50f72359cc5" NAME="jdk-15-vector"
       os: osx
 
 #  allow_failures:
