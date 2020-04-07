@@ -47,7 +47,7 @@ matrix:
     - env: DEPLOY='macos-early-access-sealed' TAG="untagged-f87bd754fce3e9a3f420" NAME="jdk-15-sealed"
       os: osx
 
-    - env: DEPLOY='macos-early-access-pattern' TAG="untagged-f87bd754fce3e9a3f420" NAME="jdk-15-pattern"
+    - env: DEPLOY='macos-early-access-pattern' TAG="untagged-e3648392d247a3d1caf9" NAME="jdk-15-pattern"
       os: osx
 
     - env: DEPLOY='macos-early-access-vector' TAG="untagged-f87bd754fce3e9a3f420" NAME="jdk-15-vector"
