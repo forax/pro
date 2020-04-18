@@ -317,8 +317,10 @@ public class CompilerPlugin implements Plugin {
       }
     } else {
       // compatibility mode, compile modules one by one, moduleRefs is already in topological order
-      javac.classPath(compilerModulePath.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList()));
-      javac.processorPath(compilerProcessorModulePath.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList()));
+      var classPath = compilerModulePath.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList());
+      var processorPath = compilerProcessorModulePath.stream().flatMap(CompilerPlugin::asClassPath).collect(toUnmodifiableList());
+      Optional.of(classPath).filter(not(List::isEmpty)).ifPresent(javac::classPath);
+      Optional.of(processorPath).filter(not(List::isEmpty)).ifPresent(javac::processorPath);
 
       for(var moduleRef: moduleRefs) {
         // compile modules one by one using the sourcePath, without the module-info
