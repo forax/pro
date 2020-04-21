@@ -24,7 +24,7 @@ class MavenArtifactResolver {
     
     var artifactQuery = aether.createArtifactQuery(mavenId);
     var dependencies = aether.dependencies(artifactQuery);
-    var resolvedArtifacts = aether.download(new ArrayList<>(dependencies));
+    var resolvedArtifacts = new ArrayList<>(aether.download(new ArrayList<>(dependencies)));
     
     var map = resolvedArtifacts.stream()
       .flatMap(artifact -> findArtifactModuleName(artifact).map(name -> entry(artifact, name)).stream())
