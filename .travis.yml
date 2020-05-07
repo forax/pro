@@ -28,15 +28,15 @@ matrix:
       os: osx
       jdk: openjdk-ea
 
-    - env: DEPLOY='linux-early-access-loom' TAG="untagged-1abc4373dea5d365b6fd" NAME="jdk-15-loom"
+    - env: DEPLOY='linux-early-access-loom' TAG="untagged-33cd3991d6b1ba54c43d" NAME="jdk-15-loom"
 
-    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-1abc4373dea5d365b6fd" NAME="jdk-15-lworld"
+    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-33cd3991d6b1ba54c43d" NAME="jdk-15-lworld"
 
-    - env: DEPLOY='linux-early-access-sealed' TAG="untagged-1abc4373dea5d365b6fd" NAME="jdk-15-sealed"
+    - env: DEPLOY='linux-early-access-sealed' TAG="untagged-33cd3991d6b1ba54c43d" NAME="jdk-15-sealed"
 
-    - env: DEPLOY='linux-early-access-pattern' TAG="untagged-1abc4373dea5d365b6fd" NAME="jdk-15-pattern"
+    - env: DEPLOY='linux-early-access-pattern' TAG="untagged-33cd3991d6b1ba54c43d" NAME="jdk-15-pattern"
 
-    - env: DEPLOY='linux-early-access-vector' TAG="untagged-1abc4373dea5d365b6fd" NAME="jdk-15-vector"
+    - env: DEPLOY='linux-early-access-vector' TAG="untagged-33cd3991d6b1ba54c43d" NAME="jdk-15-vector"
       
   ##  - env: DEPLOY='macos-early-access-loom' TAG="untagged-f3dc9f90c6e0a06c83c1" NAME="jdk-15-loom"
   ##    os: osx
@@ -44,13 +44,13 @@ matrix:
   ##  - env: DEPLOY='macos-early-access-lworld' TAG="untagged-f3dc9f90c6e0a06c83c1" NAME="jdk-15-lworld"
   ##    os: osx
 
-    - env: DEPLOY='macos-early-access-sealed' TAG="untagged-1abc4373dea5d365b6fd" NAME="jdk-15-sealed"
+    - env: DEPLOY='macos-early-access-sealed' TAG="untagged-33cd3991d6b1ba54c43d" NAME="jdk-15-sealed"
       os: osx
 
-    - env: DEPLOY='macos-early-access-pattern' TAG="untagged-1abc4373dea5d365b6fd" NAME="jdk-15-pattern"
+    - env: DEPLOY='macos-early-access-pattern' TAG="untagged-33cd3991d6b1ba54c43d" NAME="jdk-15-pattern"
       os: osx
 
-    - env: DEPLOY='macos-early-access-vector' TAG="untagged-1abc4373dea5d365b6fd" NAME="jdk-15-vector"
+    - env: DEPLOY='macos-early-access-vector' TAG="untagged-33cd3991d6b1ba54c43d" NAME="jdk-15-vector"
       os: osx
 
 #  allow_failures:
