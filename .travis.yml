@@ -30,15 +30,15 @@ matrix:
 
 
 
-    - env: DEPLOY='linux-early-access-loom' TAG="untagged-217898a7a26df6ac806a" NAME="jdk-15-loom"
+    - env: DEPLOY='linux-early-access-loom' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-loom"
 
-    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-217898a7a26df6ac806a" NAME="jdk-15-lworld"
+    - env: DEPLOY='linux-early-access-lworld' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-lworld"
 
-    - env: DEPLOY='linux-early-access-sealed' TAG="untagged-217898a7a26df6ac806a" NAME="jdk-15-sealed"
+    - env: DEPLOY='linux-early-access-sealed' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-sealed"
 
-    - env: DEPLOY='linux-early-access-pattern' TAG="untagged-217898a7a26df6ac806a" NAME="jdk-15-pattern"
+    - env: DEPLOY='linux-early-access-pattern' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-pattern"
 
-    - env: DEPLOY='linux-early-access-vector' TAG="untagged-217898a7a26df6ac806a" NAME="jdk-15-vector"
+    - env: DEPLOY='linux-early-access-vector' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-vector"
       
   ##  - env: DEPLOY='macos-early-access-loom' TAG="untagged-f3dc9f90c6e0a06c83c1" NAME="jdk-15-loom"
   ##    os: osx
@@ -46,15 +46,17 @@ matrix:
   ##  - env: DEPLOY='macos-early-access-lworld' TAG="untagged-f3dc9f90c6e0a06c83c1" NAME="jdk-15-lworld"
   ##    os: osx
 
-    - env: DEPLOY='macos-early-access-sealed' TAG="untagged-217898a7a26df6ac806a" NAME="jdk-15-sealed"
+    - env: DEPLOY='macos-early-access-sealed' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-sealed"
       os: osx
 
-    - env: DEPLOY='macos-early-access-pattern' TAG="untagged-217898a7a26df6ac806a" NAME="jdk-15-pattern"
+    - env: DEPLOY='macos-early-access-pattern' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-pattern"
       os: osx
 
-    - env: DEPLOY='macos-early-access-vector' TAG="untagged-217898a7a26df6ac806a" NAME="jdk-15-vector"
+    - env: DEPLOY='macos-early-access-vector' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-vector"
       os: osx
 
+    tar:
+      gz:
 #  allow_failures:
 #     - env: NAME="jdk-13-record"
 
