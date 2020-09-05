@@ -28,8 +28,6 @@ matrix:
       os: osx
       jdk: openjdk-ea
 
-
-
     - env: DEPLOY='linux-early-access-loom' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-loom"
 
     - env: DEPLOY='linux-early-access-lworld' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-lworld"
@@ -55,8 +53,6 @@ matrix:
     - env: DEPLOY='macos-early-access-vector' TAG="untagged-a6acf5c962e51cb48b3c" NAME="jdk-16-vector"
       os: osx
 
-    tar:
-      gz:
 #  allow_failures:
 #     - env: NAME="jdk-13-record"
 
