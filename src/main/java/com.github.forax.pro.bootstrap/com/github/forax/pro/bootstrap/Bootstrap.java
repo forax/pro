@@ -154,7 +154,7 @@ public class Bootstrap {
     //      ));
     //    });
     compileAndPackagePlugin("formatter", list("compiler", "packager"), () -> {
-      var gjfVersion = "1.7";
+      var gjfVersion = "1.9";
       var base = "https://github.com/google/google-java-format/releases/download/google-java-format";
       download(
           uri(base + "-" + gjfVersion + "/google-java-format-" + gjfVersion + "-all-deps.jar"),
